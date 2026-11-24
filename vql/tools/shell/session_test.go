@@ -13,6 +13,7 @@ import (
 	actions_proto "www.velocidex.com/golang/velociraptor/actions/proto"
 	api_proto "www.velocidex.com/golang/velociraptor/api/proto"
 	"www.velocidex.com/golang/velociraptor/artifacts/assets"
+	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	crypto_proto "www.velocidex.com/golang/velociraptor/crypto/proto"
 	"www.velocidex.com/golang/velociraptor/file_store"
 	flows_proto "www.velocidex.com/golang/velociraptor/flows/proto"
@@ -38,6 +39,21 @@ import (
 // resumption works in real life.
 type ShellSessionTestSuite struct {
 	e2e.E2ETestSuite
+}
+
+func (self *ShellSessionTestSuite) SetupTest() {
+	self.E2ETestSuite.SetupTest()
+
+	// All tests in this suite share the same client id. Shell
+	// sessions started by an earlier test can still be reported as in
+	// flight when the next test starts, which fills the server's
+	// per-client in-flight limit and stops new collections from being
+	// delivered. These tests check shell session behavior, not
+	// in-flight throttling, so turn the throttling off.
+	if self.ConfigObj.Defaults == nil {
+		self.ConfigObj.Defaults = &config_proto.Defaults{}
+	}
+	self.ConfigObj.Defaults.DisableActiveInflightChecks = true
 }
 
 func (self *ShellSessionTestSuite) TestBashShell() {
