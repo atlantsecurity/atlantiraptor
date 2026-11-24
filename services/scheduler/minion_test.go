@@ -134,6 +134,16 @@ func (self *MinionSchedulerTestSuite) TestNotebookMinionScheduler() {
 	golden := ordereddict.NewDict().
 		Set("Updated Cell", cell)
 
+	scheduler_service, err := services.GetSchedulerService(self.ConfigObj)
+	assert.NoError(self.T(), err)
+	master_scheduler := scheduler_service.(*scheduler.Scheduler)
+
+	// Make sure the worker is free again before starting the long
+	// running job.
+	vtesting.WaitUntil(5*time.Second, self.T(), func() bool {
+		return master_scheduler.AvailableWorkers() > 0
+	})
+
 	var wg sync.WaitGroup
 
 	// Test cancellations
@@ -153,9 +163,12 @@ func (self *MinionSchedulerTestSuite) TestNotebookMinionScheduler() {
 		assert.Contains(self.T(), json.MustMarshalString(cell), "Cancelled")
 	}()
 
-	// Issue the cancellation. Cancellation should be dispatched across
-	// to the minion through the notification service.
-	time.Sleep(200 * time.Millisecond)
+	// Wait until the long running job holds the only worker. A fixed
+	// sleep here raced with slow CI machines: the job below could
+	// grab the worker first and the background job would fail.
+	vtesting.WaitUntil(5*time.Second, self.T(), func() bool {
+		return master_scheduler.AvailableWorkers() == 0
+	})
 
 	// Trying to schedule now should result in an error because all
 	// workers are busy.
