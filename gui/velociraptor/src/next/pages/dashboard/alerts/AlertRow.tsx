@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { Briefcase, ChevronDown, ChevronRight, FileSearch, FileX2, Laptop, ShieldAlert, Skull, Zap } from 'lucide-react';
 import { AddToCaseDialog } from '../../cases/AddToCaseDialog';
+import { AiTriageButton } from '../../ai/AiTriage';
+import { jsonContext } from '../../ai/context';
 import { useClient } from '../../../lib/queries';
 import { fmtTime, timeAgo } from '../../../lib/format';
 import { Badge, Button, Mono, Tooltip, cn } from '../../../ui/primitives';
@@ -75,6 +77,9 @@ export function AlertRow({ alert }: { alert: Alert }) {
               <Button size="sm" variant="secondary" icon={<Skull className="tw:size-3.5" />}
                 onClick={() => history.push(respondUrl('kill', alert.clientId))}>Kill process…</Button>
             )}
+            <AiTriageButton task={`Triage this ${alert.source || 'security'} alert "${alert.rule}" on host ${host}.`}
+              getContext={async () => jsonContext('Alert', { name: alert.name, time: alert.time?.toISOString(), client: alert.clientId,
+                hostname: host, artifact: alert.artifact, severity: alert.severity, ...alert.data })} />
             <Button size="sm" variant="primary" icon={<Briefcase className="tw:size-3.5" />}
               onClick={() => setCaseOpen(true)}>Add to case…</Button>
           </div>

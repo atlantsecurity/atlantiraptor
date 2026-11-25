@@ -12,6 +12,8 @@ import {
   CASE_SEVERITIES, SEVERITY_TONE, STATUSES, STATUS_LABEL, STATUS_TONE, type CaseSeverity, type CaseStatus,
 } from './model';
 import { downloadCaseReport } from './report';
+import { AiTriageButton } from '../ai/AiTriage';
+import { jsonContext } from '../ai/context';
 
 export function CaseDetail({ id }: { id: string }) {
   const { notebook, record, isLoading, error } = useCase(id);
@@ -60,6 +62,10 @@ export function CaseDetail({ id }: { id: string }) {
             </Link>
             <Button size="sm" variant="secondary" icon={<Download className="tw:size-3.5" />}
               onClick={() => downloadCaseReport(id, record, notebook?.creator ?? '')}>Export report</Button>
+            <AiTriageButton label="AI summary" task="Summarise this investigation case: what is known, what is still open, and the next steps."
+              getContext={async () => jsonContext('Case', { title: record.title, status: record.status, severity: record.severity,
+                summary: record.summary, linked: record.links, timeline: record.timeline })}
+              onSaveNote={text => actions.addNote(text)} />
           </div>
         </header>
 

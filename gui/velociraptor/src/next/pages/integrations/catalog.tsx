@@ -49,7 +49,7 @@ export const INTEGRATIONS: Integration[] = [
       { key: 'MinLevel', label: 'Minimum severity', kind: 'select', options: LEVELS, initial: 'high' },
       { key: 'PeriodSeconds', label: 'Same alert at most every (seconds)', kind: 'text', initial: '600' },
       { key: 'MaxPerHour', label: 'Emails per hour (non-critical)', kind: 'text', initial: '30' },
-      { key: 'MaxCriticalPerHour', label: 'Emails per hour (critical)', kind: 'text', initial: '60' },
+      { key: 'MaxCriticalPerHour', label: 'Critical emails per host per hour', kind: 'text', initial: '60' },
     ],
   },
   {

@@ -10,6 +10,7 @@ import { Badge, Button, Card, CardHeader, Input, Select } from '../../ui/primiti
 import { IOC_PREFILL_KEY } from '../ioc/IocSweepPage';
 import { INTEGRATIONS, secretTypeOf, type Integration } from './catalog';
 import { useServerMonitoring } from './monitoring';
+import { AiSettingsCard } from './AiSettingsCard';
 
 export default function IntegrationsPage() {
   const monitoring = useServerMonitoring();
@@ -28,6 +29,7 @@ export default function IntegrationsPage() {
         </div>
         {!canAdmin && <div className="tw:text-xs tw:text-warn">Only server admins can change integrations.</div>}
         <div className="tw:grid tw:grid-cols-1 tw:xl:grid-cols-2 tw:gap-4 tw:items-start">
+          <AiSettingsCard canAdmin={canAdmin} />
           {INTEGRATIONS.map(i => (
             // Remount when the stored settings arrive or change, so the form shows them.
             <IntegrationCard key={`${i.id}-${monitoring.loaded}-${JSON.stringify(monitoring.specOf(i.artifact))}`}

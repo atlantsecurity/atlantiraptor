@@ -2,6 +2,8 @@
 // logs) and how to take it away (zip exports).
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import { AiTriageButton } from '../ai/AiTriage';
+import { flowContext } from '../ai/context';
 import { toast } from 'sonner';
 import {
   Ban, BookOpen, CircleAlert, Clock, Download, ExternalLink, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
@@ -95,6 +97,10 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
               {preparing ? 'Building zip…' : 'Download zip'}
             </Button>
             <Button variant="secondary" icon={<RotateCcw className="tw:size-3.5" />} onClick={() => onCollectAgain(flow)}>Collect again</Button>
+            {rows > 0 && (
+              <AiTriageButton size="md" task={`Triage the results of collecting ${artifacts.join(', ')} from ${hostname}.`}
+                getContext={() => flowContext(clientId, flowId, artifacts, hostname)} />
+            )}
             <Menu>
               <MenuTrigger asChild>
                 <IconButton label="More actions" variant="secondary" icon={<MoreHorizontal className="tw:size-4" />} />

@@ -28,7 +28,7 @@ parameters:
   - name: MaxCriticalPerHour
     type: int
     default: 60
-    description: Separate hourly budget for critical alerts.
+    description: Critical alert emails per host per hour. Server-originated critical alerts are always sent.
 
 sources:
   - query: |
@@ -51,7 +51,6 @@ sources:
       // A global hourly cap on top of the per-name dedup, so a burst of
       // many different alert names cannot flood the mailbox either.
       LET budget <= dict(window=0, count=0)
-      LET crit_budget <= dict(window=0, count=0)
       LET hour_now() = int(int=now() / 3600)
       LET reset_if_new() = if(condition=budget.window != hour_now(),
           then=set(item=budget, field="window", value=hour_now()) AND set(item=budget, field="count", value=0),
@@ -59,13 +58,16 @@ sources:
       LET under_cap() = reset_if_new() AND budget.count < MaxPerHour
           AND set(item=budget, field="count", value=budget.count + 1)
 
-      // Severity is reported by the client, so critical alerts get their
-      // own budget rather than unlimited mail.
-      LET crit_reset() = if(condition=crit_budget.window != hour_now(),
-          then=set(item=crit_budget, field="window", value=hour_now()) AND set(item=crit_budget, field="count", value=0),
-          else=TRUE)
-      LET under_crit_cap() = crit_reset() AND crit_budget.count < MaxCriticalPerHour
-          AND set(item=crit_budget, field="count", value=crit_budget.count + 1)
+      // Severity is reported by the client, so critical alerts get a budget
+      // per host and hour: one noisy or compromised host cannot use up the
+      // budget of the others. Server-originated alerts (no client) are
+      // always mailed.
+      LET crit_counts <= dict()
+      LET crit_key(client) = format(format="%v|%v", args=[client, hour_now()])
+      LET under_crit_cap(client) = NOT client OR (
+          get(item=crit_counts, field=crit_key(client=client), default=0) < MaxCriticalPerHour
+          AND set(item=crit_counts, field=crit_key(client=client),
+                  value=get(item=crit_counts, field=crit_key(client=client), default=0) + 1))
 
       LET to_send = SELECT *,
              due(key=name) AS _Due
@@ -74,7 +76,7 @@ sources:
       // Critical alerts use their own budget, and an alert only
       // counts as mailed (for the per-name dedup) when it was sent.
       LET decided = SELECT *,
-             _Due AND if(condition=level_of(e=event_data) = "critical", then=under_crit_cap(), else=under_cap()) AS _Send
+             _Due AND if(condition=level_of(e=event_data) = "critical", then=under_crit_cap(client=client_id), else=under_cap()) AS _Send
         FROM to_send
 
       LET marked = SELECT *, _Send AND set(item=last_sent, field=name, value=now()) AS _Marked
