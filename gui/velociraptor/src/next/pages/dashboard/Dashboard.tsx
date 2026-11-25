@@ -15,6 +15,7 @@ import {
 } from '../../ui/primitives';
 import { effectiveState, HuntProgress, HuntStateBadge, huntCounts, huntTitle } from '../hunts/HuntBits';
 import { useSelectedClient } from '../../shell/client-context';
+import { AlertsPanel } from './alerts/AlertsPanel';
 
 const RANGES = [
   { value: '3600', label: '1h' },
@@ -84,6 +85,8 @@ export default function Dashboard() {
             value={huntsLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : fmtNum(hunts.reduce((s, h) => s + huntCounts(h).rows, 0))}
             sub="Across all active hunts" />
         </div>
+
+        <AlertsPanel />
 
         <div className="tw:grid tw:grid-cols-1 tw:xl:grid-cols-3 tw:gap-4">
           <Card className="tw:xl:col-span-2">

@@ -2,10 +2,12 @@
 // runs as a hunt across every matching client. Progress and per-client
 // results live in the hunt; recent actions are listed below.
 import { useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Play, Siren } from 'lucide-react';
-import { useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest } from '../../lib/queries';
+import { Play, Siren, X } from 'lucide-react';
+import {
+  runArtifacts, useClient, useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest,
+} from '../../lib/queries';
 import type { HuntCondition } from '../../lib/types';
 import { Badge, Button, Card, CardHeader, Input, Select, Switch, Textarea, cn } from '../../ui/primitives';
 import { TagInput } from '../hunts/TagInput';
@@ -13,18 +15,28 @@ import { ACTIONS, GROUPS, RESPONSE_TAG, type ResponseAction } from './actions';
 import { ConfirmResponseDialog } from './ConfirmResponseDialog';
 import { ResponseHistory } from './ResponseHistory';
 
-type TargetMode = 'all' | 'labels' | 'os';
+type TargetMode = 'all' | 'labels' | 'os' | 'client';
 const OS_LABEL: Record<string, string> = { WINDOWS: 'Windows', LINUX: 'Linux', OSX: 'macOS' };
+const CLIENT_ID_RE = /^C\.[0-9a-f]+(-[A-Za-z0-9]+)?$/;
 
-function initialValues(a: ResponseAction): Record<string, string> {
-  return Object.fromEntries(a.fields.map(f => [f.key, f.initial ?? '']));
+// Field values may be prefilled from the URL (for example by an alert's
+// "Delete file" action). They are only ever placed into the form, so the
+// person still reviews and confirms them.
+function initialValues(a: ResponseAction, prefill: URLSearchParams): Record<string, string> {
+  return Object.fromEntries(a.fields.map(f => [f.key, prefill.get(f.key) ?? f.initial ?? '']));
 }
 
 export default function ResponsePage() {
   const { action: actionId } = useParams<{ action?: string }>();
   const history = useHistory();
+  const { search } = useLocation();
+  const query = useMemo(() => new URLSearchParams(search), [search]);
+  const rawClient = query.get('client') ?? '';
+  const clientId = CLIENT_ID_RE.test(rawClient) ? rawClient : '';
   const action = ACTIONS.find(a => a.id === actionId) ?? ACTIONS[0];
-  const canRun = usePermission('start_hunt');
+  const canHunt = usePermission('start_hunt');
+  const canCollect = usePermission('collect_client');
+  const canRun = clientId ? canCollect : canHunt;
 
   return (
     <div className="tw:flex-1 tw:overflow-auto tw:bg-canvas">
@@ -36,8 +48,9 @@ export default function ResponsePage() {
           </p>
         </div>
         <div className="tw:grid tw:grid-cols-1 tw:lg:grid-cols-[280px_1fr] tw:gap-4 tw:items-start">
-          <ActionList selected={action.id} onSelect={id => history.push(`/response/${id}`)} />
-          <ActionForm key={action.id} action={action} canRun={canRun} />
+          <ActionList selected={action.id}
+            onSelect={id => history.push(`/response/${id}${clientId ? `?client=${clientId}` : ''}`)} />
+          <ActionForm key={`${action.id}-${clientId}`} action={action} canRun={canRun} clientId={clientId} prefill={query} />
         </div>
         <ResponseHistory />
       </div>
@@ -65,11 +78,20 @@ function ActionList({ selected, onSelect }: { selected: string; onSelect: (id: s
   );
 }
 
-function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolean }) {
+interface ActionFormProps {
+  action: ResponseAction;
+  canRun: boolean;
+  clientId: string;
+  prefill: URLSearchParams;
+}
+
+function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
   const history = useHistory();
   const create = useCreateHunt();
-  const [values, setValues] = useState(() => initialValues(action));
-  const [mode, setMode] = useState<TargetMode>('labels');
+  const { data: client } = useClient(clientId || undefined);
+  const hostname = client?.os_info?.hostname || clientId;
+  const [values, setValues] = useState(() => initialValues(action, prefill));
+  const [mode, setMode] = useState<TargetMode>(clientId ? 'client' : 'labels');
   const [labels, setLabels] = useState<string[]>([]);
   const [excluded, setExcluded] = useState<string[]>([]);
   const [os, setOs] = useState('WINDOWS');
@@ -84,7 +106,8 @@ function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolea
     return c;
   }, [mode, labels, excluded, os]);
   const missingLabels = mode === 'labels' && labels.length === 0;
-  const estimate = useEstimateHunt(condition, 'all', !missingLabels);
+  const estimate = useEstimateHunt(condition, 'all', !missingLabels && mode !== 'client');
+  const hostCount = mode === 'client' ? 1 : missingLabels ? undefined : estimate.data;
 
   const missing = action.fields.filter(f => f.required && !(values[f.key] ?? '').trim());
   const blocked = !canRun || missingLabels || missing.length > 0;
@@ -99,12 +122,27 @@ function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolea
     return p;
   }, [action, values, dryRun]);
 
-  const targetText = mode === 'all' ? 'All clients'
+  const targetText = mode === 'client' ? `Only ${hostname} (${clientId})`
+    : mode === 'all' ? 'All clients'
     : mode === 'os' ? `All ${OS_LABEL[os]} clients`
     : `Clients labelled ${labels.join(', ') || '…'}`;
-  const fullTarget = excluded.length ? `${targetText}, except ${excluded.join(', ')}` : targetText;
+  const fullTarget = excluded.length && mode !== 'client' ? `${targetText}, except ${excluded.join(', ')}` : targetText;
+
+  // A single host is handled as a direct collection rather than a hunt.
+  const startOnClient = async () => {
+    try {
+      const per = Object.fromEntries(action.artifacts.map(a => [a, params]));
+      const r = await runArtifacts(clientId, action.artifacts, per, true);
+      toast.success(dryRun ? 'Dry run started' : `${action.title} started on ${hostname}`);
+      setConfirming(false);
+      if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const start = async () => {
+    if (mode === 'client') return startOnClient();
     const env = Object.entries(params).map(([key, value]) => ({ key, value }));
     const req: CreateHuntRequest = {
       hunt_description: `Response: ${action.summary(values)}${dryRun ? ' (dry run)' : ''}`,
@@ -150,6 +188,15 @@ function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolea
 
         <section className="tw:space-y-2">
           <div className="tw:text-xs tw:font-medium">Targets</div>
+          {mode === 'client' ? (
+            <div className="tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-accent tw:bg-accent-soft tw:px-3 tw:py-2 tw:text-xs">
+              <span className="tw:flex-1">Only this host: <b>{hostname}</b> <span className="tw:font-mono tw:text-faint">{clientId}</span></span>
+              <button type="button" className="tw:flex tw:items-center tw:gap-1 tw:text-muted tw:hover:text-fg"
+                onClick={() => history.push(`/response/${action.id}`)}>
+                <X className="tw:size-3.5" />Target the fleet instead
+              </button>
+            </div>
+          ) : <>
           <div className="tw:flex tw:flex-wrap tw:gap-1.5">
             {(['labels', 'os', 'all'] as TargetMode[]).map(m => (
               <button key={m} type="button" onClick={() => setMode(m)}
@@ -172,6 +219,7 @@ function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolea
           <div className="tw:text-xs tw:text-muted">
             {missingLabels ? 'Add at least one label.' : <>Matches <span className="tw:font-semibold tw:text-fg">{estimate.data ?? '…'}</span> clients right now.</>}
           </div>
+          </>}
         </section>
 
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-t tw:border-line tw:pt-4">
@@ -188,7 +236,7 @@ function ActionForm({ action, canRun }: { action: ResponseAction; canRun: boolea
 
       {confirming && (
         <ConfirmResponseDialog action={action} params={params} targetText={fullTarget}
-          hostCount={missingLabels ? undefined : estimate.data} dryRun={dryRun}
+          hostCount={hostCount} dryRun={dryRun}
           onClose={() => setConfirming(false)} onConfirm={start} />
       )}
     </Card>
