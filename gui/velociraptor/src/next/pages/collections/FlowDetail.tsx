@@ -1,7 +1,7 @@
 // One collection: what was asked for, what came back (results, files,
 // logs) and how to take it away (zip exports).
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Ban, BookOpen, CircleAlert, Clock, Download, ExternalLink, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
@@ -80,7 +80,8 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
             <div className="tw:flex tw:items-center tw:gap-2 tw:mt-1 tw:text-xs tw:text-muted tw:flex-wrap">
               <Mono>{flowId}</Mono><CopyButton text={flowId} />
               <span>·</span>
-              <span>{hostname}</span>
+              {clientId === 'server' ? <span>{hostname}</span>
+                : <Link to={`/host/${clientId}`} className="tw:hover:text-accent tw:hover:underline">{hostname}</Link>}
               <span>·</span>
               <Tooltip content={fmtTime(flow.create_time)}><span>Started {timeAgo(flow.create_time)} by <b className="tw:font-medium tw:text-fg">{flow.request?.creator}</b></span></Tooltip>
             </div>

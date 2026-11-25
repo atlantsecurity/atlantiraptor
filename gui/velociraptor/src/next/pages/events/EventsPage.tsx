@@ -6,7 +6,7 @@
 // keeps refreshing while the window includes "now". "Configure" edits
 // which artifacts run, with their parameters, per label for clients.
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Activity, CalendarDays, Download, ExternalLink, FileText, MoreHorizontal, Plus, Radio, Search, Server, Settings2,
@@ -98,9 +98,11 @@ export default function EventsPage() {
             <div className="tw:flex-1 tw:min-w-0">
               <h1 className="tw:text-[15px] tw:font-semibold tw:leading-tight">{title}</h1>
               {!server && (
-                <button className="tw:text-2xs tw:text-muted tw:hover:text-accent tw:truncate tw:block" onClick={() => setPicker(true)}>
-                  {host} · change
-                </button>
+                <div className="tw:text-2xs tw:text-muted tw:truncate">
+                  <Link to={`/host/${clientId}`} className="tw:hover:text-accent tw:hover:underline">{host}</Link>
+                  {' · '}
+                  <button type="button" className="tw:hover:text-accent" onClick={() => setPicker(true)}>change</button>
+                </div>
               )}
             </div>
             <Button size="sm" icon={<Settings2 />} onClick={() => setConfigOpen(true)}>Configure</Button>

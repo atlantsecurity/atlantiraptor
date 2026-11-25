@@ -1,7 +1,7 @@
 // Collections on one client (or the server): list on the left, the selected
 // collection with its results, files, logs and exports on the right.
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { History, Monitor, Plus, Server, Search } from 'lucide-react';
 import { useClient, useClientFlowList } from '../../lib/queries';
 import type { ArtifactCollectorArgs, Flow } from '../../lib/types';
@@ -67,7 +67,9 @@ export default function CollectionsPage() {
             <div className="tw:min-w-0 tw:flex-1">
               <div className="tw:flex tw:items-center tw:gap-1.5">
                 {!isServer && <StatusDot status={status} />}
-                <h2 className="tw:text-[15px] tw:font-semibold tw:truncate">{hostname}</h2>
+                <h2 className="tw:text-[15px] tw:font-semibold tw:truncate">
+                  {isServer ? hostname : <Link to={`/host/${clientId}`} className="tw:hover:text-accent tw:hover:underline" title="Open client overview">{hostname}</Link>}
+                </h2>
               </div>
               <div className="tw:text-2xs tw:text-faint tw:truncate">
                 {isServer ? 'Server collections' : <>
