@@ -23,7 +23,8 @@ import {
 import { TagInput } from '../hunts/TagInput';
 import { ArchiveList, useArchiveReadyToast } from '../evidence/ArchiveList';
 import NotebookCellView, { CELL_TYPES } from './NotebookCell';
-
+
+import { isCaseDescription } from '../cases/model';
 export default function NotebooksPage() {
   const { notebook_id: id } = useParams<{ notebook_id?: string }>();
   if (id && id !== 'new') return <NotebookView key={id} id={id} />;
@@ -48,7 +49,9 @@ function NotebookList() {
 
   const shown = useMemo(() => {
     const f = filter.toLowerCase();
+    // Case notebooks are listed under Cases, not here.
     return [...(rows ?? [])]
+      .filter(r => !isCaseDescription(r.Description))
       .filter(r => !f || `${r.Name} ${r.Description} ${r.Creator} ${r.NotebookId}`.toLowerCase().includes(f))
       .sort((a, b) => String(b['Modified Time']).localeCompare(String(a['Modified Time'])));
   }, [rows, filter]);

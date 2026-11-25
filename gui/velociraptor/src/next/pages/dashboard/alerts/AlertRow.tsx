@@ -2,7 +2,8 @@
 // triage, and response steps scoped to that single host.
 import { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { ChevronDown, ChevronRight, FileSearch, FileX2, Laptop, ShieldAlert, Skull, Zap } from 'lucide-react';
+import { Briefcase, ChevronDown, ChevronRight, FileSearch, FileX2, Laptop, ShieldAlert, Skull, Zap } from 'lucide-react';
+import { AddToCaseDialog } from '../../cases/AddToCaseDialog';
 import { useClient } from '../../../lib/queries';
 import { fmtTime, timeAgo } from '../../../lib/format';
 import { Badge, Button, Mono, Tooltip, cn } from '../../../ui/primitives';
@@ -21,6 +22,7 @@ function fmtValue(v: unknown): string {
 
 export function AlertRow({ alert }: { alert: Alert }) {
   const [open, setOpen] = useState(false);
+  const [caseOpen, setCaseOpen] = useState(false);
   const history = useHistory();
   const { data: client } = useClient(alert.clientId || undefined);
   const host = client?.os_info?.hostname || alert.clientId || 'server';
@@ -73,7 +75,19 @@ export function AlertRow({ alert }: { alert: Alert }) {
               <Button size="sm" variant="secondary" icon={<Skull className="tw:size-3.5" />}
                 onClick={() => history.push(respondUrl('kill', alert.clientId))}>Kill process…</Button>
             )}
+            <Button size="sm" variant="primary" icon={<Briefcase className="tw:size-3.5" />}
+              onClick={() => setCaseOpen(true)}>Add to case…</Button>
           </div>
+          {caseOpen && (
+            <AddToCaseDialog onClose={() => setCaseOpen(false)}
+              suggestedTitle={`${alert.rule} on ${host}`}
+              suggestedSeverity={alert.severity === 'info' ? 'low' : alert.severity}
+              item={{
+                kind: 'alert', ref: alert.key, clientId: alert.clientId || undefined,
+                label: `${alert.rule} on ${host} (${fmtTime(alert.time)})`,
+                data: { name: alert.name, time: alert.time?.toISOString(), artifact: alert.artifact, ...alert.data },
+              }} />
+          )}
 
           <dl className="tw:grid tw:grid-cols-[120px_1fr] tw:gap-x-3 tw:gap-y-1 tw:text-xs">
             <dt className="tw:text-muted">Alert</dt><dd className="tw:break-all">{alert.name}</dd>
