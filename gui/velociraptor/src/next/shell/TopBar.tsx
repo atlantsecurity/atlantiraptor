@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Popover } from 'radix-ui';
 import {
-  Bell, CircleHelp, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor,
+  Bell, CircleHelp, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor, ShieldCheck,
 } from 'lucide-react';
 import { useClientNameSuggest, useTraits } from '../lib/queries';
 import { href } from '../lib/api';
@@ -197,6 +197,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
           <MenuContent>
             <MenuLabel>{traits?.username}{orgName ? ` · ${orgName}` : ''}</MenuLabel>
             <MenuItem icon={<Settings />} onSelect={() => setSettingsOpen(true)}>Settings…</MenuItem>
+            <MenuItem icon={<ShieldCheck />} onSelect={() => { window.location.hash = '/account/security'; }}>Password and two-factor…</MenuItem>
             <MenuItem icon={dark ? <Sun /> : <Moon />} onSelect={() => setTheme(!dark, traits?.ui_settings, updateTraits)}>
               {dark ? 'Light mode' : 'Dark mode'}
             </MenuItem>

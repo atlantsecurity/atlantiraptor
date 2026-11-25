@@ -21,6 +21,7 @@ import {
   MenuItem, MenuLabel, MenuTrigger, SearchInput, Skeleton, Tooltip, cn,
 } from '../../ui/primitives';
 import { MobileBack } from '../../ui/MobileBack';
+import { PASSWORD_RULES, passwordProblems, useResetUserMfa, useUserMfaStatus } from '../../lib/security';
 
 export const ROLE_INFO: Record<string, { label: string; blurb: string; danger?: boolean }> = {
   reader: {
@@ -34,6 +35,15 @@ export const ROLE_INFO: Record<string, { label: string; blurb: string; danger?: 
   investigator: {
     label: 'Investigator',
     blurb: 'Everything an analyst can do, plus starting collections on clients and launching hunts.',
+  },
+  hunter: {
+    label: 'Hunter',
+    blurb: 'Collects from endpoints, runs hunts and IOC sweeps, works with results. Cannot run response actions (kill, delete, quarantine): the server refuses them.',
+  },
+  responder: {
+    label: 'Responder',
+    blurb: 'Everything a hunter can do, plus response actions: kill processes, delete files, quarantine hosts. Close to admin on endpoints.',
+    danger: true,
   },
   artifact_writer: {
     label: 'Artifact writer',
@@ -55,7 +65,7 @@ export const ROLE_INFO: Record<string, { label: string; blurb: string; danger?: 
   },
 };
 
-const ROLE_ORDER = ['reader', 'analyst', 'investigator', 'artifact_writer', 'org_admin', 'administrator', 'api'];
+const ROLE_ORDER = ['reader', 'analyst', 'investigator', 'hunter', 'responder', 'artifact_writer', 'org_admin', 'administrator', 'api'];
 
 export const PERM_INFO: Record<string, string> = {
   ALL_QUERY: 'Issue any query at all',
@@ -213,6 +223,7 @@ function UserDetail({ user }: { user: GlobalUser }) {
             </span>
           </div>
         </div>
+        <UserMfaControl user={user.name} />
         <Button icon={<KeyRound />} onClick={() => setPwOpen(true)}>Set password</Button>
       </header>
 
@@ -423,7 +434,7 @@ function AddUserDialog({ open, onOpenChange, onCreated }: {
         </Field>
         <Field label="Starting role" hint="You can fine-tune roles after creating the user.">
           <div className="tw:grid tw:grid-cols-3 tw:gap-1.5">
-            {['reader', 'analyst', 'investigator'].map(r => (
+            {['reader', 'analyst', 'investigator', 'hunter', 'responder'].map(r => (
               <button key={r} onClick={() => setRole(r)}
                 className={cn('tw:h-9 tw:rounded-md tw:border tw:text-[13px]',
                   role === r ? 'tw:border-accent tw:bg-accent-soft tw:text-accent tw:font-medium' : 'tw:border-line tw:hover:bg-hover')}>
@@ -454,13 +465,36 @@ function AddUserDialog({ open, onOpenChange, onCreated }: {
   );
 }
 
+// Shows whether the user has two-factor sign in, and lets an admin reset
+// it (for a lost phone). The server checks the admin permission.
+function UserMfaControl({ user }: { user: string }) {
+  const status = useUserMfaStatus(user);
+  const reset = useResetUserMfa();
+  const [confirm, setConfirm] = useState(false);
+  if (status.isError || !status.data) return null;
+  return <>
+    {status.data.enrolled
+      ? <Button variant="secondary" icon={<ShieldCheck />} onClick={() => setConfirm(true)}>2FA on · Reset</Button>
+      : <Badge tone="neutral">2FA off</Badge>}
+    <ConfirmDialog open={confirm} onOpenChange={setConfirm} title={`Reset two-factor sign in for ${user}?`}
+      confirmLabel="Reset" danger loading={reset.isPending}
+      onConfirm={() => reset.mutate(user, {
+        onSuccess: () => { toast.success(`Two-factor sign in reset for ${user}`); setConfirm(false); },
+        onError: e => toast.error((e as Error).message),
+      })}>
+      They can sign in with their password only until they set it up again. All their 2FA sessions end.
+    </ConfirmDialog>
+  </>;
+}
+
 function PasswordDialog({ open, onOpenChange, user }: { open: boolean; onOpenChange: (v: boolean) => void; user: string }) {
   const setPw = useSetPassword();
   const [a, setA] = useState('');
   const [b, setB] = useState('');
   const mismatch = !!b && a !== b;
+  const problems = a ? passwordProblems(user, a) : [];
   const submit = () => {
-    if (!a || a !== b) return;
+    if (!a || a !== b || problems.length) return;
     setPw.mutate({ username: user, password: a }, {
       onSuccess: () => { toast.success(`Password updated for ${user}`); onOpenChange(false); setA(''); setB(''); },
       onError: e => toast.error(`Could not set password: ${(e as Error).message}`),
@@ -470,10 +504,12 @@ function PasswordDialog({ open, onOpenChange, user }: { open: boolean; onOpenCha
     <Dialog open={open} onOpenChange={onOpenChange} title={`Set password for ${user}`} width={420}
       footer={<>
         <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button variant="primary" disabled={!a || a !== b} loading={setPw.isPending} onClick={submit}>Set password</Button>
+        <Button variant="primary" disabled={!a || a !== b || problems.length > 0} loading={setPw.isPending} onClick={submit}>Set password</Button>
       </>}>
       <div className="tw:flex tw:flex-col tw:gap-3">
-        <Field label="New password"><Input type="password" value={a} onChange={e => setA(e.target.value)} autoFocus autoComplete="new-password" /></Field>
+        <Field label="New password" hint={problems.length ? problems.join(' ') : PASSWORD_RULES.join(' · ')}>
+          <Input type="password" value={a} onChange={e => setA(e.target.value)} autoFocus autoComplete="new-password" />
+        </Field>
         <Field label="Repeat" hint={mismatch ? 'Passwords do not match' : undefined}>
           <Input type="password" value={b} onChange={e => setB(e.target.value)} autoComplete="new-password"
             onKeyDown={e => e.key === 'Enter' && submit()} />
