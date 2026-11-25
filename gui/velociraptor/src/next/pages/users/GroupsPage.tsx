@@ -8,9 +8,9 @@ import { useGlobalUsers } from '../../lib/queries';
 import { useGroups, useSaveGroups, type Group } from '../../lib/security';
 import { Badge, Button, Card, CardHeader, EmptyState, IconButton, Input, Skeleton, cn } from '../../ui/primitives';
 import { TagInput } from '../hunts/TagInput';
-import { ROLE_INFO } from './UsersPage';
+import { ROLE_INFO, sortRoles } from './UsersPage';
 
-const ASSIGNABLE = ['reader', 'analyst', 'investigator', 'hunter', 'responder', 'artifact_writer', 'administrator', 'org_admin'];
+const ASSIGNABLE = sortRoles(['reader', 'analyst', 'investigator', 'hunter', 'responder', 'artifact_writer', 'administrator', 'org_admin']);
 
 export default function GroupsPage() {
   const { data, isLoading, error } = useGroups();

@@ -1,7 +1,13 @@
 package api
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
@@ -186,5 +192,25 @@ func TestAuthFailureTableIsCapped(t *testing.T) {
 	authFailMu.Unlock()
 	if n > maxAuthFailEntries {
 		t.Fatalf("table grew to %d", n)
+	}
+}
+
+func TestConnectionInfo(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	tmpl := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: "VelociraptorServer"},
+		DNSNames: []string{"VelociraptorServer"}, NotAfter: time.Now().Add(time.Hour)}
+	der, _ := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	certPEM := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
+	cfg := &config_proto.Config{
+		GUI:      &config_proto.GUIConfig{BindAddress: "127.0.0.1", BindPort: 8889},
+		Frontend: &config_proto.FrontendConfig{Certificate: certPEM},
+		Client:   &config_proto.ClientConfig{CaCertificate: certPEM},
+	}
+	info := connectionInfo(cfg)
+	if info.CertName != "VelociraptorServer" || info.Port != 8889 || !info.Loopback || !info.HasCA {
+		t.Fatalf("unexpected %+v", info)
+	}
+	if connectionInfo(&config_proto.Config{}).CertName != "" {
+		t.Fatal("empty config should give no name")
 	}
 }

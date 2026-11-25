@@ -61,11 +61,18 @@ export const ROLE_INFO: Record<string, { label: string; blurb: string; danger?: 
   },
   api: {
     label: 'API client',
-    blurb: 'Allows connecting over the API port.',
+    blurb: 'Only lets a program connect to the gRPC API port. Grants no data access on its own; not needed for REST API keys.',
   },
 };
 
-const ROLE_ORDER = ['reader', 'analyst', 'investigator', 'hunter', 'responder', 'artifact_writer', 'org_admin', 'administrator', 'api'];
+// Roles from least to most permission.
+export const ROLE_ORDER = ['api', 'reader', 'analyst', 'investigator', 'hunter', 'responder', 'artifact_writer', 'org_admin', 'administrator'];
+
+/** Sorts role names from least to most permission; unknown roles go last. */
+export function sortRoles(roles: readonly string[]): string[] {
+  const rank = (r: string) => { const i = ROLE_ORDER.indexOf(r); return i < 0 ? ROLE_ORDER.length : i; };
+  return [...roles].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
 
 export const PERM_INFO: Record<string, string> = {
   ALL_QUERY: 'Issue any query at all',

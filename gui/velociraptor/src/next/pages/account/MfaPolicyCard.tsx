@@ -6,9 +6,9 @@ import { Save, ShieldAlert } from 'lucide-react';
 import { usePermission } from '../../lib/queries';
 import { useGroups, useMfaPolicy, useSaveMfaPolicy, type MfaPolicy } from '../../lib/security';
 import { Badge, Button, Card, CardHeader, Skeleton, cn } from '../../ui/primitives';
-import { ROLE_INFO } from '../users/UsersPage';
+import { ROLE_INFO, sortRoles } from '../users/UsersPage';
 
-const ROLES = ['administrator', 'org_admin', 'responder', 'hunter', 'investigator', 'artifact_writer', 'analyst', 'reader'];
+const ROLES = sortRoles(['administrator', 'org_admin', 'responder', 'hunter', 'investigator', 'artifact_writer', 'analyst', 'reader']);
 
 export function MfaPolicyCard() {
   const isAdmin = usePermission('server_admin');

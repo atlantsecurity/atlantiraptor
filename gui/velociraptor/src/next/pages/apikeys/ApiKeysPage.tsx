@@ -3,17 +3,29 @@
 // enforced on the server like console users.
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { BookOpen, KeyRound, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, KeyRound, Plug, Plus, Trash2 } from 'lucide-react';
 import { apiBaseUrl, useApiKeys, useCreateApiKey, useRevokeApiKey, type ApiKey, type CreatedKey } from '../../lib/apikeys';
 import { Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, Dialog, EmptyState, Field, IconButton, Input, Mono, Select, Skeleton, Tabs, cn } from '../../ui/primitives';
-import { ROLE_INFO } from '../users/UsersPage';
+import { ROLE_INFO, sortRoles } from '../users/UsersPage';
+
+// What each role lets an API key do through this REST API.
+const KEY_ROLE_HELP: Record<string, string> = {
+  api: 'Only lets a program use the gRPC API port. Adds nothing for this REST API.',
+  reader: 'Read alerts, hosts, collections and their results, hunts, cases and artifacts. Nothing runs on endpoints.',
+  analyst: 'Everything Reader can, plus server-side queries over the collected data.',
+  investigator: 'Everything Analyst can, plus collections on hosts and hunts with read-only artifacts.',
+  hunter: 'Collections, hunts, quick triage and IOC sweeps. Response actions are refused.',
+  responder: 'Everything Hunter can, plus response actions: quarantine, kill, delete, disable accounts. Live actions need a reason and follow your approval policy.',
+};
 import { EXAMPLES } from './examples';
+import { ConnectSiemDialog } from './ConnectSiem';
 
 const fmt = (t?: number) => (t ? new Date(t * 1000).toLocaleString() : '—');
 
 export default function ApiKeysPage() {
   const { data, isLoading, error } = useApiKeys();
   const [creating, setCreating] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [created, setCreated] = useState<CreatedKey | null>(null);
   const [revoking, setRevoking] = useState<ApiKey | null>(null);
   const revoke = useRevokeApiKey();
@@ -29,7 +41,8 @@ export default function ApiKeysPage() {
               rate limited, and every action it takes is in the audit log.
             </p>
           </div>
-          <Button variant="primary" icon={<Plus className="tw:size-3.5" />} onClick={() => setCreating(true)}>New API key</Button>
+          <Button variant="secondary" icon={<Plus className="tw:size-3.5" />} onClick={() => setCreating(true)}>New API key</Button>
+          <Button variant="primary" icon={<Plug className="tw:size-3.5" />} onClick={() => setConnecting(true)}>Connect a SIEM</Button>
         </div>
 
         <Card>
@@ -54,7 +67,7 @@ export default function ApiKeysPage() {
                       <tr key={k.id} className="tw:border-t tw:border-line">
                         <td className="tw:px-4 tw:py-2 tw:font-medium">{k.name}</td>
                         <td className="tw:px-4 tw:py-2"><Mono>atl_{k.id}_{k.hint}…</Mono></td>
-                        <td className="tw:px-4 tw:py-2"><div className="tw:flex tw:flex-wrap tw:gap-1">{k.roles.map(r => <Badge key={r}>{ROLE_INFO[r]?.label ?? r}</Badge>)}</div></td>
+                        <td className="tw:px-4 tw:py-2"><div className="tw:flex tw:flex-wrap tw:gap-1">{sortRoles(k.roles).map(r => <Badge key={r}>{ROLE_INFO[r]?.label ?? r}</Badge>)}</div></td>
                         <td className="tw:px-4 tw:py-2 tw:text-xs">{fmt(k.created)}<div className="tw:text-muted">by {k.created_by}</div></td>
                         <td className="tw:px-4 tw:py-2 tw:text-xs">{fmt(k.last_used)}</td>
                         <td className={cn('tw:px-4 tw:py-2 tw:text-xs', expired && 'tw:text-bad')}>{k.expires ? fmt(k.expires) : 'Never'}{expired && ' (expired)'}</td>
@@ -73,6 +86,7 @@ export default function ApiKeysPage() {
         <ApiDocs />
       </div>
 
+      <ConnectSiemDialog open={connecting} onOpenChange={setConnecting} connection={data?.connection} />
       <CreateDialog open={creating} onOpenChange={setCreating} roles={data?.roles ?? []}
         onCreated={k => { setCreating(false); setCreated(k); }} />
       <Dialog open={!!created} onOpenChange={v => !v && setCreated(null)} title="Copy your API key now"
@@ -116,17 +130,19 @@ function CreateDialog({ open, onOpenChange, roles, onCreated }: {
       </>}>
       <div className="tw:space-y-3">
         <Field label="Name" required><Input value={name} onChange={e => setName(e.target.value)} placeholder="Splunk alerts" /></Field>
-        <Field label="Roles" hint="Reader reads alerts, hosts, hunts and cases. Hunter also collects and hunts. Responder also runs response actions.">
-          <div className="tw:flex tw:flex-wrap tw:gap-1.5">
-            {roles.map(r => {
+        <Field label="Roles" hint="Listed from least to most permission. A key gets everything its roles allow, checked by the server on every call.">
+          <div className="tw:rounded-md tw:border tw:border-line tw:divide-y tw:divide-line">
+            {sortRoles(roles).map(r => {
               const on = picked.includes(r);
               return (
-                <button key={r} type="button" title={ROLE_INFO[r]?.blurb}
-                  onClick={() => setPicked(p => (on ? p.filter(x => x !== r) : [...p, r]))}
-                  className={cn('tw:rounded-md tw:border tw:px-2 tw:py-0.5 tw:text-xs',
-                    on ? 'tw:border-accent tw:bg-accent-soft tw:text-accent tw:font-medium' : 'tw:border-line tw:hover:bg-hover')}>
-                  {ROLE_INFO[r]?.label ?? r}
-                </button>
+                <label key={r} className={cn('tw:flex tw:items-start tw:gap-2.5 tw:px-3 tw:py-2 tw:cursor-pointer', on ? 'tw:bg-accent-soft' : 'tw:hover:bg-hover')}>
+                  <input type="checkbox" className="tw:mt-0.5" checked={on}
+                    onChange={() => setPicked(p => (on ? p.filter(x => x !== r) : [...p, r]))} />
+                  <span className="tw:min-w-0">
+                    <span className="tw:block tw:text-[13px] tw:font-medium">{ROLE_INFO[r]?.label ?? r}{ROLE_INFO[r]?.danger ? ' ⚠' : ''}</span>
+                    <span className="tw:block tw:text-xs tw:text-muted">{KEY_ROLE_HELP[r] ?? ROLE_INFO[r]?.blurb}</span>
+                  </span>
+                </label>
               );
             })}
           </div>
