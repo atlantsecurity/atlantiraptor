@@ -30,14 +30,12 @@ parameters:
 
 sources:
   - query: |
-      // Identify the agent by its exact PID and binary path, not by
-      // name, so a look-alike binary cannot hide from this action.
-      LET me <= SELECT Exe FROM info()
+      // Only the running agent process itself is exempt, by PID. Other
+      // processes started from the same binary can still be killed.
       LET agent_pid <= getpid()
-      LET agent_exe <= lowcase(string=me[0].Exe)
 
       LET targets = SELECT Pid, Ppid, Name, Exe, CommandLine, Username,
-             Pid = agent_pid OR lowcase(string=Exe) = agent_exe AS IsAgent
+             Pid = agent_pid AS IsAgent
         FROM pslist()
         WHERE ( Name =~ ProcessRegex OR Exe =~ ProcessRegex )
           AND CommandLine =~ CommandLineRegex

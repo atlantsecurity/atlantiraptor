@@ -33,8 +33,14 @@ sources:
       LET agent_pid <= getpid()
       LET agent_exe <= lowcase(string=me[0].Exe)
 
+      // The executable part of PathName: the quoted path, or everything up
+      // to the first ".exe" when unquoted. Arguments are dropped so they
+      // cannot be used to look like the agent.
+      LET exe_of(p) = lowcase(string=regex_replace(source=p,
+          re='''(?i)^\s*(?:"([^"]+)"|(\S.*?\.exe)\b).*$''', replace="$1$2"))
+
       LET services = SELECT Name, DisplayName, PathName, State, StartMode,
-             ProcessId = agent_pid OR agent_exe in lowcase(string=PathName) AS IsAgent
+             ProcessId = agent_pid OR exe_of(p=PathName) = agent_exe AS IsAgent
         FROM wmi(query="SELECT Name, DisplayName, PathName, State, StartMode, ProcessId FROM Win32_Service",
                  namespace="ROOT/CIMV2")
         WHERE Name =~ ServiceRegex OR PathName =~ ServiceRegex
