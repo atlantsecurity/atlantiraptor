@@ -385,10 +385,26 @@ const (
 	authFailRate  = 1.0 / 3
 )
 
+const maxAuthFailEntries = 10000
+
 var (
-	authFailMu sync.Mutex
-	authFails  = map[string]*bucket{}
+	authFailMu       sync.Mutex
+	authFails        = map[string]*bucket{}
+	authFailOverflow = &bucket{tokens: authFailBurst}
+	lastAuthPrune    time.Time
 )
+
+func refillShared(b *bucket, now time.Time) *bucket {
+	if b.last.IsZero() {
+		b.last = now
+	}
+	b.tokens += now.Sub(b.last).Seconds() * authFailRate
+	if b.tokens > authFailBurst {
+		b.tokens = authFailBurst
+	}
+	b.last = now
+	return b
+}
 
 func remoteIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -401,8 +417,16 @@ func remoteIP(r *http.Request) string {
 func refillAuth(ip string, now time.Time) *bucket {
 	b := authFails[ip]
 	if b == nil {
-		if len(authFails) >= 10000 {
-			pruneAuthFails(now)
+		if len(authFails) >= maxAuthFailEntries {
+			// Prune at most every 10 seconds; while the table is full,
+			// unknown addresses share one bucket, so the cap holds.
+			if now.Sub(lastAuthPrune) > 10*time.Second {
+				lastAuthPrune = now
+				pruneAuthFails(now)
+			}
+			if len(authFails) >= maxAuthFailEntries {
+				return refillShared(authFailOverflow, now)
+			}
 		}
 		b = &bucket{tokens: authFailBurst, last: now}
 		authFails[ip] = b
@@ -423,8 +447,9 @@ func pruneAuthFails(now time.Time) {
 			delete(authFails, ip)
 		}
 	}
+	// Still full: drop the entries idle longest (beyond ten minutes).
 	for ip, b := range authFails {
-		if len(authFails) < 10000 {
+		if len(authFails) < maxAuthFailEntries {
 			break
 		}
 		if now.Sub(b.last) > 10*time.Minute {

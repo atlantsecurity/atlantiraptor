@@ -16,7 +16,17 @@ export interface ApiKey {
   rate_limit?: number;
 }
 
-interface KeysResponse { keys: ApiKey[]; roles: string[] }
+export interface ConnectionInfo {
+  cert_name: string;
+  cert_names: string[];
+  cert_expires?: number;
+  port: number;
+  bind_address: string;
+  loopback_only: boolean;
+  has_ca: boolean;
+}
+
+interface KeysResponse { keys: ApiKey[]; roles: string[]; connection?: ConnectionInfo }
 export interface NewKey { name: string; roles: string[]; ttl_days: number }
 export interface CreatedKey { key: ApiKey; token: string }
 
@@ -47,4 +57,37 @@ export function useRevokeApiKey() {
 export function apiBaseUrl(): string {
   const base = api.basePath().replace(/\/+$/, '');
   return `${window.location.origin}${base}/api/atl/v1`;
+}
+
+/** Downloads the server's CA certificate (public) as a .pem file. */
+export async function downloadCaCertificate(): Promise<void> {
+  const resp = await fetch(`${api.basePath().replace(/\/+$/, '')}/api/v1/atl/apikeys?ca=1`, {
+    headers: api.headers(), credentials: 'same-origin',
+  });
+  if (!resp.ok) throw new Error(`Could not download the certificate (HTTP ${resp.status})`);
+  const url = URL.createObjectURL(await resp.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'atlantiraptor-ca.pem';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export interface TestResult { ok: boolean; message: string }
+
+/** Calls the REST API with a key, exactly as an integration would. */
+export async function testApiKey(token: string): Promise<TestResult> {
+  try {
+    const who = await fetch(`${apiBaseUrl()}/whoami`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' });
+    const body = await who.json().catch(() => ({})) as { error?: string; key?: { roles?: string[] } };
+    if (!who.ok) return { ok: false, message: body.error || `HTTP ${who.status}` };
+    const actions = await fetch(`${apiBaseUrl()}/actions`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' });
+    const list = await actions.json().catch(() => ({})) as { data?: unknown[] };
+    if (!actions.ok) return { ok: false, message: `Key works but the action list failed (HTTP ${actions.status})` };
+    return { ok: true, message: `Key accepted with roles ${(body.key?.roles ?? []).join(', ')}; ${list.data?.length ?? 0} actions available.` };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
 }

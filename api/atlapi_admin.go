@@ -5,13 +5,17 @@ package api
 // console authentication, CSRF protection and 2FA.
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Velocidex/ordereddict"
 	"www.velocidex.com/golang/velociraptor/acls"
+	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	"www.velocidex.com/golang/velociraptor/constants"
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/services"
@@ -54,6 +58,19 @@ func apiKeysHandler() http.Handler {
 
 		switch r.Method {
 		case http.MethodGet:
+			// The CA certificate (public), for clients that must trust
+			// this server's self-signed TLS certificate.
+			if r.URL.Query().Get("ca") == "1" {
+				if root.Client == nil || root.Client.CaCertificate == "" {
+					groupsJSON(w, http.StatusNotFound, map[string]string{"message": "No CA certificate in the server config."})
+					return
+				}
+				w.Header().Set("Content-Type", "application/x-pem-file")
+				w.Header().Set("Content-Disposition", `attachment; filename="atlantiraptor-ca.pem"`)
+				w.Header().Set("Cache-Control", "no-store")
+				_, _ = w.Write([]byte(root.Client.CaCertificate))
+				return
+			}
 			keys, err := ListAPIKeys(root)
 			if err != nil {
 				groupsJSON(w, http.StatusInternalServerError, map[string]string{"message": "Could not read API keys."})
@@ -66,7 +83,8 @@ func apiKeysHandler() http.Handler {
 					out = append(out, k)
 				}
 			}
-			groupsJSON(w, http.StatusOK, map[string]interface{}{"keys": out, "roles": apiKeyRoles})
+			groupsJSON(w, http.StatusOK, map[string]interface{}{"keys": out, "roles": apiKeyRoles,
+				"connection": connectionInfo(root)})
 
 		case http.MethodPost:
 			var body struct {
@@ -122,4 +140,49 @@ func apiKeysHandler() http.Handler {
 			groupsJSON(w, http.StatusMethodNotAllowed, map[string]string{"message": "GET, POST or DELETE"})
 		}
 	})
+}
+
+// ConnectionInfo tells an integrator how to reach and trust this server.
+type ConnectionInfo struct {
+	// The name on the server's TLS certificate. Clients must connect
+	// with this name (mapping it to the server's address if needed).
+	CertName    string   `json:"cert_name"`
+	CertNames   []string `json:"cert_names"`
+	CertExpires int64    `json:"cert_expires,omitempty"`
+	Port        uint32   `json:"port"`
+	BindAddress string   `json:"bind_address"`
+	Loopback    bool     `json:"loopback_only"`
+	HasCA       bool     `json:"has_ca"`
+}
+
+func connectionInfo(root *config_proto.Config) ConnectionInfo {
+	info := ConnectionInfo{CertNames: []string{}}
+	if root.GUI != nil {
+		info.Port = root.GUI.BindPort
+		info.BindAddress = root.GUI.BindAddress
+		if ip := net.ParseIP(root.GUI.BindAddress); ip != nil && ip.IsLoopback() {
+			info.Loopback = true
+		}
+		if root.GUI.BindAddress == "localhost" {
+			info.Loopback = true
+		}
+	}
+	info.HasCA = root.Client != nil && root.Client.CaCertificate != ""
+	if root.Frontend != nil && root.Frontend.Certificate != "" {
+		if block, _ := pem.Decode([]byte(root.Frontend.Certificate)); block != nil {
+			if cert, err := x509.ParseCertificate(block.Bytes); err == nil {
+				info.CertNames = append(info.CertNames, cert.DNSNames...)
+				for _, ip := range cert.IPAddresses {
+					info.CertNames = append(info.CertNames, ip.String())
+				}
+				info.CertExpires = cert.NotAfter.Unix()
+				if len(cert.DNSNames) > 0 {
+					info.CertName = cert.DNSNames[0]
+				} else {
+					info.CertName = cert.Subject.CommonName
+				}
+			}
+		}
+	}
+	return info
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -168,5 +169,22 @@ func TestValidateIOC(t *testing.T) {
 		if validateIOC(b[0], b[1]) == "" {
 			t.Errorf("%v accepted", b)
 		}
+	}
+}
+
+func TestAuthFailureTableIsCapped(t *testing.T) {
+	authFailMu.Lock()
+	authFails = map[string]*bucket{}
+	authFailMu.Unlock()
+	now := time.Unix(9000, 0)
+	for i := 0; i < maxAuthFailEntries+500; i++ {
+		authFailed(fmt.Sprintf("10.%d.%d.%d", i>>16&255, i>>8&255, i&255), now)
+	}
+	authFailMu.Lock()
+	n := len(authFails)
+	authFails = map[string]*bucket{}
+	authFailMu.Unlock()
+	if n > maxAuthFailEntries {
+		t.Fatalf("table grew to %d", n)
 	}
 }

@@ -53,7 +53,7 @@ export function currentOrgId(): string {
   return org || 'root';
 }
 
-function headers() {
+export function headers() {
   return { 'Grpc-Metadata-OrgId': currentOrgId() };
 }
 
