@@ -47,7 +47,8 @@ export const INTEGRATIONS: Integration[] = [
       { key: 'Secret', label: 'Secret', kind: 'secret', secretType: 'SMTP Creds', initial: '' },
       { key: 'To', label: 'Recipients (comma separated)', kind: 'text', initial: '' },
       { key: 'MinLevel', label: 'Minimum severity', kind: 'select', options: LEVELS, initial: 'high' },
-      { key: 'PeriodSeconds', label: 'Repeat at most every (seconds)', kind: 'text', initial: '600' },
+      { key: 'PeriodSeconds', label: 'Same alert at most every (seconds)', kind: 'text', initial: '600' },
+      { key: 'MaxPerHour', label: 'At most this many emails per hour', kind: 'text', initial: '30' },
     ],
   },
   {

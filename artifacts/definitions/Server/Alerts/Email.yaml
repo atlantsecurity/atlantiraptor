@@ -21,6 +21,10 @@ parameters:
   - name: PeriodSeconds
     type: int
     default: 600
+  - name: MaxPerHour
+    type: int
+    default: 30
+    description: At most this many alert emails per hour in total.
 
 sources:
   - query: |
@@ -40,15 +44,32 @@ sources:
       LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
         WHERE get(item=rank, field=level_of(e=event_data), default=2) <= min_rank
 
-      LET to_send = SELECT *, due(key=name) AND set(item=last_sent, field=name, value=now()) AS _Due
+      // A global hourly cap on top of the per-name dedup, so a burst of
+      // many different alert names cannot flood the mailbox either.
+      LET budget <= dict(window=0, count=0)
+      LET hour_now() = int(int=now() / 3600)
+      LET reset_if_new() = if(condition=budget.window != hour_now(),
+          then=set(item=budget, field="window", value=hour_now()) AND set(item=budget, field="count", value=0),
+          else=TRUE)
+      LET under_cap() = reset_if_new() AND budget.count < MaxPerHour
+          AND set(item=budget, field="count", value=budget.count + 1)
+
+      LET to_send = SELECT *,
+             due(key=name) AS _Due
         FROM alerts
+
+      LET decided = SELECT *,
+             _Due AND under_cap() AS _Send,
+             _Due AND set(item=last_sent, field=name, value=now()) AS _Marked
+        FROM to_send
 
       SELECT name AS Alert, client_id AS ClientId,
              if(condition=NOT _Due, then="Skipped: same alert mailed recently",
+             else=if(condition=NOT _Send, then="Skipped: hourly mail cap reached",
                 else=mail(secret=Secret, to=recipients, period=1,
                   subject=format(format="[%v] %v on %v",
                     args=[upcase(string=level_of(e=event_data)), name, client_id || "server"]),
                   body=format(format="Alert: %v\nClient: %v\nLevel: %v\nTime: %v\nArtifact: %v\n\nDetails:\n%v\n",
                     args=[name, client_id || "server", level_of(e=event_data), timestamp, artifact,
-                          serialize(item=event_data, format="json")]))) AS Sent
-      FROM to_send
+                          serialize(item=event_data, format="json")])))) AS Sent
+      FROM decided
