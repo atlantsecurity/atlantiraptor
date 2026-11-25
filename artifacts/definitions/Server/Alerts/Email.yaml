@@ -24,7 +24,7 @@ parameters:
   - name: MaxPerHour
     type: int
     default: 30
-    description: At most this many alert emails per hour in total.
+    description: At most this many alert emails per hour in total. Critical alerts are always sent; capped ones are listed as Skipped rows in this artifact's results.
 
 sources:
   - query: |
@@ -58,10 +58,14 @@ sources:
              due(key=name) AS _Due
         FROM alerts
 
+      // Critical alerts are never held back by the cap, and an alert only
+      // counts as mailed (for the per-name dedup) when it was sent.
       LET decided = SELECT *,
-             _Due AND under_cap() AS _Send,
-             _Due AND set(item=last_sent, field=name, value=now()) AS _Marked
+             _Due AND (level_of(e=event_data) = "critical" OR under_cap()) AS _Send
         FROM to_send
+
+      LET marked = SELECT *, _Send AND set(item=last_sent, field=name, value=now()) AS _Marked
+        FROM decided
 
       SELECT name AS Alert, client_id AS ClientId,
              if(condition=NOT _Due, then="Skipped: same alert mailed recently",
@@ -72,4 +76,4 @@ sources:
                   body=format(format="Alert: %v\nClient: %v\nLevel: %v\nTime: %v\nArtifact: %v\n\nDetails:\n%v\n",
                     args=[name, client_id || "server", level_of(e=event_data), timestamp, artifact,
                           serialize(item=event_data, format="json")])))) AS Sent
-      FROM decided
+      FROM marked

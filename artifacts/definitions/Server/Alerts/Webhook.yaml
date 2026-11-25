@@ -39,8 +39,10 @@ sources:
       LET slack_escape(s) = regex_replace(source=regex_replace(source=regex_replace(
           source=clip(s=s), re="&", replace="&amp;"), re="<", replace="&lt;"), re=">", replace="&gt;")
       LET discord_escape(s) = regex_replace(source=clip(s=s), re="([\\\\*_~`|>@#\\[\\]()])", replace="\\$1")
-      // Teams renders markdown, so it gets markdown escaping as well.
-      LET escape(s) = if(condition=Format =~ "^(discord|teams)$", then=discord_escape(s=s), else=slack_escape(s=s))
+      // Teams renders both HTML and markdown: entity-encode, then escape markdown.
+      LET escape(s) = if(condition=Format = "discord", then=discord_escape(s=s),
+                         else=if(condition=Format = "teams", then=discord_escape(s=slack_escape(s=s)),
+                                 else=slack_escape(s=s)))
 
       LET text_of(name, client_id, level, e, ts) = format(
           format="[%v] %v on %v: %v (%v)",
