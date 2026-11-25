@@ -1,0 +1,20 @@
+name: Server.Alerts.Test
+description: |
+  Raises one harmless alert on the server, to check that alert
+  forwarding (webhook, email, SIEM) works end to end.
+
+type: SERVER
+
+parameters:
+  - name: Level
+    type: choices
+    default: high
+    choices: [critical, high, medium, low, info]
+
+sources:
+  - query: |
+      SELECT now() AS Time,
+             alert(name="Integration test alert", dedup=1, source="test",
+                   rule="Integration test alert", level=Level,
+                   description="Test alert from the Integrations page. Nothing happened.") AS _Alert
+      FROM scope()

@@ -1,0 +1,43 @@
+name: Server.Alerts.Email
+description: |
+  Emails alerts from `Server.Internal.Alerts`. The SMTP server and
+  credentials live in an `SMTP Creds` secret.
+
+  `PeriodSeconds` limits how often mail is sent for the same alert
+  name, so a noisy rule cannot flood the inbox.
+
+type: SERVER_EVENT
+
+parameters:
+  - name: Secret
+    description: Name of an SMTP Creds secret.
+  - name: To
+    description: Comma separated recipients.
+  - name: MinLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low, info]
+  - name: PeriodSeconds
+    type: int
+    default: 600
+
+sources:
+  - query: |
+      // linter: symbol_mask_warn:timestamp
+
+      LET rank <= dict(critical=0, high=1, medium=2, low=3, info=4, informational=4)
+      LET min_rank <= get(item=rank, field=MinLevel, default=1)
+      LET level_of(e) = lowcase(string=e.level || "medium")
+      LET recipients <= filter(list=split(string=To, sep=" *, *"), regex=".")
+
+      LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
+        WHERE get(item=rank, field=level_of(e=event_data), default=2) <= min_rank
+
+      SELECT name AS Alert, client_id AS ClientId,
+             mail(secret=Secret, to=recipients, period=PeriodSeconds,
+                  subject=format(format="[%v] %v on %v",
+                    args=[upcase(string=level_of(e=event_data)), name, client_id || "server"]),
+                  body=format(format="Alert: %v\nClient: %v\nLevel: %v\nTime: %v\nArtifact: %v\n\nDetails:\n%v\n",
+                    args=[name, client_id || "server", level_of(e=event_data), timestamp, artifact,
+                          serialize(item=event_data, format="json")])) AS Sent
+      FROM alerts

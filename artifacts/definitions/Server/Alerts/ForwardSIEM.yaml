@@ -1,0 +1,44 @@
+name: Server.Alerts.ForwardSIEM
+description: |
+  Forwards alerts from `Server.Internal.Alerts` to Splunk (HTTP Event
+  Collector) or Elasticsearch / OpenSearch, using a managed secret for
+  the endpoint and credentials.
+
+  - Splunk: a `Splunk Creds` secret (url, token, index).
+  - Elastic: an `Elastic Creds` secret (addresses and credentials).
+
+  To ship full collection results as well, use `Splunk.Flows.Upload` or
+  `Elastic.Flows.Upload`.
+
+type: SERVER_EVENT
+
+parameters:
+  - name: Target
+    type: choices
+    default: splunk
+    choices: [splunk, elastic]
+  - name: Secret
+    description: Name of the Splunk Creds or Elastic Creds secret.
+  - name: Index
+    default: atlantiraptor-alerts
+    description: Elastic index (Splunk uses the index in the secret).
+
+sources:
+  - query: |
+      // linter: symbol_mask_warn:timestamp
+
+      LET alerts = SELECT timestamp, name AS alert, client_id, artifact,
+                          event_data.level AS level, event_data.rule AS rule,
+                          event_data.description AS description, event_data
+        FROM watch_monitoring(artifact="Server.Internal.Alerts")
+
+      SELECT * FROM if(condition=Target = "splunk",
+        then={
+          SELECT * FROM splunk_upload(query=alerts, secret=Secret,
+                                      sourcetype="atlantiraptor:alert",
+                                      timestamp_field="timestamp", hostname_field="client_id",
+                                      wait_time=5)
+        },
+        else={
+          SELECT * FROM elastic_upload(query=alerts, secret=Secret, index=Index, wait_time=5)
+        })
