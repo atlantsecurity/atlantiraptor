@@ -29,6 +29,10 @@ parameters:
     type: int
     default: 60
     description: Critical alert emails per host per hour. Server-originated critical alerts are always sent.
+  - name: MaxCriticalTotalPerHour
+    type: int
+    default: 200
+    description: Critical alert emails per hour across all hosts.
 
 sources:
   - query: |
@@ -62,12 +66,20 @@ sources:
       // per host and hour: one noisy or compromised host cannot use up the
       // budget of the others. Server-originated alerts (no client) are
       // always mailed.
+      // Each host entry holds its own hour window, so entries reset each
+      // hour instead of piling up; a global critical cap sits on top.
       LET crit_counts <= dict()
-      LET crit_key(client) = format(format="%v|%v", args=[client, hour_now()])
+      LET crit_total <= dict(window=0, count=0)
+      LET host_count(client) = if(
+          condition=get(item=crit_counts, field=client).window = hour_now(),
+          then=get(item=crit_counts, field=client).count, else=0)
+      LET total_ok() = if(condition=crit_total.window != hour_now(),
+          then=set(item=crit_total, field="window", value=hour_now()) AND set(item=crit_total, field="count", value=0),
+          else=TRUE) AND crit_total.count < MaxCriticalTotalPerHour
       LET under_crit_cap(client) = NOT client OR (
-          get(item=crit_counts, field=crit_key(client=client), default=0) < MaxCriticalPerHour
-          AND set(item=crit_counts, field=crit_key(client=client),
-                  value=get(item=crit_counts, field=crit_key(client=client), default=0) + 1))
+          host_count(client=client) < MaxCriticalPerHour AND total_ok()
+          AND set(item=crit_counts, field=client, value=dict(window=hour_now(), count=host_count(client=client) + 1))
+          AND set(item=crit_total, field="count", value=crit_total.count + 1))
 
       LET to_send = SELECT *,
              due(key=name) AS _Due

@@ -77,9 +77,11 @@ export function AlertRow({ alert }: { alert: Alert }) {
               <Button size="sm" variant="secondary" icon={<Skull className="tw:size-3.5" />}
                 onClick={() => history.push(respondUrl('kill', alert.clientId))}>Kill process…</Button>
             )}
-            <AiTriageButton task={`Triage this ${alert.source || 'security'} alert "${alert.rule}" on host ${host}.`}
+            {/* The task is fixed text; everything from the endpoint goes in the
+                fenced data, nested so it cannot override the trusted fields. */}
+            <AiTriageButton task="Triage this security alert."
               getContext={async () => jsonContext('Alert', { name: alert.name, time: alert.time?.toISOString(), client: alert.clientId,
-                hostname: host, artifact: alert.artifact, severity: alert.severity, ...alert.data })} />
+                hostname: host, artifact: alert.artifact, severity: alert.severity, event_data: alert.data })} />
             <Button size="sm" variant="primary" icon={<Briefcase className="tw:size-3.5" />}
               onClick={() => setCaseOpen(true)}>Add to case…</Button>
           </div>

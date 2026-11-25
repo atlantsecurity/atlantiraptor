@@ -98,7 +98,7 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
             </Button>
             <Button variant="secondary" icon={<RotateCcw className="tw:size-3.5" />} onClick={() => onCollectAgain(flow)}>Collect again</Button>
             {rows > 0 && (
-              <AiTriageButton size="md" task={`Triage the results of collecting ${artifacts.join(', ')} from ${hostname}.`}
+              <AiTriageButton size="md" task="Triage the results of this collection."
                 getContext={() => flowContext(clientId, flowId, artifacts, hostname)} />
             )}
             <Menu>
