@@ -30,15 +30,22 @@ parameters:
 
 sources:
   - query: |
-      LET targets = SELECT Pid, Ppid, Name, Exe, CommandLine, Username
+      // Identify the agent by its exact PID and binary path, not by
+      // name, so a look-alike binary cannot hide from this action.
+      LET me <= SELECT Exe FROM info()
+      LET agent_pid <= getpid()
+      LET agent_exe <= lowcase(string=me[0].Exe)
+
+      LET targets = SELECT Pid, Ppid, Name, Exe, CommandLine, Username,
+             Pid = agent_pid OR lowcase(string=Exe) = agent_exe AS IsAgent
         FROM pslist()
         WHERE ( Name =~ ProcessRegex OR Exe =~ ProcessRegex )
           AND CommandLine =~ CommandLineRegex
           AND Pid > 4
-          AND NOT Exe =~ '(?i)(velociraptor|atlantiraptor)[^\\/]*$'
 
       SELECT Pid, Ppid, Name, Exe, CommandLine, Username,
-             if(condition=ReallyDoIt,
-                then=if(condition=pskill(pid=Pid), then="Killed", else="Failed"),
-                else="Dry run") AS Result
+             if(condition=IsAgent, then="Skipped (agent)",
+                else=if(condition=ReallyDoIt,
+                   then=if(condition=pskill(pid=Pid), then="Killed", else="Failed"),
+                   else="Dry run")) AS Result
       FROM targets

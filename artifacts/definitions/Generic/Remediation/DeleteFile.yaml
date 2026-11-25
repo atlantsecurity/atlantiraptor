@@ -32,10 +32,12 @@ parameters:
 
 sources:
   - query: |
+      // Links are never followed or deleted, so a symlink or junction
+      // cannot redirect the deletion to another file.
       LET matches = SELECT OSPath, Size, Mtime,
                            hash(path=OSPath).SHA256 AS SHA256
-        FROM glob(globs=Glob)
-        WHERE NOT IsDir
+        FROM glob(globs=Glob, nosymlink=TRUE)
+        WHERE NOT IsDir AND NOT IsLink
 
       LET targets <= SELECT * FROM matches
         WHERE if(condition=HashFilter,
@@ -46,11 +48,15 @@ sources:
       // a host is treated as a mistake and nothing is deleted there.
       LET too_many <= len(list=targets) > int(int=MaxFiles)
 
+      // Each file is re-hashed right before deletion; if it changed since it
+      // was matched, it is left alone.
       SELECT OSPath, Size, Mtime, SHA256,
              if(condition=too_many,
                 then=format(format="Skipped: %v matches exceed MaxFiles", args=len(list=targets)),
                 else=if(condition=ReallyDoIt,
-                   then=if(condition=rm(filename=OSPath) AND NOT stat(filename=OSPath),
-                           then="Deleted", else="Failed"),
+                   then=if(condition=hash(path=OSPath).SHA256 != SHA256,
+                      then="Skipped: changed since matched",
+                      else=if(condition=rm(filename=OSPath) AND NOT stat(filename=OSPath),
+                              then="Deleted", else="Failed")),
                    else="Dry run")) AS Result
       FROM targets

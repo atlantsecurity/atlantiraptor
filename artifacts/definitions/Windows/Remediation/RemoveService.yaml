@@ -27,20 +27,26 @@ parameters:
 
 sources:
   - query: |
-      LET services = SELECT Name, DisplayName, PathName, State, StartMode
-        FROM wmi(query="SELECT Name, DisplayName, PathName, State, StartMode FROM Win32_Service",
+      // The agent's own service is identified by its exact binary path
+      // or process ID, not by name, so look-alike services are not hidden.
+      LET me <= SELECT Exe FROM info()
+      LET agent_pid <= getpid()
+      LET agent_exe <= lowcase(string=me[0].Exe)
+
+      LET services = SELECT Name, DisplayName, PathName, State, StartMode,
+             ProcessId = agent_pid OR agent_exe in lowcase(string=PathName) AS IsAgent
+        FROM wmi(query="SELECT Name, DisplayName, PathName, State, StartMode, ProcessId FROM Win32_Service",
                  namespace="ROOT/CIMV2")
-        WHERE ( Name =~ ServiceRegex OR PathName =~ ServiceRegex )
-          AND NOT Name =~ '(?i)(velociraptor|atlantiraptor)'
-          AND NOT PathName =~ '(?i)(velociraptor|atlantiraptor)'
+        WHERE Name =~ ServiceRegex OR PathName =~ ServiceRegex
 
       LET run(argv) = SELECT ReturnCode, Stdout FROM execve(argv=argv)
 
       SELECT Name, DisplayName, PathName, State, StartMode,
-             if(condition=ReallyDoIt,
+             if(condition=ReallyDoIt AND NOT IsAgent,
                 then=run(argv=["sc.exe", "stop", Name])[0].ReturnCode) AS StopCode,
-             if(condition=ReallyDoIt,
-                then=if(condition=run(argv=["sc.exe", "delete", Name])[0].ReturnCode = 0,
-                        then="Deleted", else="Failed"),
-                else="Dry run") AS Result
+             if(condition=IsAgent, then="Skipped (agent)",
+                else=if(condition=ReallyDoIt,
+                   then=if(condition=run(argv=["sc.exe", "delete", Name])[0].ReturnCode = 0,
+                           then="Deleted", else="Failed"),
+                   else="Dry run")) AS Result
       FROM services
