@@ -12,6 +12,7 @@ import { useLocation } from 'react-router-dom';
 
 const Dashboard = lazy(() => import('../pages/dashboard/Dashboard'));
 const HuntsPage = lazy(() => import('../pages/hunts/HuntsPage'));
+const ResponsePage = lazy(() => import('../pages/response/ResponsePage'));
 const ClientsPage = lazy(() => import('../pages/clients/ClientsPage'));
 const ClientOverview = lazy(() => import('../pages/host/ClientOverview'));
 const ArtifactsPage = lazy(() => import('../pages/artifacts/ArtifactsPage'));
@@ -84,6 +85,9 @@ export default function AppShell() {
                 </Route>
                 <Route path="/hunts/:hunt_id?/:tab?">
                   <HuntsPage />
+                </Route>
+                <Route path="/response/:action?">
+                  <ResponsePage />
                 </Route>
                 <Route path="/search/:query?">
                   <ClientsPage />

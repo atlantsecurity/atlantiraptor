@@ -1,0 +1,44 @@
+name: Generic.Remediation.KillProcess
+description: |
+  Terminates processes whose name or executable path matches a regex
+  (and optionally whose command line matches a second regex).
+
+  Without `ReallyDoIt` the artifact only lists the processes it would
+  kill, so it can be used as a dry run first. The agent's own process
+  and PIDs 0 to 4 are never touched.
+
+  WARNING: killing processes across many hosts can disrupt users and
+  services. Test the regex with a dry run before deploying widely.
+
+type: CLIENT
+
+required_permissions:
+  - EXECVE
+
+parameters:
+  - name: ProcessRegex
+    type: regex
+    default: ThisIsAUniqueName
+    description: Matched against the process name and executable path.
+  - name: CommandLineRegex
+    type: regex
+    default: .
+    description: Only kill processes whose command line also matches.
+  - name: ReallyDoIt
+    type: bool
+    description: Kill the matching processes. Otherwise only list them.
+
+sources:
+  - query: |
+      LET targets = SELECT Pid, Ppid, Name, Exe, CommandLine, Username
+        FROM pslist()
+        WHERE ( Name =~ ProcessRegex OR Exe =~ ProcessRegex )
+          AND CommandLine =~ CommandLineRegex
+          AND Pid > 4
+          AND NOT Exe =~ '(?i)(velociraptor|atlantiraptor)[^\\/]*$'
+
+      SELECT Pid, Ppid, Name, Exe, CommandLine, Username,
+             if(condition=ReallyDoIt,
+                then=if(condition=pskill(pid=Pid), then="Killed", else="Failed"),
+                else="Dry run") AS Result
+      FROM targets

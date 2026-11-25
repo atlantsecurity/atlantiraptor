@@ -1,0 +1,46 @@
+name: Windows.Remediation.RemoveService
+description: |
+  Stops and deletes Windows services whose name or binary path matches
+  a regex, for example a malicious persistence service.
+
+  Without `ReallyDoIt` the artifact only lists the services it would
+  remove. The agent's own service is never touched.
+
+  WARNING: deleting the wrong service can break the host. Test the regex
+  with a dry run before deploying widely.
+
+type: CLIENT
+
+required_permissions:
+  - EXECVE
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: ServiceRegex
+    type: regex
+    default: ThisIsAUniqueName
+    description: Matched against the service name and its binary path.
+  - name: ReallyDoIt
+    type: bool
+    description: Stop and delete the matching services. Otherwise only list them.
+
+sources:
+  - query: |
+      LET services = SELECT Name, DisplayName, PathName, State, StartMode
+        FROM wmi(query="SELECT Name, DisplayName, PathName, State, StartMode FROM Win32_Service",
+                 namespace="ROOT/CIMV2")
+        WHERE ( Name =~ ServiceRegex OR PathName =~ ServiceRegex )
+          AND NOT Name =~ '(?i)(velociraptor|atlantiraptor)'
+          AND NOT PathName =~ '(?i)(velociraptor|atlantiraptor)'
+
+      LET run(argv) = SELECT ReturnCode, Stdout FROM execve(argv=argv)
+
+      SELECT Name, DisplayName, PathName, State, StartMode,
+             if(condition=ReallyDoIt,
+                then=run(argv=["sc.exe", "stop", Name])[0].ReturnCode) AS StopCode,
+             if(condition=ReallyDoIt,
+                then=if(condition=run(argv=["sc.exe", "delete", Name])[0].ReturnCode = 0,
+                        then="Deleted", else="Failed"),
+                else="Dry run") AS Result
+      FROM services
