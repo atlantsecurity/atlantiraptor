@@ -170,7 +170,18 @@ const ENDPOINTS: [string, string, string][] = [
   ['GET/POST', '/hunts', 'List or start hunts; /hunts/{id}/results?artifact='],
   ['POST', '/ioc-sweeps', 'Sweep hosts for hashes, IPs, domains, paths, file names'],
   ['GET', '/cases', 'Investigation cases'],
-  ['GET', '/artifacts', 'Artifact definitions and parameters'],
+  ['GET', '/artifacts/{name}', 'Artifact definitions, parameters and YAML'],
+  ['POST', '/rapid-hunts', 'Rapid hunt: which machines visited a domain, URL or IP'],
+  ['GET', '/rapid-hunts/{id}', 'Rapid hunt results per machine, live as machines answer'],
+  ['GET', '/approvals', 'Live response actions waiting for a second person'],
+  ['POST', '/approvals/{id}/approve', 'Approve or reject (…/reject); never by the requester'],
+  ['POST', '/hunts/{id}/stop', 'Stop a hunt (…/start for paused, non-pending hunts)'],
+  ['GET', '/clients/{id}', 'One endpoint: OS, agent, labels, IP, metadata'],
+  ['POST', '/clients/{id}/labels', 'Add or remove labels'],
+  ['GET', '/clients/{id}/flows/{flow}/uploads', 'Uploaded files; …/uploads/{n} downloads one'],
+  ['POST', '/clients/{id}/flows/{flow}/cancel', 'Cancel a running collection'],
+  ['GET', '/stats', 'Clients total and online, running hunts, pending approvals'],
+  ['POST', '/query', 'VQL over collected data (analyst keys only)'],
 ];
 
 function ApiDocs() {

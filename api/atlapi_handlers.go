@@ -30,6 +30,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/services"
 	"www.velocidex.com/golang/velociraptor/utils"
+	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
 	"www.velocidex.com/golang/velociraptor/vql/acl_managers"
 	"www.velocidex.com/golang/vfilter"
 )
@@ -83,6 +84,11 @@ func apiError(w http.ResponseWriter, status int, msg string) {
 // runAPIQuery runs a fixed query as principal and returns up to max rows.
 func runAPIQuery(ctx context.Context, config_obj *config_proto.Config, principal string,
 	env *ordereddict.Dict, query string, max int) ([]*ordereddict.Dict, error) {
+	return runAPIQueryWithACL(ctx, config_obj, acl_managers.NewServerACLManager(config_obj, principal), env, query, max)
+}
+
+func runAPIQueryWithACL(ctx context.Context, config_obj *config_proto.Config, acl vql_subsystem.ACLManager,
+	env *ordereddict.Dict, query string, max int) ([]*ordereddict.Dict, error) {
 
 	manager, err := services.GetRepositoryManager(config_obj)
 	if err != nil {
@@ -91,7 +97,7 @@ func runAPIQuery(ctx context.Context, config_obj *config_proto.Config, principal
 	scope := manager.BuildScope(services.ScopeBuilder{
 		Config:     config_obj,
 		Env:        env,
-		ACLManager: acl_managers.NewServerACLManager(config_obj, principal),
+		ACLManager: acl,
 		Logger:     logging.NewPlainLogger(config_obj, &logging.ToolComponent),
 	})
 	defer scope.Close()
@@ -277,6 +283,34 @@ func routeAPI(c *apiCtx) {
 		listCases(c, "")
 	case len(p) == 2 && p[0] == "cases" && get:
 		listCases(c, p[1])
+	case len(p) == 1 && p[0] == "rapid-hunts" && post:
+		startRapidHunt(c)
+	case len(p) == 1 && p[0] == "rapid-hunts" && get:
+		listRapidHunts(c)
+	case len(p) == 2 && p[0] == "rapid-hunts" && get:
+		getRapidHunt(c, p[1])
+	case len(p) == 1 && p[0] == "approvals" && get:
+		listApprovals(c)
+	case len(p) == 3 && p[0] == "approvals" && (p[2] == "approve" || p[2] == "reject") && post:
+		decideApproval(c, p[1], p[2] == "approve")
+	case len(p) == 3 && p[0] == "hunts" && (p[2] == "stop" || p[2] == "start") && post:
+		controlHunt(c, p[1], p[2])
+	case len(p) == 2 && p[0] == "clients" && get:
+		getClient(c, p[1])
+	case len(p) == 3 && p[0] == "clients" && p[2] == "labels" && post:
+		labelClient(c, p[1])
+	case len(p) == 5 && p[0] == "clients" && p[2] == "flows" && p[4] == "cancel" && post:
+		cancelFlow(c, p[1], p[3])
+	case len(p) == 5 && p[0] == "clients" && p[2] == "flows" && p[4] == "uploads" && get:
+		listUploads(c, p[1], p[3])
+	case len(p) == 6 && p[0] == "clients" && p[2] == "flows" && p[4] == "uploads" && get:
+		downloadUpload(c, p[1], p[3], p[5])
+	case len(p) == 2 && p[0] == "artifacts" && get:
+		getArtifact(c, p[1])
+	case len(p) == 1 && p[0] == "stats" && get:
+		fleetStats(c)
+	case len(p) == 1 && p[0] == "query" && post:
+		runAnalysisQuery(c)
 	default:
 		apiError(c.w, 404, "No such endpoint. See /api/atl/v1/openapi.yaml")
 	}
@@ -626,6 +660,10 @@ func (t apiTarget) validate() string {
 	for _, l := range append(append([]string{}, t.Labels...), t.ExcludeLabels...) {
 		if !labelRe.MatchString(l) {
 			return "invalid label " + l
+		}
+		// Labels that aim response hunts are managed by Atlantiraptor.
+		if reservedLabels.MatchString(l) {
+			return "labels starting with response- or apitarget- can't be targeted directly"
 		}
 	}
 	return ""

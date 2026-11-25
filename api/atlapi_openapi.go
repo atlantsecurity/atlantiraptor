@@ -261,4 +261,138 @@ paths:
       summary: One case
       parameters: [{name: case_id, in: path, required: true, schema: {type: string}}]
       responses: {"200": {description: OK}}
-`
+
+  /rapid-hunts:
+    get:
+      summary: Recent rapid hunts (indicator, state, progress)
+      parameters: [{name: limit, in: query, schema: {type: integer, default: 50}}]
+      responses: {"200": {description: OK}}
+    post:
+      summary: Rapid hunt - which machines visited a domain, URL or IP
+      description: |
+        Each machine checks browser history, the DNS cache, live connections,
+        Sysmon DNS/network events and the DNS client log. Poll
+        /rapid-hunts/{hunt_id} for results as machines answer. Needs a key
+        that can start hunts (hunter, investigator or responder).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [indicator]
+              properties:
+                indicator: {type: string, example: evil.example}
+                days_back: {type: integer, default: 30, minimum: 1, maximum: 365}
+                include_event_logs: {type: boolean, default: true}
+                target: {$ref: "#/components/schemas/Target"}
+      responses: {"201": {description: Started}, "400": {description: Invalid indicator}}
+  /rapid-hunts/{hunt_id}:
+    get:
+      summary: Rapid hunt results grouped per machine
+      parameters:
+        - {name: hunt_id, in: path, required: true, schema: {type: string}}
+        - {name: hits, in: query, description: 0 to leave out per-hit details, schema: {type: integer}}
+      responses:
+        "200":
+          description: progress (scheduled, with_results, with_errors), matched_machines, and machines with sources, users, hit_count and hits (source, time, user, process, match, detail)
+  /approvals:
+    get:
+      summary: Live response actions waiting for a second person
+      responses: {"200": {description: OK}}
+  /approvals/{hunt_id}/approve:
+    post:
+      summary: Approve a pending response action (starts it)
+      description: |
+        Refused for the requester, and for any key created by the requester or
+        by the owner of the key that made the request. The key needs a role
+        that can start hunts. A one-off host target must still cover exactly
+        the requested machines.
+      parameters:
+        - {name: hunt_id, in: path, required: true, schema: {type: string}}
+        - {name: reason, in: query, schema: {type: string}}
+      responses: {"200": {description: Approved}, "403": {description: Not allowed}, "409": {description: Not pending or target changed}}
+  /approvals/{hunt_id}/reject:
+    post:
+      summary: Reject a pending response action (stops it)
+      parameters: [{name: hunt_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: Rejected}}
+  /hunts/{hunt_id}/stop:
+    post:
+      summary: Stop a hunt
+      parameters: [{name: hunt_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: Stopped}}
+  /hunts/{hunt_id}/start:
+    post:
+      summary: Start a paused hunt (refused for hunts waiting for approval)
+      parameters: [{name: hunt_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: Started}, "409": {description: Waiting for approval}}
+  /clients/{client_id}:
+    get:
+      summary: One endpoint with OS, agent, labels, last seen, IP and metadata
+      parameters: [{name: client_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: OK}}
+  /clients/{client_id}/labels:
+    post:
+      summary: Add or remove labels (labels starting with response- or apitarget- are reserved)
+      parameters: [{name: client_id, in: path, required: true, schema: {type: string}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                add: {type: array, items: {type: string}}
+                remove: {type: array, items: {type: string}}
+      responses: {"200": {description: The client after the change}}
+  /clients/{client_id}/flows/{flow_id}/cancel:
+    post:
+      summary: Cancel a running collection
+      parameters:
+        - {name: client_id, in: path, required: true, schema: {type: string}}
+        - {name: flow_id, in: path, required: true, schema: {type: string}}
+      responses: {"200": {description: Cancelled}}
+  /clients/{client_id}/flows/{flow_id}/uploads:
+    get:
+      summary: Files a collection uploaded (name, size, download_url)
+      parameters:
+        - {name: client_id, in: path, required: true, schema: {type: string}}
+        - {name: flow_id, in: path, required: true, schema: {type: string}}
+      responses: {"200": {description: OK}}
+  /clients/{client_id}/flows/{flow_id}/uploads/{index}:
+    get:
+      summary: Download one uploaded file (up to 100 MB)
+      parameters:
+        - {name: client_id, in: path, required: true, schema: {type: string}}
+        - {name: flow_id, in: path, required: true, schema: {type: string}}
+        - {name: index, in: path, required: true, schema: {type: integer}}
+      responses: {"200": {description: The file, content: {application/octet-stream: {}}}}
+  /artifacts/{name}:
+    get:
+      summary: One artifact definition (parameters, sources, required permissions, YAML)
+      parameters: [{name: name, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: OK}}
+  /stats:
+    get:
+      summary: Fleet counts - clients total and online, running hunts, pending approvals
+      responses: {"200": {description: OK}}
+  /query:
+    post:
+      summary: Run a VQL query over collected data (analysis)
+      description: |
+        For keys with the analyst role that cannot change endpoints (no
+        responder role). Use a separate analyst key next to a responder key.
+        Every query is audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: {type: string, example: "SELECT * FROM hunts() LIMIT 10"}
+                env: {type: object, additionalProperties: {type: string}}
+                max_rows: {type: integer, default: 500, maximum: 5000}
+      responses: {"200": {description: OK}, "403": {description: Key not allowed}}`

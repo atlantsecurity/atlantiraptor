@@ -119,6 +119,39 @@ if analyst_approves(procs):
     # res["state"] == "waiting_for_approval" when two-person approval is on.`,
   },
   {
+    id: 'rapid', title: 'Rapid hunt', lang: 'python',
+    blurb: 'Ask the fleet who visited a domain, URL or IP, then act on every machine that did.',
+    code: `import os, time, requests
+BASE, H = "{BASE}", {"Authorization": f"Bearer {os.environ['ATL_API_KEY']}"}
+
+hunt = requests.post(f"{BASE}/rapid-hunts", headers=H, timeout=30,
+                     json={"indicator": "evil.example", "days_back": 30}).json()["data"]
+
+# Results arrive as machines answer; poll until enough have reported.
+for _ in range(30):
+    r = requests.get(f"{BASE}/rapid-hunts/{hunt['hunt_id']}", headers=H, timeout=30).json()["data"]
+    p = r["progress"]
+    if p["scheduled"] and p["with_results"] + p["with_errors"] >= p["scheduled"]:
+        break
+    time.sleep(10)
+
+for m in r["machines"]:
+    print(m["hostname"], m["client_id"], m["sources"], m["users"], m["hit_count"])
+
+# Quarantine all of them at once (held for approval if your policy requires it).
+ids = [m["client_id"] for m in r["machines"]]
+if ids:
+    requests.post(f"{BASE}/actions/quarantine/run", headers=H, timeout=30,
+                  json={"target": {"client_ids": ids}, "reason": "Visited evil.example"})`,
+  },
+  {
+    id: 'approve', title: 'Approvals', lang: 'bash',
+    blurb: 'Show pending live actions in the SIEM and approve them there. The requester can never approve their own.',
+    code: `curl -s -H "Authorization: Bearer $ATL" {BASE}/approvals
+curl -s -X POST -H "Authorization: Bearer $ATL" "{BASE}/approvals/H.XXXXXXXX/approve?reason=Checked+by+SOC+lead"
+curl -s -X POST -H "Authorization: Bearer $ATL" {BASE}/approvals/H.XXXXXXXX/reject`,
+  },
+  {
     id: 'ioc', title: 'IOC sweep', lang: 'bash',
     blurb: 'Push threat intel indicators to every Windows host; matches raise alerts you can poll.',
     code: `curl -s -X POST -H "Authorization: Bearer $ATL" -H "Content-Type: application/json" \\

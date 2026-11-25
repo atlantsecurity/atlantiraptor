@@ -37,6 +37,16 @@ sources:
   - query: SELECT * FROM Artifact.Generic.Remediation.KillProcess(ProcessRegex=".", ReallyDoIt=TRUE)
 `
 
+const testRapidArtifact = `
+name: Generic.Detection.RapidHunt
+parameters:
+  - name: Indicator
+  - name: DaysBack
+  - name: IncludeEventLogs
+sources:
+  - query: SELECT * FROM info()
+`
+
 const testPslistArtifact = `
 name: Windows.System.Pslist
 sources:
@@ -53,11 +63,17 @@ func (self *AtlAPITestSuite) SetupTest() {
 	self.ConfigObj.Services.HuntDispatcher = true
 	self.ConfigObj.Services.HuntManager = true
 	self.TestSuite.SetupTest()
-	self.LoadArtifacts(testKillArtifact, testPslistArtifact, testWrapperArtifact)
+	self.LoadArtifacts(testKillArtifact, testPslistArtifact, testWrapperArtifact, testRapidArtifact)
 	self.CreateClient("C.0123456789abcdef")
 	self.CreateClient("C.fedcba9876543210")
 	self.handler = AtlAPIHandler(self.ConfigObj)
 	apiKeyCache = nil
+}
+
+func (self *AtlAPITestSuite) keyBy(creator string, roles ...string) string {
+	_, token, err := CreateAPIKey(self.ConfigObj, self.ConfigObj, creator, creator+" "+strings.Join(roles, " "), roles, 0)
+	assert.NoError(self.T(), err)
+	return token
 }
 
 func (self *AtlAPITestSuite) key(roles ...string) string {
@@ -264,6 +280,123 @@ func (self *AtlAPITestSuite) TestClientList() {
 	code, _ = self.call("POST", "actions/kill/run", responder, map[string]interface{}{
 		"target": map[string]interface{}{"client_ids": many}, "parameters": map[string]string{"ProcessRegex": "x"}})
 	assert.Equal(self.T(), 400, code)
+}
+
+func (self *AtlAPITestSuite) TestRapidHunt() {
+	hunter := self.key("hunter")
+	code, _ := self.call("POST", "rapid-hunts", hunter, map[string]interface{}{"indicator": "a|.*"})
+	assert.Equal(self.T(), 400, code)
+	code, out := self.call("POST", "rapid-hunts", hunter, map[string]interface{}{"indicator": "https://evil.example/x", "days_back": 7})
+	assert.Equal(self.T(), 201, code, fmt.Sprint(out))
+	id := utils.ToString(out["data"].(map[string]interface{})["hunt_id"])
+
+	code, out = self.call("GET", "rapid-hunts/"+id, hunter, nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	data := out["data"].(map[string]interface{})
+	assert.Equal(self.T(), "https://evil.example/x", data["indicator"])
+
+	code, out = self.call("GET", "rapid-hunts", hunter, nil)
+	assert.Equal(self.T(), 200, code)
+	assert.True(self.T(), strings.Contains(fmt.Sprint(out["data"]), id))
+
+	// A normal hunt is not a rapid hunt.
+	code, _ = self.call("GET", "rapid-hunts/H.NOTRAPID1", hunter, nil)
+	assert.Equal(self.T(), 404, code)
+}
+
+func (self *AtlAPITestSuite) TestApprovals() {
+	_, err := runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj), ordereddict.NewDict(),
+		`SELECT server_set_metadata(atl_response_require_approval="Y") FROM scope()`, 1)
+	assert.NoError(self.T(), err)
+	requester := self.keyBy("alice", "responder")
+	code, out := self.call("POST", "actions/kill/run", requester, map[string]interface{}{
+		"target": map[string]string{"client_id": "C.0123456789abcdef"}, "dry_run": false, "reason": "INC-7",
+		"parameters": map[string]string{"ProcessRegex": "evil"}})
+	assert.Equal(self.T(), 201, code, fmt.Sprint(out))
+	id := utils.ToString(out["data"].(map[string]interface{})["hunt_id"])
+
+	code, out = self.call("GET", "approvals", requester, nil)
+	assert.Equal(self.T(), 200, code)
+	assert.True(self.T(), strings.Contains(fmt.Sprint(out["data"]), id))
+
+	// Starting it directly is refused.
+	code, _ = self.call("POST", "hunts/"+id+"/start", requester, nil)
+	assert.Equal(self.T(), 409, code)
+
+	// The requesting key, and another key of the same person, can't approve.
+	code, dbg0 := self.call("POST", "approvals/"+id+"/approve", requester, nil)
+	assert.Equal(self.T(), 403, code, fmt.Sprint(dbg0))
+	code, dbg := self.call("POST", "approvals/"+id+"/approve", self.keyBy("alice", "hunter"), nil)
+	assert.Equal(self.T(), 403, code, fmt.Sprint(dbg))
+	// A reader key can't decide.
+	code, _ = self.call("POST", "approvals/"+id+"/approve", self.keyBy("bob", "reader"), nil)
+	assert.Equal(self.T(), 403, code)
+
+	// Someone else who can't run the action themselves (a hunter can't kill) can't approve it.
+	code, out = self.call("POST", "approvals/"+id+"/approve", self.keyBy("bob", "hunter"), nil)
+	assert.Equal(self.T(), 403, code, fmt.Sprint(out))
+	// hunt_update through the API (start) is refused while pending.
+	code, _ = self.call("POST", "hunts/"+id+"/start", self.keyBy("bob", "responder"), nil)
+	assert.Equal(self.T(), 409, code)
+
+	// Another responder can.
+	code, out = self.call("POST", "approvals/"+id+"/approve", self.keyBy("bob", "responder"), nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	code, out = self.call("GET", "hunts/"+id, requester, nil)
+	assert.Equal(self.T(), "RUNNING", utils.ToString(out["data"].(map[string]interface{})["state"]))
+	// Decided requests can't be decided again.
+	code, _ = self.call("POST", "approvals/"+id+"/reject", self.keyBy("carol", "hunter"), nil)
+	assert.Equal(self.T(), 409, code)
+
+	// A rejected request can never be started again, by any path.
+	code, out = self.call("POST", "actions/kill/run", requester, map[string]interface{}{
+		"target": map[string]bool{"all": true}, "dry_run": false, "reason": "INC-8",
+		"parameters": map[string]string{"ProcessRegex": "evil"}})
+	assert.Equal(self.T(), 201, code, fmt.Sprint(out))
+	id2 := utils.ToString(out["data"].(map[string]interface{})["hunt_id"])
+	code, out = self.call("POST", "approvals/"+id2+"/reject", self.keyBy("dave", "responder"), nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	code, _ = self.call("POST", "hunts/"+id2+"/start", requester, nil)
+	assert.Equal(self.T(), 403, code)
+	_, err = runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj),
+		ordereddict.NewDict().Set("H", id2), `SELECT hunt_update(hunt_id=H, start=TRUE) FROM scope()`, 1)
+	assert.NoError(self.T(), err)
+	code, out = self.call("GET", "hunts/"+id2, requester, nil)
+	assert.Equal(self.T(), "STOPPED", utils.ToString(out["data"].(map[string]interface{})["state"]))
+}
+
+func (self *AtlAPITestSuite) TestClientsLabelsQueryStats() {
+	hunter := self.key("hunter")
+	code, out := self.call("GET", "clients/C.0123456789abcdef", hunter, nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	code, _ = self.call("POST", "clients/C.0123456789abcdef/labels", hunter, map[string]interface{}{"add": []string{"response-abcdef0123456789"}})
+	assert.Equal(self.T(), 403, code)
+	code, out = self.call("POST", "clients/C.0123456789abcdef/labels", hunter, map[string]interface{}{"add": []string{"siem-flagged"}})
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	assert.True(self.T(), strings.Contains(fmt.Sprint(out["data"]), "siem-flagged"))
+
+	code, _ = self.call("POST", "query", self.key("reader"), map[string]interface{}{"query": "SELECT 1 AS X FROM scope()"})
+	assert.Equal(self.T(), 403, code)
+	// Any key with the analyst role may query; queries are read-only.
+	code, _ = self.call("POST", "query", self.key("responder", "analyst"), map[string]interface{}{"query": "SELECT 1 AS X FROM scope()"})
+	assert.Equal(self.T(), 200, code)
+	code, out = self.call("POST", "query", self.key("analyst"), map[string]interface{}{"query": "SELECT 1 AS X FROM scope()"})
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	// Queries are read-only even for keys that may label clients.
+	code, _ = self.call("POST", "query", self.key("analyst"), map[string]interface{}{
+		"query": `SELECT label(client_id="C.0123456789abcdef", labels=["response-abcdef0123456789"], op="set") AS L FROM scope()`})
+	assert.Equal(self.T(), 200, code)
+	code, out = self.call("GET", "clients/C.0123456789abcdef", hunter, nil)
+	assert.False(self.T(), strings.Contains(fmt.Sprint(out["data"]), "response-abcdef0123456789"))
+	// Reserved labels can't be used as targets.
+	code, _ = self.call("POST", "hunts", hunter, map[string]interface{}{
+		"artifacts": []string{"Windows.System.Pslist"}, "target": map[string]interface{}{"labels": []string{"Response-abc"}}})
+	assert.Equal(self.T(), 400, code)
+
+	code, out = self.call("GET", "stats", hunter, nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	code, out = self.call("GET", "artifacts/Windows.System.Pslist", hunter, nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
 }
 
 func TestAtlAPI(t *testing.T) {

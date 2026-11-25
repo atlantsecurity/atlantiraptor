@@ -7,6 +7,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	yamlv3 "gopkg.in/yaml.v3"
 	"math/big"
 	"testing"
 	"time"
@@ -212,5 +213,33 @@ func TestConnectionInfo(t *testing.T) {
 	}
 	if connectionInfo(&config_proto.Config{}).CertName != "" {
 		t.Fatal("empty config should give no name")
+	}
+}
+
+func TestOpenAPISpecParsesAndCoversRoutes(t *testing.T) {
+	var doc struct {
+		Paths map[string]interface{} `yaml:"paths"`
+	}
+	if err := yamlv3.Unmarshal([]byte(atlOpenAPISpec), &doc); err != nil {
+		t.Fatalf("spec is not valid YAML: %v", err)
+	}
+	for _, p := range []string{"/actions/{id}/run", "/rapid-hunts", "/rapid-hunts/{hunt_id}", "/approvals",
+		"/approvals/{hunt_id}/approve", "/clients/{client_id}/flows/{flow_id}/uploads/{index}", "/query", "/stats"} {
+		if _, ok := doc.Paths[p]; !ok {
+			t.Errorf("spec is missing %s", p)
+		}
+	}
+}
+
+func TestRapidIndicatorProblem(t *testing.T) {
+	for _, ok := range []string{"evil.example", "https://evil.example/x?y=1", "203.0.113.7", "2001:db8::1", "evil.example/path"} {
+		if msg := rapidIndicatorProblem(ok); msg != "" {
+			t.Errorf("%q rejected: %s", ok, msg)
+		}
+	}
+	for _, bad := range []string{"", "two words", "a|.*", "http://", "nodot"} {
+		if rapidIndicatorProblem(bad) == "" {
+			t.Errorf("%q accepted", bad)
+		}
 	}
 }

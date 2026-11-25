@@ -52,7 +52,7 @@ export function useApprovalActions() {
 
   // Re-read the hunt right before acting: it must still be paused and
   // pending, so a stale view cannot restart a rejected request. The
-  // state changes first; the decision tag follows.
+  // server enforces the same rules (hunt_dispatcher/approval_guard.go).
   const decide = async (id: string, me: string, approve: boolean) => {
     if (!me) throw new Error('Your user name is not loaded yet. Try again in a moment.');
     const h = await freshHunt(id);
@@ -62,9 +62,10 @@ export function useApprovalActions() {
     }
     const self = approve ? selfApprovalReason(h, me) : null;
     if (self) throw new Error(self);
-    await api.post('v1/ModifyHunt', { hunt_id: id, state: approve ? 'RUNNING' : 'STOPPED' });
+    // One change: the server only accepts the decision together with
+    // the new state, recorded for the signed-in user.
     const tags = [...(h.tags ?? []).filter(t => t !== PENDING_TAG), `${approve ? APPROVED_PREFIX : REJECTED_PREFIX}${me}`];
-    await api.post('v1/ModifyHunt', { hunt_id: id, tags });
+    await api.post('v1/ModifyHunt', { hunt_id: id, state: approve ? 'RUNNING' : 'STOPPED', tags });
     if (!approve) await removeOneOffLabels(h);
     refresh();
   };
