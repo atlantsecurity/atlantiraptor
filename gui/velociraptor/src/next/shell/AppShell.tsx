@@ -16,6 +16,7 @@ const ResponsePage = lazy(() => import('../pages/response/ResponsePage'));
 const CasesPage = lazy(() => import('../pages/cases/CasesPage'));
 const IocSweepPage = lazy(() => import('../pages/ioc/IocSweepPage'));
 const IntegrationsPage = lazy(() => import('../pages/integrations/IntegrationsPage'));
+const FleetHealthPage = lazy(() => import('../pages/fleet/FleetHealthPage'));
 const ClientsPage = lazy(() => import('../pages/clients/ClientsPage'));
 const ClientOverview = lazy(() => import('../pages/host/ClientOverview'));
 const ArtifactsPage = lazy(() => import('../pages/artifacts/ArtifactsPage'));
@@ -100,6 +101,9 @@ export default function AppShell() {
                 </Route>
                 <Route path="/integrations">
                   <IntegrationsPage />
+                </Route>
+                <Route path="/fleet">
+                  <FleetHealthPage />
                 </Route>
                 <Route path="/search/:query?">
                   <ClientsPage />

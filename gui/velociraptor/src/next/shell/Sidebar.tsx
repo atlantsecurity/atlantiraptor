@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server, Users, KeyRound,
-  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, Plug,
+  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, Plug, HeartPulse,
 } from 'lucide-react';
 import { getItem, schema } from '../../components/core/storage.jsx';
 import { EncodePathInURL } from '../../components/utils/paths.jsx';
@@ -70,6 +70,7 @@ export default function Sidebar({ collapsed, onToggle, className }: { collapsed:
     { to: remembered(schema.CurrentNotebookIdKey, '/notebooks'), label: 'Notebooks', icon: <BookOpen />, match: /^\/notebooks/ },
   ];
   const server: Item[] = [
+    { to: '/fleet', label: 'Fleet health', icon: <HeartPulse />, match: /^\/fleet/ },
     { to: remembered(schema.CurrentSelectedArtifactKey, '/artifacts'), label: 'Artifacts', icon: <Package />, match: /^\/artifacts/ },
     { to: remembered(schema.ServerCurrentFlowKey, '/collected/server'), label: 'Server collections', icon: <Server />, match: /^\/collected\/server/ },
     { to: remembered(schema.CurrentServerEventArtifactKey, '/events/server'), label: 'Server events', icon: <Radio />, match: /^\/events\/server/ },
