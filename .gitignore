@@ -30,3 +30,5 @@ debug.test*
 artifacts/testdata/server/hunts/H.*
 artifacts/testdata/server/users/
 build/packages/
+# Release builds (signed binaries are shipped, not committed)
+/dist/
