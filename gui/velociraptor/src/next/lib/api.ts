@@ -34,7 +34,7 @@ export class ApiError extends Error {
   }
 }
 
-function basePath(): string {
+export function basePath(): string {
   return (legacyApi as { base_path: () => string }).base_path();
 }
 
@@ -124,6 +124,16 @@ export async function post<T>(
       headers: headers(),
       signal,
     });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
+export async function del<T>(
+  path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.delete<T>(apiUrl(path), { params, headers: headers(), signal });
     return resp.data;
   } catch (err) {
     return toApiError(err);

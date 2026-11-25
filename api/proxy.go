@@ -164,6 +164,15 @@ func PrepareGUIMux(
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(groupsHandler(), acls.READ_RESULTS))))
 
+	// SIEM/SOAR API keys (console management) and the key-authenticated
+	// REST API. The REST API uses bearer keys, not cookies, so it needs
+	// no CSRF protection; it still goes through the IP filter.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/apikeys"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(apiKeysHandler(), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/atl/v1/"),
+		ipFilter(config_obj, AtlAPIHandler(config_obj)))
+
 	base_path := api_utils.GetBasePath(config_obj)
 	grpc_client_factory := grpc_client.Factory
 

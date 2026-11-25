@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/Velocidex/ordereddict"
@@ -122,6 +123,12 @@ func ValidateUsername(config_obj *config_proto.Config, name string) error {
 
 	if name == utils.GetGatewayName(config_obj) {
 		return fmt.Errorf("Username is reserved for the gateway: %v", name)
+	}
+
+	// API keys act as principals named api-<id>; no account may take
+	// such a name and inherit a key's permissions.
+	if strings.HasPrefix(strings.ToLower(name), "api-") {
+		return fmt.Errorf("Usernames starting with api- are reserved for API keys: %v", name)
 	}
 
 	return nil

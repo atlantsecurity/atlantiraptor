@@ -13,6 +13,10 @@
    " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
    " *utils.ServeMux"
   ],
+  "/velociraptor/api/atl/v1/": [
+   "authenticators.IpFilter",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/DownloadTable": [
    "authenticators.IpFilter",
    " api.csrfProtect",
@@ -40,6 +44,13 @@
    " GetLoggingHandler",
    " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
    " api.toolUploadHandler"
+  ],
+  "/velociraptor/api/v1/atl/apikeys": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
+   " http.HandlerFunc"
   ],
   "/velociraptor/api/v1/atl/groups": [
    "authenticators.IpFilter",
