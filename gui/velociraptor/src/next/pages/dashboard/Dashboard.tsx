@@ -16,6 +16,7 @@ import {
 import { effectiveState, HuntProgress, HuntStateBadge, huntCounts, huntTitle } from '../hunts/HuntBits';
 import { useSelectedClient } from '../../shell/client-context';
 import { AlertsPanel } from './alerts/AlertsPanel';
+import { RapidHuntPanel } from './rapid/RapidHunt';
 
 const RANGES = [
   { value: '3600', label: '1h' },
@@ -85,6 +86,8 @@ export default function Dashboard() {
             value={huntsLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : fmtNum(hunts.reduce((s, h) => s + huntCounts(h).rows, 0))}
             sub="Across all active hunts" />
         </div>
+
+        <RapidHuntPanel canHunt={canHunt} />
 
         <AlertsPanel />
 
