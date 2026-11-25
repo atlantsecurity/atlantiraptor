@@ -14,7 +14,7 @@ import { setServerMetadata, useHunts, useServerMetadata } from '../../lib/querie
 import type { Hunt } from '../../lib/types';
 import { RESPONSE_TAG } from './actions';
 import {
-  APPROVED_PREFIX, isPaused, oneOffLabelOf, PENDING_TAG, POLICY_KEY, REJECTED_PREFIX, selfApprovalReason,
+  APPROVED_PREFIX, isPaused, oneOffClientsOf, oneOffLabelOf, PENDING_TAG, POLICY_KEY, REJECTED_PREFIX, selfApprovalReason,
 } from './approvalModel';
 
 export * from './approvalModel';
@@ -81,8 +81,12 @@ export function useApprovalActions() {
 export async function removeOneOffLabels(h: Hunt) {
   const label = oneOffLabelOf(h);
   if (!label) return;
+  const expected = oneOffClientsOf(h);
   const found = await api.get<{ items?: { client_id: string }[] }>('v1/SearchClients',
-    { query: `label:${label}`, limit: 2 });
+    { query: `label:${label}`, limit: Math.min((expected?.length ?? 1) + 5, 200) });
   const ids = (found.items ?? []).map(c => c.client_id);
-  if (ids.length === 1) await api.post('v1/LabelClients', { client_ids: ids, labels: [label], operation: 'remove' });
+  // Only from the hosts the request named (or the one host of a
+  // single-host request).
+  const targets = expected ? ids.filter(id => expected.includes(id)) : ids.length === 1 ? ids : [];
+  if (targets.length) await api.post('v1/LabelClients', { client_ids: targets, labels: [label], operation: 'remove' });
 }

@@ -30,9 +30,10 @@ components:
         error: {type: string}
     Target:
       type: object
-      description: Exactly one of client_id, labels, os or all.
+      description: Exactly one of client_id, client_ids (up to 100), labels, os or all.
       properties:
         client_id: {type: string, example: C.f614264ea30165fa}
+        client_ids: {type: array, maxItems: 100, items: {type: string}}
         labels: {type: array, items: {type: string}}
         exclude_labels: {type: array, items: {type: string}}
         os: {type: string, enum: [WINDOWS, LINUX, OSX]}

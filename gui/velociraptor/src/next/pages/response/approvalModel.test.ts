@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Hunt } from '../../lib/types.ts';
 import {
-  decodeUserData, encodeUserData, isPaused, oneLine, oneOffLabelOf, requestView, selfApprovalReason,
+  decodeUserData, encodeUserData, isPaused, oneLine, oneOffLabelOf, oneOffMismatch, requestView, selfApprovalReason,
 } from './approvalModel.ts';
 
 const LABEL = 'response-abcdef0123456789';
@@ -109,5 +109,17 @@ describe('self approval', () => {
   });
   it('allows anyone else for console requests', () => {
     assert.equal(selfApprovalReason(hunt({ creator: 'alice', start_request: { user_data: ud() } }), 'bob'), null);
+  });
+});
+describe('one-off label hosts', () => {
+  it('single-host requests need exactly one host', () => {
+    assert.equal(oneOffMismatch(null, ['C.1']), null);
+    assert.ok(oneOffMismatch(null, ['C.1', 'C.2']));
+    assert.ok(oneOffMismatch(null, []));
+  });
+  it('several-host requests need exactly the recorded hosts', () => {
+    assert.equal(oneOffMismatch(['C.1', 'C.2'], ['C.2', 'C.1']), null);
+    assert.ok(oneOffMismatch(['C.1', 'C.2'], ['C.1']));
+    assert.ok(oneOffMismatch(['C.1', 'C.2'], ['C.1', 'C.2', 'C.3']));
   });
 });

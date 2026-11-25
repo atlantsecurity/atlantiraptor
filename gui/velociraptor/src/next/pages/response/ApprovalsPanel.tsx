@@ -14,7 +14,7 @@ import { timeAgo } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Mono, Switch } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
 import {
-  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, requestView, selfApprovalReason, useApprovalActions, useApprovalPolicy, usePendingApprovals,
+  ONE_OFF_LABEL_PREFIX, oneOffClientsOf, oneOffLabelOf, oneOffMismatch, requestOf, requestView, selfApprovalReason, useApprovalActions, useApprovalPolicy, usePendingApprovals,
 } from './approval';
 
 export function ApprovalsPanel() {
@@ -53,13 +53,13 @@ export function ApprovalsPanel() {
   );
 }
 
-function useOneOffHost(label: string | null) {
+function useOneOffHost(label: string | null, expected: number) {
   return useQuery({
-    queryKey: ['one-off-host', label],
+    queryKey: ['one-off-host', label, expected],
     enabled: !!label,
     queryFn: () => api.get<{ items?: { client_id: string; os_info?: { hostname?: string } }[] }>('v1/SearchClients',
-      { query: `label:${label}`, limit: 5 }),
-    select: d => (d.items ?? []).map(c => `${c.os_info?.hostname || c.client_id} (${c.client_id})`),
+      { query: `label:${label}`, limit: Math.min(expected + 5, 200) }),
+    select: d => (d.items ?? []).map(c => ({ id: c.client_id, text: `${c.os_info?.hostname || c.client_id} (${c.client_id})` })),
   });
 }
 
@@ -80,7 +80,8 @@ function PendingRow({ id }: { id: string }) {
   const { data: hunt } = useHunt(id);
   const oneOffLabel = hunt ? oneOffLabelOf(hunt) : null;
   const usesOneOffPrefix = (hunt?.condition?.labels?.label ?? []).some(l => l.startsWith(ONE_OFF_LABEL_PREFIX));
-  const { data: oneOff, isFetched: oneOffFetched } = useOneOffHost(oneOffLabel);
+  const expectedClients = hunt ? oneOffClientsOf(hunt) : null;
+  const { data: oneOff, isFetched: oneOffFetched } = useOneOffHost(oneOffLabel, expectedClients?.length ?? 1);
   const me = useMe();
   const actions = useApprovalActions();
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
@@ -96,7 +97,8 @@ function PendingRow({ id }: { id: string }) {
   // Refuse to approve anything whose target or parameters are ambiguous.
   const problems: string[] = [...view.problems];
   if (usesOneOffPrefix && !oneOffLabel) problems.push('The target label does not match the recorded single-host label.');
-  if (oneOffLabel && oneOffFetched && (oneOff?.length ?? 0) !== 1) problems.push(`The single-host label matches ${oneOff?.length ?? 0} hosts, not 1.`);
+  const mismatch = oneOffLabel && oneOffFetched ? oneOffMismatch(expectedClients, (oneOff ?? []).map(h => h.id)) : null;
+  if (mismatch) problems.push(mismatch);
 
   const act = async (kind: 'approve' | 'reject') => {
     setBusy(kind);
@@ -123,7 +125,7 @@ function PendingRow({ id }: { id: string }) {
 
       <dl className="tw:grid tw:grid-cols-[90px_1fr] tw:gap-x-3 tw:gap-y-1 tw:text-xs tw:rounded-md tw:border tw:border-line tw:bg-canvas/50 tw:p-2.5">
         <dt className="tw:text-muted">Condition</dt><dd className="tw:font-mono tw:text-[11px]">{conditionText(hunt)}</dd>
-        {oneOffLabel && <><dt className="tw:text-muted">Host</dt><dd>{oneOffFetched ? (oneOff?.join(', ') || 'no host has this label') : 'resolving…'}</dd></>}
+        {oneOffLabel && <><dt className="tw:text-muted">{(expectedClients?.length ?? 1) > 1 ? `Hosts (${expectedClients?.length})` : 'Host'}</dt><dd>{oneOffFetched ? (oneOff?.map(h => h.text).join(', ') || 'no host has this label') : 'resolving…'}</dd></>}
         {specs.map(s => (
           <div key={s.artifact} className="tw:contents">
             <dt className="tw:text-muted tw:font-mono tw:text-[11px] tw:break-all">{s.artifact}</dt>

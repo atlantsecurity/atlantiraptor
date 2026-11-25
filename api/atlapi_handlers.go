@@ -524,12 +524,69 @@ func firstOf(row *ordereddict.Dict, keys ...string) interface{} {
 
 // ---------------------------------------------------------------- writes
 
+const maxTargetClients = 100
+
 type apiTarget struct {
 	ClientId      string   `json:"client_id,omitempty"`
+	ClientIds     []string `json:"client_ids,omitempty"`
 	Labels        []string `json:"labels,omitempty"`
 	ExcludeLabels []string `json:"exclude_labels,omitempty"`
 	OS            string   `json:"os,omitempty"`
 	All           bool     `json:"all,omitempty"`
+}
+
+// clients returns the explicitly named clients (deduplicated), if any.
+func (t apiTarget) clients() []string {
+	out := []string{}
+	for _, id := range append([]string{t.ClientId}, t.ClientIds...) {
+		if id != "" && !utils.InString(out, id) {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// labelClients sets (or removes) one label on every named client and
+// reports whether all of them took it.
+func (c *apiCtx) labelClients(ids []string, label, op string) bool {
+	rows, err := runAPIQuery(c.r.Context(), c.org, c.key.Principal(),
+		ordereddict.NewDict().Set("Ids", ids).Set("Label", label).Set("Op", op),
+		`SELECT label(client_id=_value, labels=[Label], op=Op) AS L FROM foreach(row=Ids)`, len(ids))
+	if err != nil || len(rows) != len(ids) {
+		return false
+	}
+	for _, row := range rows {
+		if l, _ := row.Get("L"); utils.IsNil(l) || l == false {
+			return false
+		}
+	}
+	return true
+}
+
+// huntOnClients aims a hunt at exactly the named clients through a fresh
+// label. The label goes on first so a running hunt sees the clients; if
+// the hunt can't be created the label is taken off again.
+func (c *apiCtx) huntOnClients(h huntRequest, ids []string, label string) (string, bool) {
+	if !c.labelClients(ids, label, "set") {
+		c.labelClients(ids, label, "remove")
+		apiError(c.w, http.StatusForbidden, "The clients could not be labelled. The key may lack the label permission.")
+		return "", false
+	}
+	h.Target = apiTarget{Labels: []string{label}}
+	id, ok := c.hunt(h)
+	if !ok {
+		c.labelClients(ids, label, "remove")
+	}
+	return id, ok
+}
+
+// huntTarget starts a hunt on the request's target, using a fresh label
+// when the target is a list of clients.
+func (c *apiCtx) huntTarget(h huntRequest) (string, bool) {
+	if ids := h.Target.clients(); len(ids) > 0 {
+		return c.huntOnClients(h, ids, "apitarget-"+newToken()+newToken())
+	}
+	return c.hunt(h)
 }
 
 func (t apiTarget) validate() string {
@@ -538,6 +595,17 @@ func (t apiTarget) validate() string {
 		modes++
 		if !clientIdRe.MatchString(t.ClientId) {
 			return "invalid client_id"
+		}
+	}
+	if len(t.ClientIds) > 0 {
+		modes++
+		if len(t.ClientIds) > maxTargetClients {
+			return fmt.Sprintf("at most %d client_ids; use labels or os for more", maxTargetClients)
+		}
+		for _, id := range t.ClientIds {
+			if !clientIdRe.MatchString(id) {
+				return "invalid client id " + id
+			}
 		}
 	}
 	if len(t.Labels) > 0 {
@@ -553,7 +621,7 @@ func (t apiTarget) validate() string {
 		modes++
 	}
 	if modes != 1 {
-		return "target needs exactly one of client_id, labels, os or all"
+		return "target needs exactly one of client_id, client_ids, labels, os or all"
 	}
 	for _, l := range append(append([]string{}, t.Labels...), t.ExcludeLabels...) {
 		if !labelRe.MatchString(l) {
@@ -758,7 +826,7 @@ func startHunt(c *apiCtx) {
 		return
 	}
 	if body.Target.ClientId != "" {
-		apiError(c.w, 400, "use /collections for a single client")
+		apiError(c.w, 400, "use /collections for a single client, or client_ids for several")
 		return
 	}
 	if msg := body.Target.validate(); msg != "" {
@@ -777,7 +845,7 @@ func startHunt(c *apiCtx) {
 	if desc == "" {
 		desc = "API hunt: " + strings.Join(body.Artifacts, ", ")
 	}
-	id, ok := c.hunt(huntRequest{Description: desc + " (via API key " + c.key.Name + ")", Artifacts: body.Artifacts,
+	id, ok := c.huntTarget(huntRequest{Description: desc + " (via API key " + c.key.Name + ")", Artifacts: body.Artifacts,
 		Spec: spec, Target: body.Target, Tags: []string{"api"}, Pause: body.Paused})
 	if !ok {
 		return
@@ -855,7 +923,7 @@ func startIOCSweep(c *apiCtx) {
 		apiWrite(c.w, 201, map[string]interface{}{"data": map[string]string{"client_id": body.Target.ClientId, "flow_id": flow}})
 		return
 	}
-	id, ok := c.hunt(huntRequest{Description: desc, Artifacts: []string{artifact}, Spec: spec, Target: body.Target, Tags: []string{"ioc-sweep", "api"}})
+	id, ok := c.huntTarget(huntRequest{Description: desc, Artifacts: []string{artifact}, Spec: spec, Target: body.Target, Tags: []string{"ioc-sweep", "api"}})
 	if !ok {
 		return
 	}
@@ -998,8 +1066,14 @@ func runAction(c *apiCtx, id string) {
 
 	// Same request record the console writes, so the approval queue and
 	// audit view show API requests like any other.
+	// Named clients: one without approval runs as a direct collection;
+	// several, or any waiting for approval, get one fresh one-off label
+	// that a hunt targets. The request records exactly which clients, so
+	// the approval queue can check the label covers just those.
+	clients := body.Target.clients()
+	direct := len(clients) == 1 && !needsApproval
 	oneOff := ""
-	if needsApproval && body.Target.ClientId != "" {
+	if len(clients) > 0 && !direct {
 		oneOff = "response-" + newToken() + newToken()
 	}
 	userData := ""
@@ -1010,54 +1084,44 @@ func runAction(c *apiCtx, id string) {
 		}
 		// key_owner lets the console refuse approval by the person who
 		// created the key, so one person can't request and approve.
-		rec := map[string]string{"reason": reason, "requested_by": c.key.Principal(), "approval": approval,
+		rec := map[string]interface{}{"reason": reason, "requested_by": c.key.Principal(), "approval": approval,
 			"key_owner": c.key.CreatedBy, "api_key": c.key.Name}
 		if oneOff != "" {
 			rec["one_off_label"] = oneOff
+			rec["one_off_clients"] = clients
 		}
 		data, _ := stdjson.Marshal(map[string]interface{}{"atl_response": rec})
 		userData = string(data)
 	}
 
-	// A single client without approval: a direct collection.
-	if body.Target.ClientId != "" && !needsApproval {
-		flow, ok := c.collect(body.Target.ClientId, action.Artifacts, spec, userData)
+	if direct {
+		flow, ok := c.collect(clients[0], action.Artifacts, spec, userData)
 		if !ok {
 			return
 		}
 		c.audit("api_action", details.Set("flow_id", flow))
 		apiWrite(c.w, 201, map[string]interface{}{"data": map[string]interface{}{
-			"client_id": body.Target.ClientId, "flow_id": flow, "dry_run": dryRun,
-			"status_url": "/api/atl/v1/clients/" + body.Target.ClientId + "/flows/" + flow}})
+			"client_id": clients[0], "flow_id": flow, "dry_run": dryRun,
+			"status_url": "/api/atl/v1/clients/" + clients[0] + "/flows/" + flow}})
 		return
 	}
 
-	target := body.Target
-	hostID := target.ClientId
-	if hostID != "" {
-		// Approval needed for one host: aim a paused hunt at a one-off
-		// label (as the console does). The hunt is created first, so a
-		// refused request never leaves a label behind.
-		desc += " – host " + hostID
-		target = apiTarget{Labels: []string{oneOff}}
+	h := huntRequest{Description: desc, Artifacts: action.Artifacts, Spec: spec,
+		Target: body.Target, Tags: tags, Pause: needsApproval, UserData: userData}
+	var huntID string
+	var ok bool
+	if len(clients) > 0 {
+		if len(clients) == 1 {
+			h.Description += " – host " + clients[0]
+		} else {
+			h.Description += fmt.Sprintf(" – %d hosts", len(clients))
+		}
+		huntID, ok = c.huntOnClients(h, clients, oneOff)
+	} else {
+		huntID, ok = c.hunt(h)
 	}
-	huntID, ok := c.hunt(huntRequest{Description: desc, Artifacts: action.Artifacts, Spec: spec,
-		Target: target, Tags: tags, Pause: needsApproval, UserData: userData})
 	if !ok {
 		return
-	}
-	if hostID != "" {
-		rows, ok := c.query(`SELECT label(client_id=ClientId, labels=[Label], op="set") AS L FROM scope()`,
-			ordereddict.NewDict().Set("ClientId", hostID).Set("Label", oneOff), 1)
-		if !ok {
-			return
-		}
-		if l, _ := rows[0].Get("L"); utils.IsNil(l) || l == false {
-			c.audit("api_action", details.Set("hunt_id", huntID).Set("error", "label failed"))
-			apiError(c.w, http.StatusForbidden, "The request was created as hunt "+huntID+
-				" but the host could not be labelled. The key may lack the label permission.")
-			return
-		}
 	}
 	c.audit("api_action", details.Set("hunt_id", huntID))
 	state := "running"

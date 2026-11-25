@@ -1,10 +1,10 @@
 // Fleet response: pick an action, pick targets, confirm, and the action
 // runs as a hunt across every matching client. Progress and per-client
 // results live in the hunt; recent actions are listed below.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Play, Siren, X } from 'lucide-react';
+import { Play, Siren } from 'lucide-react';
 import {
   runArtifacts, useClient, useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest,
 } from '../../lib/queries';
@@ -21,9 +21,10 @@ import {
 import { TagInput } from '../hunts/TagInput';
 import { ACTIONS, GROUPS, RESPONSE_TAG, type ResponseAction } from './actions';
 import { ConfirmResponseDialog } from './ConfirmResponseDialog';
+import { ClientPicker, type PickedClient } from './ClientPicker';
 import { ResponseHistory } from './ResponseHistory';
 
-type TargetMode = 'all' | 'labels' | 'os' | 'client';
+type TargetMode = 'clients' | 'labels' | 'os' | 'all';
 const OS_LABEL: Record<string, string> = { WINDOWS: 'Windows', LINUX: 'Linux', OSX: 'macOS' };
 const CLIENT_ID_RE = /^C\.[0-9a-f]+(-[A-Za-z0-9]+)?$/;
 
@@ -111,9 +112,15 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
   const history = useHistory();
   const create = useCreateHunt();
   const { data: client } = useClient(clientId || undefined);
-  const hostname = client?.os_info?.hostname || clientId;
   const [values, setValues] = useState(() => initialValues(action, prefill));
-  const [mode, setMode] = useState<TargetMode>(clientId ? 'client' : 'labels');
+  const [mode, setMode] = useState<TargetMode>(clientId ? 'clients' : 'labels');
+  const [picked, setPicked] = useState<PickedClient[]>(() => (clientId ? [{ id: clientId, hostname: clientId }] : []));
+  // Show the hostname once the client page's client has loaded.
+  useEffect(() => {
+    if (client?.os_info?.hostname) {
+      setPicked(ps => ps.map(p => (p.id === clientId && p.hostname === clientId ? { ...p, hostname: client.os_info!.hostname! } : p)));
+    }
+  }, [client, clientId]);
   const [labels, setLabels] = useState<string[]>([]);
   const [excluded, setExcluded] = useState<string[]>([]);
   const [os, setOs] = useState('WINDOWS');
@@ -132,19 +139,23 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
     const c: HuntCondition = {};
     if (mode === 'labels' && labels.length) c.labels = { label: labels };
     if (mode === 'os') c.os = { os };
-    if (excluded.length) c.excluded_labels = { label: excluded };
+    if (excluded.length && mode !== 'clients') c.excluded_labels = { label: excluded };
     return c;
   }, [mode, labels, excluded, os]);
   const missingLabels = mode === 'labels' && labels.length === 0;
-  const estimate = useEstimateHunt(condition, 'all', !missingLabels && mode !== 'client');
-  const hostCount = mode === 'client' ? 1 : missingLabels ? undefined : estimate.data;
+  const missingClients = mode === 'clients' && picked.length === 0;
+  const estimate = useEstimateHunt(condition, 'all', !missingLabels && mode !== 'clients');
+  const hostCount = mode === 'clients' ? picked.length : missingLabels ? undefined : estimate.data;
+  // One host without approval runs as a direct collection; anything else
+  // (several hosts, or waiting for approval) becomes a hunt.
+  const direct = mode === 'clients' && picked.length === 1 && !needsApproval;
 
   const missing = action.fields.filter(f => f.required && !(values[f.key] ?? '').trim());
   const missingReason = !dryRun && !reason.trim();
   // A single host waiting for approval becomes a labelled hunt, which
   // needs the hunt permission too.
-  const permitted = canRun && (!(needsApproval && mode === 'client') || canHunt);
-  const blocked = !permitted || !policy.loaded || missingLabels || missing.length > 0 || missingReason;
+  const permitted = canRun && (direct || mode !== 'clients' || canHunt);
+  const blocked = !permitted || !policy.loaded || missingLabels || missingClients || missing.length > 0 || missingReason;
 
   const params: Record<string, string> = useMemo(() => {
     const p: Record<string, string> = { ...action.fixed };
@@ -156,36 +167,43 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
     return p;
   }, [action, values, dryRun]);
 
-  const targetText = mode === 'client' ? `Only ${hostname} (${clientId})`
+  const targetText = mode === 'clients'
+    ? (picked.length === 1 ? `Only ${picked[0].hostname} (${picked[0].id})` : `These ${picked.length} clients: ${picked.slice(0, 5).map(p => p.hostname).join(', ')}${picked.length > 5 ? '…' : ''}`)
     : mode === 'all' ? 'All clients'
     : mode === 'os' ? `All ${OS_LABEL[os]} clients`
     : `Clients labelled ${labels.join(', ') || '…'}`;
-  const fullTarget = excluded.length && mode !== 'client' ? `${targetText}, except ${excluded.join(', ')}` : targetText;
+  const fullTarget = excluded.length && mode !== 'clients' ? `${targetText}, except ${excluded.join(', ')}` : targetText;
 
-  // A single host is handled as a direct collection rather than a hunt,
-  // unless it must wait for approval: then the host gets a one-off label
-  // and a paused hunt targets that label.
-  const startOnClient = async () => {
-    if (needsApproval) {
-      const label = `${ONE_OFF_LABEL_PREFIX}${newId()}`;
-      await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'set' });
-      try {
-        return await startHunt({ labels: { label: [label] } }, label);
-      } catch (e) {
-        await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'remove' }).catch(() => undefined);
-        throw e;
-      }
+  // One host without approval: a direct collection. Several hosts, or
+  // any host waiting for approval: the hosts get one one-off label and a
+  // hunt targets that label. The request records exactly which hosts,
+  // so the approval queue can check the label covers just those.
+  const startOnClients = async () => {
+    if (direct) {
+      const target = picked[0];
+      const per = Object.fromEntries(action.artifacts.map(a => [a, params]));
+      const r = await runArtifacts(target.id, action.artifacts, per, true, userData);
+      toast.success(dryRun ? 'Dry run started' : `${action.title} started on ${target.hostname}`);
+      setConfirming(false);
+      if (r.flow_id) history.push(`/collected/${target.id}/${r.flow_id}`);
+      return;
     }
-    const per = Object.fromEntries(action.artifacts.map(a => [a, params]));
-    const r = await runArtifacts(clientId, action.artifacts, per, true, userData);
-    toast.success(dryRun ? 'Dry run started' : `${action.title} started on ${hostname}`);
-    setConfirming(false);
-    if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
+    const ids = picked.map(p => p.id);
+    const label = `${ONE_OFF_LABEL_PREFIX}${newId()}`;
+    await api.post('v1/LabelClients', { client_ids: ids, labels: [label], operation: 'set' });
+    try {
+      return await startHunt({ labels: { label: [label] } }, label, ids);
+    } catch (e) {
+      await api.post('v1/LabelClients', { client_ids: ids, labels: [label], operation: 'remove' }).catch(() => undefined);
+      throw e;
+    }
   };
-
-  const startHunt = async (cond: HuntCondition, oneOffLabel?: string) => {
+  const startHunt = async (cond: HuntCondition, oneOffLabel?: string, oneOffClients?: string[]) => {
     const huntUserData = oneOffLabel
-      ? encodeUserData({ reason: reason.trim(), requested_by: me, approval: 'required', one_off_label: oneOffLabel })
+      ? encodeUserData({
+        reason: reason.trim(), requested_by: me, approval: needsApproval ? 'required' : 'not-required',
+        one_off_label: oneOffLabel, one_off_clients: oneOffClients,
+      })
       : userData;
     const env = Object.entries(params).map(([key, value]) => ({ key, value }));
     const why = reason.trim() ? ` – reason: ${oneLine(reason)}` : '';
@@ -211,7 +229,7 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
 
   const start = async () => {
     try {
-      if (mode === 'client') await startOnClient();
+      if (mode === 'clients') await startOnClients();
       else await startHunt(condition);
     } catch (e) {
       toast.error((e as Error).message);
@@ -241,37 +259,37 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
 
         <section className="tw:space-y-2">
           <div className="tw:text-xs tw:font-medium">Targets</div>
-          {mode === 'client' ? (
-            <div className="tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-accent tw:bg-accent-soft tw:px-3 tw:py-2 tw:text-xs">
-              <span className="tw:flex-1">Only this host: <b>{hostname}</b> <span className="tw:font-mono tw:text-faint">{clientId}</span></span>
-              <button type="button" className="tw:flex tw:items-center tw:gap-1 tw:text-muted tw:hover:text-fg"
-                onClick={() => history.push(`/response/${action.id}`)}>
-                <X className="tw:size-3.5" />Target the fleet instead
-              </button>
-            </div>
-          ) : <>
           <div className="tw:flex tw:flex-wrap tw:gap-1.5">
-            {(['labels', 'os', 'all'] as TargetMode[]).map(m => (
+            {(['clients', 'labels', 'os', 'all'] as TargetMode[]).map(m => (
               <button key={m} type="button" onClick={() => setMode(m)}
                 className={cn('tw:rounded-md tw:border tw:px-2.5 tw:py-1 tw:text-xs',
                   mode === m ? 'tw:border-accent tw:bg-accent-soft tw:text-accent tw:font-medium' : 'tw:border-line tw:hover:bg-hover')}>
-                {m === 'labels' ? 'By label' : m === 'os' ? 'By OS' : 'All clients'}
+                {m === 'clients' ? 'Specific clients' : m === 'labels' ? 'By label' : m === 'os' ? 'By OS' : 'All clients'}
               </button>
             ))}
           </div>
+          {mode === 'clients' && <>
+            <ClientPicker value={picked} onChange={setPicked} />
+            <div className="tw:text-xs tw:text-muted">
+              {picked.length === 0 ? 'Search and add at least one client.'
+                : direct ? 'Runs right away on this client.'
+                : `Runs as one hunt on ${picked.length} client${picked.length > 1 ? 's' : ''}${needsApproval ? ' after approval' : ''}.`}
+            </div>
+          </>}
           {mode === 'labels' && <TagInput value={labels} onChange={setLabels} tone="accent" placeholder="e.g. compromised, finance" />}
           {mode === 'os' && (
             <Select value={os} onChange={e => setOs(e.target.value)}>
               {Object.entries(OS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </Select>
           )}
-          <div>
-            <div className="tw:text-2xs tw:text-muted tw:mb-1">Exclude labels</div>
-            <TagInput value={excluded} onChange={setExcluded} tone="bad" placeholder="Optional" />
-          </div>
-          <div className="tw:text-xs tw:text-muted">
-            {missingLabels ? 'Add at least one label.' : <>Matches <span className="tw:font-semibold tw:text-fg">{estimate.data ?? '…'}</span> clients right now.</>}
-          </div>
+          {mode !== 'clients' && <>
+            <div>
+              <div className="tw:text-2xs tw:text-muted tw:mb-1">Exclude labels</div>
+              <TagInput value={excluded} onChange={setExcluded} tone="bad" placeholder="Optional" />
+            </div>
+            <div className="tw:text-xs tw:text-muted">
+              {missingLabels ? 'Add at least one label.' : <>Matches <span className="tw:font-semibold tw:text-fg">{estimate.data ?? '…'}</span> clients right now.</>}
+            </div>
           </>}
         </section>
 

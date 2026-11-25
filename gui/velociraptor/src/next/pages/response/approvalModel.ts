@@ -15,6 +15,8 @@ export interface ResponseUserData {
   approval?: 'required' | 'not-required';
   // The exact one-off label a single-host request was aimed at.
   one_off_label?: string;
+  // The clients that one-off label was put on (several-host requests).
+  one_off_clients?: string[];
   // For requests made with an API key: who created the key.
   key_owner?: string;
   api_key?: string;
@@ -63,6 +65,23 @@ export function oneOffLabelOf(h: Hunt): string | null {
   if (labels.length !== 1 || labels[0] !== recorded) return null;
   if (c.os?.os || (c.excluded_labels?.label ?? []).length) return null;
   return recorded;
+}
+
+/** The clients a one-off label request was aimed at (one or more). */
+export function oneOffClientsOf(h: Hunt): string[] | null {
+  const recorded = requestOf(h)?.one_off_clients;
+  if (!Array.isArray(recorded) || recorded.length === 0) return null;
+  return recorded.filter(c => typeof c === 'string');
+}
+
+/** Problem text when the label's hosts differ from the recorded ones. */
+export function oneOffMismatch(expected: string[] | null, actual: string[]): string | null {
+  if (!expected) {
+    return actual.length === 1 ? null : `The single-host label matches ${actual.length} hosts, not 1.`;
+  }
+  const want = [...new Set(expected)].sort().join(',');
+  const got = [...new Set(actual)].sort().join(',');
+  return want === got ? null : `The target label is on ${actual.length} hosts, but the request named ${expected.length}.`;
 }
 
 export function requestOf(h: Hunt): ResponseUserData | null {

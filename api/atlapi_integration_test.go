@@ -55,6 +55,7 @@ func (self *AtlAPITestSuite) SetupTest() {
 	self.TestSuite.SetupTest()
 	self.LoadArtifacts(testKillArtifact, testPslistArtifact, testWrapperArtifact)
 	self.CreateClient("C.0123456789abcdef")
+	self.CreateClient("C.fedcba9876543210")
 	self.handler = AtlAPIHandler(self.ConfigObj)
 	apiKeyCache = nil
 }
@@ -225,6 +226,44 @@ func (self *AtlAPITestSuite) TestGenericEndpointsRefuseResponseArtifacts() {
 	code, out = self.call("POST", "ioc-sweeps", responder, map[string]interface{}{
 		"target": map[string]bool{"all": true}, "indicators": []map[string]string{{"type": "domain", "value": "a|.*"}}})
 	assert.Equal(self.T(), 400, code, fmt.Sprint(out))
+}
+
+func (self *AtlAPITestSuite) TestClientList() {
+	responder := self.key("responder")
+	two := []string{"C.0123456789abcdef", "C.fedcba9876543210"}
+
+	// Several clients, dry run: one hunt aimed at a fresh label on both.
+	code, out := self.call("POST", "actions/kill/run", responder, map[string]interface{}{
+		"target": map[string]interface{}{"client_ids": two}, "parameters": map[string]string{"ProcessRegex": "evil"}})
+	assert.Equal(self.T(), 201, code, fmt.Sprint(out))
+	data := out["data"].(map[string]interface{})
+	rows, err := runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj),
+		ordereddict.NewDict().Set("H", data["hunt_id"]),
+		`SELECT start_request.user_data AS U, condition.labels.label AS L FROM hunts(hunt_id=H)`, 1)
+	assert.NoError(self.T(), err)
+	u, _ := rows[0].Get("U")
+	assert.True(self.T(), strings.Contains(utils.ToString(u), `"one_off_clients":["C.0123456789abcdef","C.fedcba9876543210"]`), utils.ToString(u))
+	l, _ := rows[0].Get("L")
+	label := strings.Trim(utils.ToString(l), `[]" `)
+	assert.True(self.T(), strings.HasPrefix(label, "response-"), label)
+	for _, id := range two {
+		rows, _ := runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj),
+			ordereddict.NewDict().Set("C", id), `SELECT labels FROM clients(client_id=C)`, 1)
+		v, _ := rows[0].Get("labels")
+		assert.True(self.T(), strings.Contains(fmt.Sprint(v), label), fmt.Sprint(v))
+	}
+
+	// Mixed target modes and oversized lists are refused.
+	code, _ = self.call("POST", "actions/kill/run", responder, map[string]interface{}{
+		"target": map[string]interface{}{"client_ids": two, "all": true}, "parameters": map[string]string{"ProcessRegex": "x"}})
+	assert.Equal(self.T(), 400, code)
+	many := []string{}
+	for i := 0; i < maxTargetClients+1; i++ {
+		many = append(many, fmt.Sprintf("C.%016x", i))
+	}
+	code, _ = self.call("POST", "actions/kill/run", responder, map[string]interface{}{
+		"target": map[string]interface{}{"client_ids": many}, "parameters": map[string]string{"ProcessRegex": "x"}})
+	assert.Equal(self.T(), 400, code)
 }
 
 func TestAtlAPI(t *testing.T) {
