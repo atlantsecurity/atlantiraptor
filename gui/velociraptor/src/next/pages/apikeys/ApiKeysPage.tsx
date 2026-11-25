@@ -4,8 +4,9 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { BookOpen, KeyRound, Plug, Plus, Trash2 } from 'lucide-react';
-import { apiBaseUrl, useApiKeys, useCreateApiKey, useRevokeApiKey, type ApiKey, type CreatedKey } from '../../lib/apikeys';
-import { Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, Dialog, EmptyState, Field, IconButton, Input, Mono, Select, Skeleton, Tabs, cn } from '../../ui/primitives';
+import { apiBaseUrl, useApiKeys, useCreateApiKey, useRevokeApiKey, useSetKeyNetworks, type ApiKey, type CreatedKey } from '../../lib/apikeys';
+import { entryProblem, splitEntries } from '../../lib/network';
+import { Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, Dialog, EmptyState, Field, IconButton, Input, Mono, Select, Skeleton, Tabs, Textarea, cn } from '../../ui/primitives';
 import { ROLE_INFO, sortRoles } from '../users/UsersPage';
 
 // What each role lets an API key do through this REST API.
@@ -26,6 +27,7 @@ export default function ApiKeysPage() {
   const { data, isLoading, error } = useApiKeys();
   const [creating, setCreating] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [editingNets, setEditingNets] = useState<ApiKey | null>(null);
   const [created, setCreated] = useState<CreatedKey | null>(null);
   const [revoking, setRevoking] = useState<ApiKey | null>(null);
   const revoke = useRevokeApiKey();
@@ -58,7 +60,7 @@ export default function ApiKeysPage() {
             <div className="tw:overflow-x-auto">
               <table className="tw:w-full tw:text-[13px]">
                 <thead className="tw:text-xs tw:text-muted tw:text-left">
-                  <tr>{['Name', 'Key', 'Roles', 'Created', 'Last used', 'Expires', ''].map(h => <th key={h} className="tw:px-4 tw:py-2 tw:font-medium">{h}</th>)}</tr>
+                  <tr>{['Name', 'Key', 'Roles', 'Allowed from', 'Created', 'Last used', 'Expires', ''].map(h => <th key={h} className="tw:px-4 tw:py-2 tw:font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {data.keys.map(k => {
@@ -68,6 +70,12 @@ export default function ApiKeysPage() {
                         <td className="tw:px-4 tw:py-2 tw:font-medium">{k.name}</td>
                         <td className="tw:px-4 tw:py-2"><Mono>atl_{k.id}_{k.hint}…</Mono></td>
                         <td className="tw:px-4 tw:py-2"><div className="tw:flex tw:flex-wrap tw:gap-1">{sortRoles(k.roles).map(r => <Badge key={r}>{ROLE_INFO[r]?.label ?? r}</Badge>)}</div></td>
+                        <td className="tw:px-4 tw:py-2 tw:text-xs">
+                          <button type="button" className="tw:text-left tw:hover:underline" title="Change where this key can be used from"
+                            onClick={() => setEditingNets(k)}>
+                            {k.allowed_networks?.length ? <Mono className="tw:text-[11px]">{k.allowed_networks.join(", ")}</Mono> : <span className="tw:text-muted">Anywhere allowed</span>}
+                          </button>
+                        </td>
                         <td className="tw:px-4 tw:py-2 tw:text-xs">{fmt(k.created)}<div className="tw:text-muted">by {k.created_by}</div></td>
                         <td className="tw:px-4 tw:py-2 tw:text-xs">{fmt(k.last_used)}</td>
                         <td className={cn('tw:px-4 tw:py-2 tw:text-xs', expired && 'tw:text-bad')}>{k.expires ? fmt(k.expires) : 'Never'}{expired && ' (expired)'}</td>
@@ -86,6 +94,7 @@ export default function ApiKeysPage() {
         <ApiDocs />
       </div>
 
+      {editingNets && <KeyNetworksDialog apiKey={editingNets} onClose={() => setEditingNets(null)} />}
       <ConnectSiemDialog open={connecting} onOpenChange={setConnecting} connection={data?.connection} />
       <CreateDialog open={creating} onOpenChange={setCreating} roles={data?.roles ?? []}
         onCreated={k => { setCreating(false); setCreated(k); }} />
@@ -118,15 +127,17 @@ function CreateDialog({ open, onOpenChange, roles, onCreated }: {
   const [name, setName] = useState('');
   const [picked, setPicked] = useState<string[]>(['reader']);
   const [ttl, setTtl] = useState('365');
-  const submit = () => create.mutate({ name: name.trim(), roles: picked, ttl_days: Number(ttl) }, {
-    onSuccess: k => { setName(''); setPicked(['reader']); onCreated(k); },
+  const [nets, setNets] = useState('');
+  const netProblems = splitEntries(nets).map(entryProblem).filter(Boolean);
+  const submit = () => create.mutate({ name: name.trim(), roles: picked, ttl_days: Number(ttl), allowed_networks: splitEntries(nets) }, {
+    onSuccess: k => { setName(''); setPicked(['reader']); setNets(''); onCreated(k); },
     onError: e => toast.error((e as Error).message),
   });
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title="New API key"
       footer={<>
         <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button variant="primary" loading={create.isPending} disabled={!name.trim() || picked.length === 0} onClick={submit}>Create key</Button>
+        <Button variant="primary" loading={create.isPending} disabled={!name.trim() || picked.length === 0 || netProblems.length > 0} onClick={submit}>Create key</Button>
       </>}>
       <div className="tw:space-y-3">
         <Field label="Name" required><Input value={name} onChange={e => setName(e.target.value)} placeholder="Splunk alerts" /></Field>
@@ -146,6 +157,10 @@ function CreateDialog({ open, onOpenChange, roles, onCreated }: {
               );
             })}
           </div>
+        </Field>
+        <Field label="Allowed from (optional)" hint="IP addresses or ranges this key may be used from, e.g. your SIEM's address. Empty: anywhere the API allowlist permits.">
+          <Textarea rows={2} className="tw:font-mono tw:text-xs" value={nets} onChange={e => setNets(e.target.value)} placeholder="192.0.2.15, 10.20.0.0/16" />
+          {netProblems.length > 0 && <span className="tw:text-2xs tw:text-bad">{netProblems.join(" · ")}</span>}
         </Field>
         <Field label="Expires">
           <Select value={ttl} onChange={e => setTtl(e.target.value)}>
@@ -227,5 +242,26 @@ function ApiDocs() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function KeyNetworksDialog({ apiKey, onClose }: { apiKey: ApiKey; onClose: () => void }) {
+  const set = useSetKeyNetworks();
+  const [text, setText] = useState((apiKey.allowed_networks ?? []).join('\n'));
+  const problems = splitEntries(text).map(entryProblem).filter(Boolean);
+  return (
+    <Dialog open onOpenChange={v => !v && onClose()} title={`Where “${apiKey.name}” can be used from`}
+      description="IP addresses or ranges, one per line. Leave empty to allow any address the API allowlist permits."
+      footer={<>
+        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" loading={set.isPending} disabled={problems.length > 0}
+          onClick={() => set.mutate({ id: apiKey.id, allowed_networks: splitEntries(text) }, {
+            onSuccess: () => { toast.success('Saved'); onClose(); },
+            onError: e => toast.error((e as Error).message),
+          })}>Save</Button>
+      </>}>
+      <Textarea rows={5} className="tw:font-mono tw:text-xs" value={text} onChange={e => setText(e.target.value)} placeholder="192.0.2.15" />
+      {problems.length > 0 && <div className="tw:mt-1 tw:text-2xs tw:text-bad">{problems.join(' · ')}</div>}
+    </Dialog>
   );
 }

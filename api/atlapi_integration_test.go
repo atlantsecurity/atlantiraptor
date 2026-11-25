@@ -11,6 +11,7 @@ import (
 
 	"github.com/Velocidex/ordereddict"
 	"github.com/stretchr/testify/suite"
+	"www.velocidex.com/golang/velociraptor/api/authenticators"
 	"www.velocidex.com/golang/velociraptor/file_store/test_utils"
 	"www.velocidex.com/golang/velociraptor/utils"
 	_ "www.velocidex.com/golang/velociraptor/vql_plugins"
@@ -428,6 +429,59 @@ func (self *AtlAPITestSuite) TestClientsLabelsQueryStats() {
 	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
 	code, out = self.call("GET", "artifacts/Windows.System.Pslist", hunter, nil)
 	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+}
+
+func (self *AtlAPITestSuite) TestNetworkAllowlists() {
+	// httptest requests come from 192.0.2.1.
+	token := self.key("reader")
+	keys, _ := ListAPIKeys(self.ConfigObj)
+	var id string
+	for _, k := range keys {
+		if k.Name == "test reader" {
+			id = k.ID
+		}
+	}
+	_, err := SetAPIKeyNetworks(self.ConfigObj, id, []string{"10.0.0.0/8"})
+	assert.NoError(self.T(), err)
+	// From elsewhere the key looks like a bad key.
+	code, _ := self.call("GET", "whoami", token, nil)
+	assert.Equal(self.T(), 401, code)
+	_, err = SetAPIKeyNetworks(self.ConfigObj, id, []string{"192.0.2.0/24"})
+	assert.NoError(self.T(), err)
+	code, _ = self.call("GET", "whoami", token, nil)
+	assert.Equal(self.T(), 200, code)
+	_, err = SetAPIKeyNetworks(self.ConfigObj, id, []string{"not-a-network"})
+	assert.Error(self.T(), err)
+
+	// The server-wide API list, enforced in front of the API.
+	_, err = SetAPIKeyNetworks(self.ConfigObj, id, nil)
+	assert.NoError(self.T(), err)
+	authFailMu.Lock()
+	authFails = map[string]*bucket{}
+	authFailMu.Unlock()
+	gate := authenticators.IpFilter(self.ConfigObj, self.handler)
+	_, err = authenticators.SaveNetworkPolicy(self.ConfigObj, authenticators.NetworkPolicy{
+		API: authenticators.NetworkList{Enabled: true, Entries: []string{"10.0.0.0/8"}}}, "test")
+	assert.NoError(self.T(), err)
+	req := httptest.NewRequest("GET", "/api/atl/v1/whoami", nil).WithContext(self.Ctx)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	gate.ServeHTTP(rec, req)
+	assert.Equal(self.T(), 403, rec.Code)
+
+	// Loopback is always allowed.
+	req.RemoteAddr = "127.0.0.1:5000"
+	rec = httptest.NewRecorder()
+	gate.ServeHTTP(rec, req)
+	assert.NotEqual(self.T(), 403, rec.Code)
+
+	// Disabled again: allowed from anywhere.
+	_, err = authenticators.SaveNetworkPolicy(self.ConfigObj, authenticators.NetworkPolicy{}, "test")
+	assert.NoError(self.T(), err)
+	req.RemoteAddr = "192.0.2.1:1234"
+	rec = httptest.NewRecorder()
+	gate.ServeHTTP(rec, req)
+	assert.Equal(self.T(), 200, rec.Code)
 }
 
 func TestAtlAPI(t *testing.T) {

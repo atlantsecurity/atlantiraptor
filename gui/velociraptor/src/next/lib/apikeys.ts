@@ -14,6 +14,7 @@ export interface ApiKey {
   expires?: number;
   last_used?: number;
   rate_limit?: number;
+  allowed_networks?: string[];
 }
 
 export interface ConnectionInfo {
@@ -27,7 +28,7 @@ export interface ConnectionInfo {
 }
 
 interface KeysResponse { keys: ApiKey[]; roles: string[]; connection?: ConnectionInfo }
-export interface NewKey { name: string; roles: string[]; ttl_days: number }
+export interface NewKey { name: string; roles: string[]; ttl_days: number; allowed_networks?: string[] }
 export interface CreatedKey { key: ApiKey; token: string }
 
 export function useApiKeys() {
@@ -41,6 +42,15 @@ export function useCreateApiKey() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (k: NewKey) => api.post<CreatedKey>('v1/atl/apikeys', k),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['apikeys'] }),
+  });
+}
+
+export function useSetKeyNetworks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { id: string; allowed_networks: string[] }) =>
+      api.put<{ key: ApiKey }>('v1/atl/apikeys', { allowed_networks: p.allowed_networks }, { id: p.id }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['apikeys'] }),
   });
 }

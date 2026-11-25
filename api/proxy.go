@@ -102,7 +102,9 @@ func AddProxyMux(config_obj *config_proto.Config, mux *api_utils.ServeMux) error
 			handler = auther.AuthenticateUserHandler(handler, acls.READ_RESULTS)
 		}
 
-		mux.Handle(reverse_proxy_config.Route, handler)
+		// Reverse-proxied routes are part of the console: apply the
+		// network allowlists to them too.
+		mux.Handle(reverse_proxy_config.Route, ipFilter(config_obj, handler))
 	}
 
 	return nil
@@ -170,6 +172,9 @@ func PrepareGUIMux(
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/apikeys"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(apiKeysHandler(), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/network"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(networkHandler(config_obj), acls.READ_RESULTS))))
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/atl/v1/"),
 		ipFilter(config_obj, AtlAPIHandler(config_obj)))
 

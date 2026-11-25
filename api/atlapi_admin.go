@@ -88,9 +88,10 @@ func apiKeysHandler() http.Handler {
 
 		case http.MethodPost:
 			var body struct {
-				Name    string   `json:"name"`
-				Roles   []string `json:"roles"`
-				TTLDays int      `json:"ttl_days"`
+				Name            string   `json:"name"`
+				Roles           []string `json:"roles"`
+				TTLDays         int      `json:"ttl_days"`
+				AllowedNetworks []string `json:"allowed_networks"`
 			}
 			if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body); err != nil {
 				groupsJSON(w, http.StatusBadRequest, map[string]string{"message": "Bad request"})
@@ -101,13 +102,13 @@ func apiKeysHandler() http.Handler {
 				return
 			}
 			key, token, err := CreateAPIKey(root, org_config, principal, strings.TrimSpace(body.Name),
-				body.Roles, time.Duration(body.TTLDays)*24*time.Hour)
+				body.Roles, time.Duration(body.TTLDays)*24*time.Hour, body.AllowedNetworks...)
 			if err != nil {
 				groupsJSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
 				return
 			}
 			audit("api_key_create", ordereddict.NewDict().Set("key_id", key.ID).Set("name", key.Name).
-				Set("roles", key.Roles).Set("expires", key.Expires))
+				Set("roles", key.Roles).Set("expires", key.Expires).Set("allowed_networks", key.AllowedNetworks))
 			groupsJSON(w, http.StatusOK, map[string]interface{}{"key": key, "token": token})
 
 		case http.MethodDelete:
@@ -136,10 +137,46 @@ func apiKeysHandler() http.Handler {
 			audit("api_key_revoke", ordereddict.NewDict().Set("key_id", key.ID).Set("name", key.Name))
 			groupsJSON(w, http.StatusOK, map[string]interface{}{"revoked": key})
 
+		case http.MethodPut:
+			// Change the addresses a key may be used from.
+			id := r.URL.Query().Get("id")
+			if !keyInOrg(root, id, org_config.OrgId) {
+				groupsJSON(w, http.StatusNotFound, map[string]string{"message": "No such key in this org."})
+				return
+			}
+			var body struct {
+				AllowedNetworks []string `json:"allowed_networks"`
+			}
+			if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body); err != nil {
+				groupsJSON(w, http.StatusBadRequest, map[string]string{"message": "Bad request"})
+				return
+			}
+			key, err := SetAPIKeyNetworks(root, id, body.AllowedNetworks)
+			if err != nil {
+				groupsJSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
+				return
+			}
+			audit("api_key_networks", ordereddict.NewDict().Set("key_id", key.ID).Set("allowed_networks", key.AllowedNetworks))
+			groupsJSON(w, http.StatusOK, map[string]interface{}{"key": key})
+
 		default:
-			groupsJSON(w, http.StatusMethodNotAllowed, map[string]string{"message": "GET, POST or DELETE"})
+			groupsJSON(w, http.StatusMethodNotAllowed, map[string]string{"message": "GET, POST, PUT or DELETE"})
 		}
 	})
+}
+
+// keyInOrg reports whether the key exists and belongs to the org.
+func keyInOrg(root *config_proto.Config, id, org_id string) bool {
+	keys, err := ListAPIKeys(root)
+	if err != nil {
+		return false
+	}
+	for _, k := range keys {
+		if k.ID == id && (k.OrgId == org_id || (utils.IsRootOrg(k.OrgId) && utils.IsRootOrg(org_id))) {
+			return true
+		}
+	}
+	return false
 }
 
 // ConnectionInfo tells an integrator how to reach and trust this server.

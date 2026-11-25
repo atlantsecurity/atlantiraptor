@@ -130,6 +130,16 @@ export async function post<T>(
   }
 }
 
+export async function put<T>(
+  path: string, body?: unknown, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.put<T>(apiUrl(path), body ?? {}, { params, headers: headers(), signal });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
 export async function del<T>(
   path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   try {

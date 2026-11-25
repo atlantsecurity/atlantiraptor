@@ -7,6 +7,7 @@ import { CheckCircle2, Download, Plug, XCircle } from 'lucide-react';
 import {
   downloadCaCertificate, testApiKey, useCreateApiKey, type ConnectionInfo, type CreatedKey, type TestResult,
 } from '../../lib/apikeys';
+import { entryProblem, splitEntries } from '../../lib/network';
 import { Badge, Button, CopyButton, Dialog, Field, Input, Mono, Segmented, Select, cn } from '../../ui/primitives';
 
 type Preset = 'respond' | 'triage' | 'read';
@@ -29,13 +30,15 @@ export function ConnectSiemDialog({ open, onOpenChange, connection }: Props) {
   const [ttl, setTtl] = useState('365');
   const [where, setWhere] = useState<Where>('docker');
   const [created, setCreated] = useState<CreatedKey | null>(null);
+  const [siemAddr, setSiemAddr] = useState('');
+  const addrProblems = splitEntries(siemAddr).map(entryProblem).filter(Boolean);
 
   const close = (v: boolean) => {
     if (!v) { setCreated(null); create.reset(); }
     onOpenChange(v);
   };
   const submit = () => create.mutate(
-    { name: name.trim(), roles: PRESETS[preset].roles, ttl_days: Number(ttl) },
+    { name: name.trim(), roles: PRESETS[preset].roles, ttl_days: Number(ttl), allowed_networks: splitEntries(siemAddr) },
     { onSuccess: setCreated, onError: e => toast.error((e as Error).message) });
 
   return (
@@ -48,7 +51,7 @@ export function ConnectSiemDialog({ open, onOpenChange, connection }: Props) {
         ? <Button variant="primary" onClick={() => close(false)}>Done, I have copied the settings</Button>
         : <>
             <Button variant="secondary" onClick={() => close(false)}>Cancel</Button>
-            <Button variant="primary" loading={create.isPending} disabled={!name.trim()} onClick={submit}>Create key and show settings</Button>
+            <Button variant="primary" loading={create.isPending} disabled={!name.trim() || addrProblems.length > 0} onClick={submit}>Create key and show settings</Button>
           </>}>
       {created
         ? <Settings created={created} connection={connection} where={where} />
@@ -71,6 +74,10 @@ export function ConnectSiemDialog({ open, onOpenChange, connection }: Props) {
               <Field label="Where does the SIEM run?">
                 <Segmented<Where> value={where} onChange={setWhere}
                   options={[{ value: 'docker', label: 'Docker on this computer' }, { value: 'remote', label: 'Another machine' }]} />
+              </Field>
+              <Field label="SIEM address (optional)" hint="Lock the key to the SIEM's IP address or range. A SIEM in Docker on this computer connects from 127.0.0.1.">
+                <Input value={siemAddr} onChange={e => setSiemAddr(e.target.value)} placeholder="192.0.2.15" className="tw:font-mono tw:text-xs" />
+                {addrProblems.length > 0 && <span className="tw:text-2xs tw:text-bad">{addrProblems.join(" · ")}</span>}
               </Field>
               <Field label="Key expires">
                 <Select value={ttl} onChange={e => setTtl(e.target.value)}>

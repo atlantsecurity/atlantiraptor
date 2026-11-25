@@ -31,6 +31,7 @@ import (
 	"time"
 
 	acl_proto "www.velocidex.com/golang/velociraptor/acls/proto"
+	"www.velocidex.com/golang/velociraptor/api/authenticators"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	"www.velocidex.com/golang/velociraptor/file_store"
 	fs_api "www.velocidex.com/golang/velociraptor/file_store/api"
@@ -67,6 +68,9 @@ type APIKey struct {
 	Expires   int64    `json:"expires,omitempty"`
 	LastUsed  int64    `json:"last_used,omitempty"`
 	RateLimit int      `json:"rate_limit,omitempty"`
+	// Addresses the key may be used from (IPs or CIDR ranges). Empty
+	// means any address the API allowlist allows.
+	AllowedNetworks []string `json:"allowed_networks,omitempty"`
 }
 
 func (k APIKey) Principal() string { return apiPrincipalLabel + k.ID }
@@ -210,12 +214,17 @@ func validateKeyRoles(roles []string) ([]string, error) {
 // CreateAPIKey stores a new key, grants its roles in the org and returns
 // the key record and the full token (shown once).
 func CreateAPIKey(root, org_config *config_proto.Config, creator, name string,
-	roles []string, ttl time.Duration) (APIKey, string, error) {
+	roles []string, ttl time.Duration, networks ...string) (APIKey, string, error) {
+
+	networks, err := validateKeyNetworks(networks)
+	if err != nil {
+		return APIKey{}, "", err
+	}
 
 	if !apiKeyNameRe.MatchString(name) {
 		return APIKey{}, "", errors.New("name: 1-64 letters, digits, spaces, dots, dashes or underscores")
 	}
-	roles, err := validateKeyRoles(roles)
+	roles, err = validateKeyRoles(roles)
 	if err != nil {
 		return APIKey{}, "", err
 	}
@@ -238,7 +247,7 @@ func CreateAPIKey(root, org_config *config_proto.Config, creator, name string,
 	key := APIKey{
 		ID: id, Name: name, Hash: hashSecret(pepper, secret), Hint: secret[:4],
 		Roles: roles, OrgId: org_config.OrgId, CreatedBy: creator, Created: now.Unix(),
-		RateLimit: defaultKeyRate,
+		RateLimit: defaultKeyRate, AllowedNetworks: networks,
 	}
 	if ttl > 0 {
 		key.Expires = now.Add(ttl).Unix()
@@ -310,6 +319,53 @@ func RevokeAPIKey(root *config_proto.Config, id string) (APIKey, error) {
 		return APIKey{}, err
 	}
 	return found.Public(), nil
+}
+
+const maxKeyNetworks = 50
+
+func validateKeyNetworks(networks []string) ([]string, error) {
+	out := []string{}
+	for _, n := range networks {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		if _, err := authenticators.ParseNetworkEntry(n); err != nil {
+			return nil, err
+		}
+		if !utils.InString(out, n) {
+			out = append(out, n)
+		}
+	}
+	if len(out) > maxKeyNetworks {
+		return nil, fmt.Errorf("at most %d allowed addresses per key", maxKeyNetworks)
+	}
+	return out, nil
+}
+
+// SetAPIKeyNetworks replaces the addresses a key may be used from.
+func SetAPIKeyNetworks(root *config_proto.Config, id string, networks []string) (APIKey, error) {
+	networks, err := validateKeyNetworks(networks)
+	if err != nil {
+		return APIKey{}, err
+	}
+	apiKeyMu.Lock()
+	defer apiKeyMu.Unlock()
+	doc, err := readKeysLocked(root)
+	if err != nil {
+		return APIKey{}, err
+	}
+	next := &apiKeyDoc{Keys: append([]APIKey{}, doc.Keys...), Revoked: doc.Revoked}
+	for i := range next.Keys {
+		if next.Keys[i].ID == id {
+			next.Keys[i].AllowedNetworks = networks
+			if err := writeKeysLocked(root, next); err != nil {
+				return APIKey{}, err
+			}
+			return next.Keys[i].Public(), nil
+		}
+	}
+	return APIKey{}, errors.New("no such key")
 }
 
 var errBadToken = errors.New("invalid or expired API key")

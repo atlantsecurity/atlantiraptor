@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/Velocidex/ordereddict"
+	"www.velocidex.com/golang/velociraptor/api/authenticators"
 	api_utils "www.velocidex.com/golang/velociraptor/api/utils"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	vjson "www.velocidex.com/golang/velociraptor/json"
@@ -214,6 +215,14 @@ func AtlAPIHandler(config_obj *config_proto.Config) http.Handler {
 			}
 			authFailed(ip, time.Now())
 			logging.GetLogger(root, &logging.FrontendComponent).Info("atl api: rejected API key from %v", ip)
+			apiError(w, http.StatusUnauthorized, errBadToken.Error())
+			return
+		}
+		if !authenticators.IPAllowedByEntries(authenticators.ClientIP(config_obj, r), key.AllowedNetworks) {
+			// Answer as for a bad key, so a stolen key can't be confirmed
+			// from elsewhere, and count it as a failed attempt.
+			authenticators.LogNetworkDenied(root, "api-key", "key "+key.ID, authenticators.ClientIP(config_obj, r), r)
+			authFailed(ip, time.Now())
 			apiError(w, http.StatusUnauthorized, errBadToken.Error())
 			return
 		}
