@@ -217,13 +217,20 @@ func SetGroups(config_obj *config_proto.Config, groups []Group) ([]Group, error)
 
 // UserRolesAndGroups returns the roles a user holds in this org (their
 // own plus those from groups) and the names of the groups they are in.
-func UserRolesAndGroups(config_obj *config_proto.Config, principal string) ([]string, []string) {
+func UserRolesAndGroups(config_obj *config_proto.Config, principal string) ([]string, []string, error) {
 	roles := []string{}
-	if policy, err := services.GetPolicy(config_obj, principal); err == nil && policy != nil {
+	policy, err := services.GetPolicy(config_obj, principal)
+	if err == nil && policy != nil {
 		roles = append(roles, policy.Roles...)
+	} else if err != nil && !errors.Is(err, utils.NotFoundError) && !errors.Is(err, os.ErrNotExist) {
+		return nil, nil, err
 	}
 	names := []string{}
-	if groups, err := GetGroups(config_obj); err == nil {
+	groups, err := GetGroups(config_obj)
+	if err != nil {
+		return nil, nil, err
+	}
+	{
 		for _, role := range groupRoles(groups, principal) {
 			if !utils.InString(roles, role) {
 				roles = append(roles, role)
@@ -238,7 +245,7 @@ func UserRolesAndGroups(config_obj *config_proto.Config, principal string) ([]st
 			}
 		}
 	}
-	return roles, names
+	return roles, names, nil
 }
 
 // groupRoles returns the roles a principal gets through groups.

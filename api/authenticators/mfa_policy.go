@@ -7,6 +7,7 @@ package authenticators
 // out. ATLANTIRAPTOR_DISABLE_MFA=1 overrides everything.
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/file_store"
 	"www.velocidex.com/golang/velociraptor/file_store/api"
 	"www.velocidex.com/golang/velociraptor/file_store/path_specs"
+	"www.velocidex.com/golang/velociraptor/services"
 	"www.velocidex.com/golang/velociraptor/services/acl_manager"
 	"www.velocidex.com/golang/velociraptor/utils"
 )
@@ -147,16 +149,62 @@ func SaveMFAPolicy(root *config_proto.Config, p MFAPolicy) (MFAPolicy, error) {
 	return p, nil
 }
 
-// mfaRequiredFor decides whether a user must use 2FA. If the policy
-// can't be read, 2FA is required (enrolment is always possible).
+// mfaRequiredFor decides whether a user must use 2FA. Roles and groups
+// are collected across every org the user belongs to (and the root
+// org). Anything that can't be read means 2FA is required: enrolment is
+// always possible, so failing closed never locks anyone out.
 func mfaRequiredFor(root *config_proto.Config, username string) bool {
 	p, err := LoadMFAPolicy(root)
 	if err != nil {
 		return true
 	}
-	return policyRequires(p, func() ([]string, []string) {
-		return acl_manager.UserRolesAndGroups(root, username)
-	})
+	if p.Mode != MFAModeSelected {
+		return policyRequires(p, nil)
+	}
+
+	roles, groups, err := rolesAndGroupsAllOrgs(root, username)
+	if err != nil {
+		return true
+	}
+	return policyRequires(p, func() ([]string, []string) { return roles, groups })
+}
+
+func rolesAndGroupsAllOrgs(root *config_proto.Config, username string) ([]string, []string, error) {
+	configs := []*config_proto.Config{root}
+
+	user_record, err := services.GetUserManager().GetUser(context.Background(), username, username)
+	if err != nil {
+		return nil, nil, err
+	}
+	org_manager, err := services.GetOrgManager()
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, org := range user_record.Orgs {
+		if utils.IsRootOrg(org.Id) {
+			continue
+		}
+		org_config, err := org_manager.GetOrgConfig(org.Id)
+		if err != nil {
+			return nil, nil, err
+		}
+		configs = append(configs, org_config)
+	}
+
+	roles, groups := []string{}, []string{}
+	for _, cfg := range configs {
+		r, g, err := acl_manager.UserRolesAndGroups(cfg, username)
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, x := range r {
+			if !utils.InString(roles, x) {
+				roles = append(roles, x)
+			}
+		}
+		groups = append(groups, g...)
+	}
+	return roles, groups, nil
 }
 
 func policyRequires(p MFAPolicy, rolesAndGroups func() ([]string, []string)) bool {
