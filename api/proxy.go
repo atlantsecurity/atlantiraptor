@@ -148,6 +148,22 @@ func PrepareGUIMux(
 		return nil, err
 	}
 
+	// Two-factor sign in for password (basic auth) logins.
+	if _, ok := auther.(*authenticators.BasicAuthenticator); ok {
+		authenticators.AddMFAHandlers(config_obj, mux,
+			func(h http.Handler) http.Handler {
+				return ipFilter(config_obj, csrfProtect(config_obj, h))
+			},
+			auther.AuthenticateUserHandler)
+	}
+
+	// User groups (roles for many users at once). Admin checks are in
+	// the handler; the effective permissions are enforced by the ACL
+	// manager.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/groups"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(groupsHandler(), acls.READ_RESULTS))))
+
 	base_path := api_utils.GetBasePath(config_obj)
 	grpc_client_factory := grpc_client.Factory
 

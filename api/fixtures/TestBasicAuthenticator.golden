@@ -41,6 +41,25 @@
    " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
    " api.toolUploadHandler"
   ],
+  "/velociraptor/api/v1/atl/groups": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
+   " http.HandlerFunc"
+  ],
+  "/velociraptor/api/v1/atl/mfa/": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " authenticators.passwordOnly"
+  ],
+  "/velociraptor/api/v1/atl/mfa/manage/": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
+   " authenticators.AddMFAHandlers"
+  ],
   "/velociraptor/app/": [
    "authenticators.IpFilter",
    " utils.StripPrefix",
@@ -58,6 +77,11 @@
   "/velociraptor/app/logoff.html": [
    "authenticators.IpFilter",
    " authenticators.(*BasicAuthenticator).AddLogoff"
+  ],
+  "/velociraptor/app/mfa.html": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " authenticators.passwordOnly"
   ],
   "/velociraptor/clients/": [
    "authenticators.IpFilter",

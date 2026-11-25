@@ -57,12 +57,31 @@ function headers() {
   return { 'Grpc-Metadata-OrgId': currentOrgId() };
 }
 
+export function isMfaRequired(data: unknown): boolean {
+  return !!data && typeof data === 'object' && (data as { message?: string }).message === 'mfa_required';
+}
+
+let mfaRedirecting = false;
+export function redirectToMfa() {
+  if (mfaRedirecting) return;
+  mfaRedirecting = true;
+  const base = basePath().replace(/\/+$/, '');
+  const back = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.location.assign(`${base}/app/mfa.html?return=${encodeURIComponent(back)}`);
+}
+
 function toApiError(err: unknown): never {
   if (axios.isCancel(err)) {
     throw err;
   }
   const e = err as AxiosError<{ message?: string } | string>;
   const status = e.response?.status;
+
+  // The two-factor session expired or was revoked: go to the code page
+  // and come back to the same screen afterwards.
+  if (status === 403 && isMfaRequired(e.response?.data)) {
+    redirectToMfa();
+  }
 
   if (status === 401) {
     const tpl = window.globals?.AuthRedirectTemplate || '';
