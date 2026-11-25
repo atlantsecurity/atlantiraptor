@@ -4,7 +4,8 @@ description: |
   credentials live in an `SMTP Creds` secret.
 
   `PeriodSeconds` limits how often mail is sent for the same alert
-  name, so a noisy rule cannot flood the inbox.
+  name, so a noisy rule cannot flood the inbox. Alerts with other names
+  are always mailed.
 
 type: SERVER_EVENT
 
@@ -30,14 +31,24 @@ sources:
       LET level_of(e) = lowcase(string=e.level || "medium")
       LET recipients <= filter(list=split(string=To, sep=" *, *"), regex=".")
 
+      // Per alert name: the first alert of each name is mailed, repeats of
+      // the same name within PeriodSeconds are skipped (and reported as
+      // Skipped rows), and other names are never held back.
+      LET last_sent <= dict()
+      LET due(key) = now() - get(item=last_sent, field=key, default=0) > PeriodSeconds
+
       LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
         WHERE get(item=rank, field=level_of(e=event_data), default=2) <= min_rank
 
+      LET to_send = SELECT *, due(key=name) AND set(item=last_sent, field=name, value=now()) AS _Due
+        FROM alerts
+
       SELECT name AS Alert, client_id AS ClientId,
-             mail(secret=Secret, to=recipients, period=PeriodSeconds,
+             if(condition=NOT _Due, then="Skipped: same alert mailed recently",
+                else=mail(secret=Secret, to=recipients, period=1,
                   subject=format(format="[%v] %v on %v",
                     args=[upcase(string=level_of(e=event_data)), name, client_id || "server"]),
                   body=format(format="Alert: %v\nClient: %v\nLevel: %v\nTime: %v\nArtifact: %v\n\nDetails:\n%v\n",
                     args=[name, client_id || "server", level_of(e=event_data), timestamp, artifact,
-                          serialize(item=event_data, format="json")])) AS Sent
-      FROM alerts
+                          serialize(item=event_data, format="json")]))) AS Sent
+      FROM to_send

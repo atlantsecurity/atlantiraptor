@@ -32,16 +32,27 @@ sources:
 
       LET level_of(e) = lowcase(string=e.level || "medium")
 
+      // Alert text can come from endpoints, so it is truncated and chat
+      // markup is neutralised: Slack/Teams control characters are
+      // escaped, Discord markdown is escaped and mentions are disabled.
+      LET clip(s) = format(format="%.300v", args=str(str=s || ""))
+      LET slack_escape(s) = regex_replace(source=regex_replace(source=regex_replace(
+          source=clip(s=s), re="&", replace="&amp;"), re="<", replace="&lt;"), re=">", replace="&gt;")
+      LET discord_escape(s) = regex_replace(source=clip(s=s), re="([\\\\*_~`|>@#\\[\\]()])", replace="\\$1")
+      LET escape(s) = if(condition=Format = "discord", then=discord_escape(s=s), else=slack_escape(s=s))
+
       LET text_of(name, client_id, level, e, ts) = format(
           format="[%v] %v on %v: %v (%v)",
-          args=[upcase(string=level), name, client_id || "server", e.description || "", ts])
+          args=[upcase(string=level), escape(s=name), escape(s=client_id || "server"),
+                escape(s=e.description), ts])
 
       LET body(name, client_id, level, e, ts, artifact) = if(
           condition=Format = "generic",
           then=dict(name=name, client_id=client_id, level=level, artifact=artifact,
                     timestamp=ts, event_data=e),
           else=if(condition=Format = "discord",
-             then=dict(content=text_of(name=name, client_id=client_id, level=level, e=e, ts=ts)),
+             then=dict(content=text_of(name=name, client_id=client_id, level=level, e=e, ts=ts),
+                       allowed_mentions=dict(parse=[])),
              else=dict(text=text_of(name=name, client_id=client_id, level=level, e=e, ts=ts))))
 
       LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
