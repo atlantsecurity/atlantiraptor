@@ -48,8 +48,13 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
 
 ### In this repository
 
-- The Windows agent and server are one binary. A Release build is
+- The Windows agent and server are one binary. Version resources (product Atlantiraptor,
+  Atlant Security EOOD, AGPL attribution) come from `docs/winres/winres_template.json`:
+  set the version and run `go-winres make --in docs/winres/winres.json --out bin/rsrc`.
+  A Release build is
   `go build -tags "velomain server_vql extras disable_grpc_modules goexperiment.nojsonv2 release yara"`
   with the `bin/rsrc_windows_*.syso` resources in place, written to `dist/release/`.
   Sign that folder; never sign `output/` (local development builds, rebuilt constantly).
-- There is no MSI build in this repo yet. When one is added, sign the MSI after building it.
+- MSI: `scripts/build-msi.ps1 -Binary dist/release/Atlantiraptor.exe -ClientConfig <client.config.yaml> -Version x.y.z`
+  (WiX v5, source `docs/wix/atlantiraptor_amd64.wxs`). Order: build exe -> sign exe ->
+  build MSI -> sign MSI -> verify. Keep the UpgradeCode unchanged so new versions upgrade in place.
