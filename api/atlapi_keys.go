@@ -76,8 +76,17 @@ func (k APIKey) Public() APIKey {
 	return k
 }
 
+// Revoked keys are remembered (without their hash) so the server can
+// still tell who created a key that made a request.
+type revokedKey struct {
+	ID        string `json:"id"`
+	CreatedBy string `json:"created_by"`
+	Revoked   int64  `json:"revoked"`
+}
+
 type apiKeyDoc struct {
-	Keys []APIKey `json:"keys"`
+	Keys    []APIKey     `json:"keys"`
+	Revoked []revokedKey `json:"revoked,omitempty"`
 }
 
 var (
@@ -248,7 +257,7 @@ func CreateAPIKey(root, org_config *config_proto.Config, creator, name string,
 	if err := services.SetPolicy(org_config, key.Principal(), &acl_proto.ApiClientACL{Roles: roles}); err != nil {
 		return APIKey{}, "", fmt.Errorf("grant key roles: %w", err)
 	}
-	next := &apiKeyDoc{Keys: append(append([]APIKey{}, doc.Keys...), key)}
+	next := &apiKeyDoc{Keys: append(append([]APIKey{}, doc.Keys...), key), Revoked: doc.Revoked}
 	if err := writeKeysLocked(root, next); err != nil {
 		_ = services.SetPolicy(org_config, key.Principal(), &acl_proto.ApiClientACL{})
 		return APIKey{}, "", err
@@ -288,7 +297,9 @@ func RevokeAPIKey(root *config_proto.Config, id string) (APIKey, error) {
 			return APIKey{}, fmt.Errorf("remove key permissions: %w", err)
 		}
 	}
-	if err := writeKeysLocked(root, &apiKeyDoc{Keys: kept}); err != nil {
+	revoked := append(append([]revokedKey{}, doc.Revoked...),
+		revokedKey{ID: found.ID, CreatedBy: found.CreatedBy, Revoked: time.Now().Unix()})
+	if err := writeKeysLocked(root, &apiKeyDoc{Keys: kept, Revoked: revoked}); err != nil {
 		return APIKey{}, err
 	}
 	return found.Public(), nil
@@ -332,7 +343,7 @@ func VerifyAPIKey(root *config_proto.Config, token string, now time.Time) (APIKe
 		// Record last use, at most once a minute per key.
 		if now.Sub(lastUsedSaved[k.ID]) > lastUsedWriteGap {
 			lastUsedSaved[k.ID] = now
-			updated := &apiKeyDoc{Keys: append([]APIKey{}, doc.Keys...)}
+			updated := &apiKeyDoc{Keys: append([]APIKey{}, doc.Keys...), Revoked: doc.Revoked}
 			updated.Keys[i].LastUsed = now.Unix()
 			_ = writeKeysLocked(root, updated)
 			return updated.Keys[i], nil

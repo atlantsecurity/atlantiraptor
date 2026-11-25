@@ -365,6 +365,31 @@ func (self *AtlAPITestSuite) TestApprovals() {
 	assert.Equal(self.T(), "STOPPED", utils.ToString(out["data"].(map[string]interface{})["state"]))
 }
 
+func (self *AtlAPITestSuite) TestRevokedRequesterKeyStillBlocksOwner() {
+	_, err := runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj), ordereddict.NewDict(),
+		`SELECT server_set_metadata(atl_response_require_approval="Y") FROM scope()`, 1)
+	assert.NoError(self.T(), err)
+	requester := self.keyBy("erin", "responder")
+	code, out := self.call("POST", "actions/kill/run", requester, map[string]interface{}{
+		"target": map[string]bool{"all": true}, "dry_run": false, "reason": "INC-9",
+		"parameters": map[string]string{"ProcessRegex": "evil"}})
+	assert.Equal(self.T(), 201, code, fmt.Sprint(out))
+	id := utils.ToString(out["data"].(map[string]interface{})["hunt_id"])
+
+	// Erin revokes the requesting key, then tries to approve with a new one.
+	keys, _ := ListAPIKeys(self.ConfigObj)
+	for _, k := range keys {
+		if k.CreatedBy == "erin" {
+			_, err := RevokeAPIKey(self.ConfigObj, k.ID)
+			assert.NoError(self.T(), err)
+		}
+	}
+	code, out = self.call("POST", "approvals/"+id+"/approve", self.keyBy("erin", "responder"), nil)
+	assert.Equal(self.T(), 403, code, fmt.Sprint(out))
+	code, out = self.call("POST", "approvals/"+id+"/approve", self.keyBy("frank", "responder"), nil)
+	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+}
+
 func (self *AtlAPITestSuite) TestClientsLabelsQueryStats() {
 	hunter := self.key("hunter")
 	code, out := self.call("GET", "clients/C.0123456789abcdef", hunter, nil)
@@ -388,6 +413,12 @@ func (self *AtlAPITestSuite) TestClientsLabelsQueryStats() {
 	assert.Equal(self.T(), 200, code)
 	code, out = self.call("GET", "clients/C.0123456789abcdef", hunter, nil)
 	assert.False(self.T(), strings.Contains(fmt.Sprint(out["data"]), "response-abcdef0123456789"))
+	// A nested query() with an org switch keeps the read-only restriction.
+	code, _ = self.call("POST", "query", self.key("analyst"), map[string]interface{}{
+		"query": `SELECT * FROM query(org_id="root", query={SELECT label(client_id="C.0123456789abcdef", labels=["nested-escape"], op="set") AS L FROM scope()})`})
+	assert.Equal(self.T(), 200, code)
+	code, out = self.call("GET", "clients/C.0123456789abcdef", hunter, nil)
+	assert.False(self.T(), strings.Contains(fmt.Sprint(out["data"]), "nested-escape"), fmt.Sprint(out["data"]))
 	// Reserved labels can't be used as targets.
 	code, _ = self.call("POST", "hunts", hunter, map[string]interface{}{
 		"artifacts": []string{"Windows.System.Pslist"}, "target": map[string]interface{}{"labels": []string{"Response-abc"}}})

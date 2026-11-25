@@ -230,11 +230,15 @@ func apiKeyOwner(id string) (string, error) {
 			ID        string `json:"id"`
 			CreatedBy string `json:"created_by"`
 		} `json:"keys"`
+		Revoked []struct {
+			ID        string `json:"id"`
+			CreatedBy string `json:"created_by"`
+		} `json:"revoked"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
 		return "", err
 	}
-	for _, k := range doc.Keys {
+	for _, k := range append(doc.Keys, doc.Revoked...) {
 		if k.ID == id {
 			if k.CreatedBy == "" {
 				return "", errors.New("key has no owner")
@@ -242,6 +246,6 @@ func apiKeyOwner(id string) (string, error) {
 			return k.CreatedBy, nil
 		}
 	}
-	// A revoked key: its requests can still be decided by anyone else.
-	return "", nil
+	// Unknown key: refuse rather than guess.
+	return "", errors.New("unknown API key")
 }

@@ -699,6 +699,12 @@ func (self *readOnlyACL) GetPrincipal() string { return self.principal }
 
 var readOnlyPerms = []acls.ACL_PERMISSION{acls.READ_RESULTS, acls.API_QUERY}
 
+// Restrict keeps the restriction when VQL (query()) builds a new ACL
+// manager for a sub-scope, e.g. for another org or user.
+func (self *readOnlyACL) Restrict(inner vql_subsystem.ACLManager) vql_subsystem.ACLManager {
+	return &readOnlyACL{ACLManager: inner, principal: self.principal}
+}
+
 func newReadOnlyACL(inner vql_subsystem.ACLManager, principal string) *readOnlyACL {
 	return &readOnlyACL{ACLManager: inner, principal: principal}
 }
