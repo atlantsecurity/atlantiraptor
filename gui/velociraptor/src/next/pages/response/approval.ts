@@ -139,20 +139,39 @@ export async function removeOneOffLabels(h: Hunt) {
   if (ids.length === 1) await api.post('v1/LabelClients', { client_ids: ids, labels: [label], operation: 'remove' });
 }
 
-export interface SpecView { artifact: string; params: [string, string][]; duplicateKeys: boolean; live: boolean }
+export interface SpecView { artifact: string; params: [string, string][]; duplicateKeys: boolean; live: boolean; hasSpec: boolean }
+export interface RequestView { specs: SpecView[]; problems: string[] }
 
-// Parameters per artifact, as the client will receive them. A request
-// counts as live if any artifact is armed or has no dry-run switch.
-export function specsOf(h: Hunt): SpecView[] {
-  return (h.start_request?.specs ?? []).map(s => {
-    const env = s.parameters?.env ?? [];
+// The request as the launcher will run it: one entry per launched
+// artifact, using its spec (or defaults when it has none). Anything that
+// could make the display differ from execution is reported as a problem
+// that blocks approval. A request is live if any artifact is armed or has
+// no dry-run switch.
+export function requestView(h: Hunt): RequestView {
+  const req = h.start_request ?? {};
+  const artifacts = req.artifacts ?? [];
+  const specs = req.specs ?? [];
+  const problems: string[] = [];
+  const names = specs.map(s => s.artifact ?? '');
+  if (new Set(artifacts).size !== artifacts.length) problems.push('An artifact is launched more than once.');
+  if (new Set(names).size !== names.length) problems.push('An artifact has more than one parameter set.');
+  if (names.some(n => !artifacts.includes(n))) problems.push('Parameters are given for an artifact that is not launched.');
+  if ((req as { allow_custom_overrides?: boolean }).allow_custom_overrides) problems.push('The request overrides artifact definitions.');
+  if (artifacts.length === 0) problems.push('The request launches no artifacts.');
+
+  const view = artifacts.map(name => {
+    const s = specs.find(x => x.artifact === name);
+    const env = s?.parameters?.env ?? [];
     const keys = env.map(e => e.key);
     const arm = env.find(e => e.key === 'ReallyDoIt');
     return {
-      artifact: s.artifact ?? '',
+      artifact: name,
       params: env.map(e => [e.key, e.value] as [string, string]),
       duplicateKeys: new Set(keys).size !== keys.length,
       live: arm ? arm.value === 'Y' : true,
+      hasSpec: !!s,
     };
   });
+  if (view.some(v => v.duplicateKeys)) problems.push('An artifact has a parameter set twice.');
+  return { specs: view, problems };
 }

@@ -14,7 +14,7 @@ import { timeAgo } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Mono, Switch } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
 import {
-  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, specsOf, useApprovalActions, useApprovalPolicy, usePendingApprovals,
+  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, requestView, useApprovalActions, useApprovalPolicy, usePendingApprovals,
 } from './approval';
 
 export function ApprovalsPanel() {
@@ -88,11 +88,11 @@ function PendingRow({ id }: { id: string }) {
 
   const req = requestOf(hunt);
   const own = hunt.creator === me;
-  const specs = specsOf(hunt);
+  const view = requestView(hunt);
+  const specs = view.specs;
   const live = specs.length === 0 || specs.some(s => s.live);
   // Refuse to approve anything whose target or parameters are ambiguous.
-  const problems: string[] = [];
-  if (specs.some(s => s.duplicateKeys)) problems.push('An artifact has a parameter set twice.');
+  const problems: string[] = [...view.problems];
   if (usesOneOffPrefix && !oneOffLabel) problems.push('The target label does not match the recorded single-host label.');
   if (oneOffLabel && oneOffFetched && (oneOff?.length ?? 0) !== 1) problems.push(`The single-host label matches ${oneOff?.length ?? 0} hosts, not 1.`);
 
@@ -124,7 +124,7 @@ function PendingRow({ id }: { id: string }) {
           <div key={s.artifact} className="tw:contents">
             <dt className="tw:text-muted tw:font-mono tw:text-[11px] tw:break-all">{s.artifact}</dt>
             <dd className="tw:space-y-0.5">
-              {s.params.length === 0 && <span className="tw:text-faint">Defaults</span>}
+              {s.params.length === 0 && <span className="tw:text-faint">{s.hasSpec ? 'Defaults' : 'Defaults (no parameters given)'}</span>}
               {s.params.map(([k, v], i) => (
                 <div key={`${k}-${i}`} className="tw:flex tw:gap-2"><span className="tw:text-muted tw:shrink-0">{k}</span><Mono className="tw:text-[11px] tw:whitespace-pre-wrap tw:break-all">{v}</Mono></div>
               ))}
