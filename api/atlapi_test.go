@@ -243,3 +243,9 @@ func TestRapidIndicatorProblem(t *testing.T) {
 		}
 	}
 }
+
+func TestRevokedListIsCapped(t *testing.T) {
+	if maxRevokedKeys*200 > 4<<20/2 {
+		t.Fatal("revoked list could approach the key document size limit")
+	}
+}

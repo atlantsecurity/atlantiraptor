@@ -42,6 +42,7 @@ import (
 const (
 	apiKeyPrefix      = "atl_"
 	maxAPIKeys        = 200
+	maxRevokedKeys    = 2000
 	defaultKeyRate    = 5  // requests per second
 	defaultKeyBurst   = 30 // burst size
 	lastUsedWriteGap  = 60 * time.Second
@@ -299,6 +300,12 @@ func RevokeAPIKey(root *config_proto.Config, id string) (APIKey, error) {
 	}
 	revoked := append(append([]revokedKey{}, doc.Revoked...),
 		revokedKey{ID: found.ID, CreatedBy: found.CreatedBy, Revoked: time.Now().Unix()})
+	// Keep the most recent ones only, so the document stays small. A
+	// request from a key that has been forgotten can still be decided
+	// only by someone else; the approval guard refuses unknown owners.
+	if len(revoked) > maxRevokedKeys {
+		revoked = revoked[len(revoked)-maxRevokedKeys:]
+	}
 	if err := writeKeysLocked(root, &apiKeyDoc{Keys: kept, Revoked: revoked}); err != nil {
 		return APIKey{}, err
 	}
