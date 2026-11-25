@@ -401,8 +401,8 @@ func remoteIP(r *http.Request) string {
 func refillAuth(ip string, now time.Time) *bucket {
 	b := authFails[ip]
 	if b == nil {
-		if len(authFails) > 10000 {
-			authFails = map[string]*bucket{}
+		if len(authFails) >= 10000 {
+			pruneAuthFails(now)
 		}
 		b = &bucket{tokens: authFailBurst, last: now}
 		authFails[ip] = b
@@ -413,6 +413,24 @@ func refillAuth(ip string, now time.Time) *bucket {
 	}
 	b.last = now
 	return b
+}
+
+// pruneAuthFails drops addresses that have fully recovered, then the
+// oldest entries if the table is still full. Blocked addresses stay.
+func pruneAuthFails(now time.Time) {
+	for ip, b := range authFails {
+		if b.tokens+now.Sub(b.last).Seconds()*authFailRate >= authFailBurst {
+			delete(authFails, ip)
+		}
+	}
+	for ip, b := range authFails {
+		if len(authFails) < 10000 {
+			break
+		}
+		if now.Sub(b.last) > 10*time.Minute {
+			delete(authFails, ip)
+		}
+	}
 }
 
 func authBlocked(ip string, now time.Time) bool {

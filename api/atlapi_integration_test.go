@@ -31,6 +31,12 @@ sources:
   - query: SELECT * FROM info()
 `
 
+const testWrapperArtifact = `
+name: Custom.Wrapper
+sources:
+  - query: SELECT * FROM Artifact.Generic.Remediation.KillProcess(ProcessRegex=".", ReallyDoIt=TRUE)
+`
+
 const testPslistArtifact = `
 name: Windows.System.Pslist
 sources:
@@ -47,7 +53,7 @@ func (self *AtlAPITestSuite) SetupTest() {
 	self.ConfigObj.Services.HuntDispatcher = true
 	self.ConfigObj.Services.HuntManager = true
 	self.TestSuite.SetupTest()
-	self.LoadArtifacts(testKillArtifact, testPslistArtifact)
+	self.LoadArtifacts(testKillArtifact, testPslistArtifact, testWrapperArtifact)
 	self.CreateClient("C.0123456789abcdef")
 	self.handler = AtlAPIHandler(self.ConfigObj)
 	apiKeyCache = nil
@@ -93,7 +99,19 @@ func (self *AtlAPITestSuite) TestAuth() {
 	code, _ = self.call("GET", "whoami", token[:len(token)-2]+"xx", nil)
 	assert.Equal(self.T(), 401, code)
 
+	// Failures from the same address never lock out a valid key.
+	for i := 0; i < authFailBurst+5; i++ {
+		self.call("GET", "whoami", "atl_0123456789abcdef_nope", nil)
+	}
+	code, _ = self.call("GET", "whoami", "atl_0123456789abcdef_nope", nil)
+	assert.Equal(self.T(), 429, code)
+	code, _ = self.call("GET", "whoami", token, nil)
+	assert.Equal(self.T(), 200, code)
+
 	// Revoked keys stop working.
+	authFailMu.Lock()
+	authFails = map[string]*bucket{}
+	authFailMu.Unlock()
 	keys, _ := ListAPIKeys(self.ConfigObj)
 	_, err := RevokeAPIKey(self.ConfigObj, keys[0].ID)
 	assert.NoError(self.T(), err)
@@ -181,6 +199,7 @@ func (self *AtlAPITestSuite) TestResponseAction() {
 	assert.Equal(self.T(), 1, len(rows))
 	u, _ := rows[0].Get("U")
 	assert.True(self.T(), strings.Contains(utils.ToString(u), `"reason":"ticket 42"`), utils.ToString(u))
+	assert.True(self.T(), strings.Contains(utils.ToString(u), `"key_owner":"admin"`), utils.ToString(u))
 	cv, _ := rows[0].Get("C")
 	cond, _ := json.Marshal(cv)
 	assert.True(self.T(), strings.Contains(string(cond), `"response-`), string(cond))
@@ -196,6 +215,11 @@ func (self *AtlAPITestSuite) TestGenericEndpointsRefuseResponseArtifacts() {
 
 	code, out = self.call("POST", "collections", responder, map[string]interface{}{
 		"client_id": "C.0123456789abcdef", "artifacts": []string{"Generic.Remediation.KillProcess/Source"}})
+	assert.Equal(self.T(), 403, code, fmt.Sprint(out))
+
+	// A wrapper that calls a response artifact is refused too.
+	code, out = self.call("POST", "collections", responder, map[string]interface{}{
+		"client_id": "C.0123456789abcdef", "artifacts": []string{"Custom.Wrapper"}})
 	assert.Equal(self.T(), 403, code, fmt.Sprint(out))
 
 	code, out = self.call("POST", "ioc-sweeps", responder, map[string]interface{}{

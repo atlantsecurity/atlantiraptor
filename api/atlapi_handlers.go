@@ -196,14 +196,16 @@ func AtlAPIHandler(config_obj *config_proto.Config) http.Handler {
 			apiError(w, http.StatusServiceUnavailable, "Server not ready")
 			return
 		}
+		// A valid key always works; the per-address throttle only slows
+		// down repeated failures, so others' failures can't lock it out.
 		ip := remoteIP(r)
-		if authBlocked(ip, time.Now()) {
-			w.Header().Set("Retry-After", "60")
-			apiError(w, http.StatusTooManyRequests, "Too many failed attempts")
-			return
-		}
 		key, err := VerifyAPIKey(root, strings.TrimSpace(strings.TrimPrefix(auth, "Bearer ")), time.Now())
 		if err != nil {
+			if authBlocked(ip, time.Now()) {
+				w.Header().Set("Retry-After", "60")
+				apiError(w, http.StatusTooManyRequests, "Too many failed attempts")
+				return
+			}
 			authFailed(ip, time.Now())
 			logging.GetLogger(root, &logging.FrontendComponent).Info("atl api: rejected API key from %v", ip)
 			apiError(w, http.StatusUnauthorized, errBadToken.Error())
@@ -672,8 +674,28 @@ func (c *apiCtx) refuseResponseArtifacts(artifacts []string) bool {
 		apiError(c.w, http.StatusServiceUnavailable, "Server not ready")
 		return true
 	}
+	// Check every artifact the request would run, including the ones it
+	// calls, so a wrapper artifact can't smuggle a response artifact in.
+	names := []string{}
 	for _, a := range artifacts {
-		name := strings.SplitN(a, "/", 2)[0]
+		names = append(names, strings.SplitN(a, "/", 2)[0])
+	}
+	launcher, err := services.GetLauncher(c.org)
+	if err != nil {
+		apiError(c.w, http.StatusServiceUnavailable, "Server not ready")
+		return true
+	}
+	deps, err := launcher.GetDependentArtifacts(c.r.Context(), c.org, repo, names)
+	if err != nil {
+		apiError(c.w, http.StatusBadRequest, "Unknown artifact or artifact dependency")
+		return true
+	}
+	for _, d := range deps {
+		if !utils.InString(names, d) {
+			names = append(names, d)
+		}
+	}
+	for _, name := range names {
 		refuse := utils.InString(responseArtifacts, name)
 		if def, ok := repo.Get(c.r.Context(), c.org, name); ok && def != nil {
 			for _, p := range append(append([]string{}, def.RequiredPermissions...), def.ImpliedPermissions...) {
@@ -986,7 +1008,10 @@ func runAction(c *apiCtx, id string) {
 		if needsApproval {
 			approval = "required"
 		}
-		rec := map[string]string{"reason": reason, "requested_by": c.key.Principal(), "approval": approval}
+		// key_owner lets the console refuse approval by the person who
+		// created the key, so one person can't request and approve.
+		rec := map[string]string{"reason": reason, "requested_by": c.key.Principal(), "approval": approval,
+			"key_owner": c.key.CreatedBy, "api_key": c.key.Name}
 		if oneOff != "" {
 			rec["one_off_label"] = oneOff
 		}

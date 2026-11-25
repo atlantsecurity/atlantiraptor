@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Hunt } from '../../lib/types.ts';
 import {
-  decodeUserData, encodeUserData, isPaused, oneLine, oneOffLabelOf, requestView,
+  decodeUserData, encodeUserData, isPaused, oneLine, oneOffLabelOf, requestView, selfApprovalReason,
 } from './approvalModel.ts';
 
 const LABEL = 'response-abcdef0123456789';
@@ -94,5 +94,20 @@ describe('isPaused', () => {
     assert.equal(isPaused(hunt({ state: 'PAUSED' as Hunt['state'] })), true);
     assert.equal(isPaused(hunt({ state: 1 as unknown as Hunt['state'] })), true);
     assert.equal(isPaused(hunt({ state: 'RUNNING' as Hunt['state'] })), false);
+  });
+});
+
+describe('self approval', () => {
+  const ud = (owner?: string) => encodeUserData({ reason: 'r', requested_by: 'api-0123456789abcdef', key_owner: owner });
+  it('refuses the requester', () => {
+    assert.ok(selfApprovalReason(hunt({ creator: 'alice' }), 'alice'));
+  });
+  it('refuses the creator of the API key, case-insensitively', () => {
+    const h = hunt({ creator: 'api-0123456789abcdef', start_request: { user_data: ud('Alice') } });
+    assert.ok(selfApprovalReason(h, 'alice'));
+    assert.equal(selfApprovalReason(h, 'bob'), null);
+  });
+  it('allows anyone else for console requests', () => {
+    assert.equal(selfApprovalReason(hunt({ creator: 'alice', start_request: { user_data: ud() } }), 'bob'), null);
   });
 });

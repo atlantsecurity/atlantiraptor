@@ -15,6 +15,20 @@ export interface ResponseUserData {
   approval?: 'required' | 'not-required';
   // The exact one-off label a single-host request was aimed at.
   one_off_label?: string;
+  // For requests made with an API key: who created the key.
+  key_owner?: string;
+  api_key?: string;
+}
+
+// The approver must be someone other than the requester, and for API
+// key requests someone other than the person who created the key.
+export function selfApprovalReason(h: Hunt, me: string): string | null {
+  if (h.creator === me) return 'You cannot approve your own request. Ask another user.';
+  const owner = requestOf(h)?.key_owner;
+  if (owner && owner.toLowerCase() === me.toLowerCase()) {
+    return 'This request came from an API key you created, so another user must approve it.';
+  }
+  return null;
 }
 
 const ONE_OFF_RE = /^response-[0-9a-z]{12,40}$/;

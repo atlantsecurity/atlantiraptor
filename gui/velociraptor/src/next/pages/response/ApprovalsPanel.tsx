@@ -14,7 +14,7 @@ import { timeAgo } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Mono, Switch } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
 import {
-  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, requestView, useApprovalActions, useApprovalPolicy, usePendingApprovals,
+  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, requestView, selfApprovalReason, useApprovalActions, useApprovalPolicy, usePendingApprovals,
 } from './approval';
 
 export function ApprovalsPanel() {
@@ -88,6 +88,8 @@ function PendingRow({ id }: { id: string }) {
 
   const req = requestOf(hunt);
   const own = hunt.creator === me;
+  // API key requests can't be approved by the person who created the key.
+  const ownKey = !own && !!selfApprovalReason(hunt, me);
   const view = requestView(hunt);
   const specs = view.specs;
   const live = specs.length === 0 || specs.some(s => s.live);
@@ -115,6 +117,8 @@ function PendingRow({ id }: { id: string }) {
         {live ? <Badge tone="bad">Live</Badge> : <Badge tone="info">Dry run</Badge>}
         <span className="tw:text-2xs tw:text-faint">requested by <b className="tw:text-muted">{hunt.creator}</b> · {timeAgo(hunt.create_time)}</span>
         {own && <Badge tone="neutral">Your request</Badge>}
+        {req?.api_key && <Badge tone="info">API key {req.api_key}{req.key_owner ? ` (created by ${req.key_owner})` : ''}</Badge>}
+        {ownKey && <Badge tone="neutral">From your API key</Badge>}
       </div>
 
       <dl className="tw:grid tw:grid-cols-[90px_1fr] tw:gap-x-3 tw:gap-y-1 tw:text-xs tw:rounded-md tw:border tw:border-line tw:bg-canvas/50 tw:p-2.5">
@@ -145,7 +149,7 @@ function PendingRow({ id }: { id: string }) {
         <Button size="sm" variant="ghost" icon={<X className="tw:size-3.5" />} loading={busy === 'reject'} disabled={!!busy}
           onClick={() => act('reject')}>{own ? 'Withdraw' : 'Reject'}</Button>
         <Button size="sm" variant="danger" icon={<Check className="tw:size-3.5" />} loading={busy === 'approve'}
-          disabled={!!busy || own || me === 'unknown' || problems.length > 0 || (!!oneOffLabel && !oneOffFetched)}
+          disabled={!!busy || own || ownKey || me === 'unknown' || problems.length > 0 || (!!oneOffLabel && !oneOffFetched)}
           onClick={() => act('approve')}>Approve and run</Button>
       </div>
     </div>

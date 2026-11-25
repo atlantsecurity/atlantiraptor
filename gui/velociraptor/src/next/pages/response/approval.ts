@@ -14,7 +14,7 @@ import { setServerMetadata, useHunts, useServerMetadata } from '../../lib/querie
 import type { Hunt } from '../../lib/types';
 import { RESPONSE_TAG } from './actions';
 import {
-  APPROVED_PREFIX, isPaused, oneOffLabelOf, PENDING_TAG, POLICY_KEY, REJECTED_PREFIX,
+  APPROVED_PREFIX, isPaused, oneOffLabelOf, PENDING_TAG, POLICY_KEY, REJECTED_PREFIX, selfApprovalReason,
 } from './approvalModel';
 
 export * from './approvalModel';
@@ -60,7 +60,8 @@ export function useApprovalActions() {
       refresh();
       throw new Error('This request was already decided or changed. The list has been refreshed.');
     }
-    if (approve && h.creator === me) throw new Error('You cannot approve your own request. Ask another user.');
+    const self = approve ? selfApprovalReason(h, me) : null;
+    if (self) throw new Error(self);
     await api.post('v1/ModifyHunt', { hunt_id: id, state: approve ? 'RUNNING' : 'STOPPED' });
     const tags = [...(h.tags ?? []).filter(t => t !== PENDING_TAG), `${approve ? APPROVED_PREFIX : REJECTED_PREFIX}${me}`];
     await api.post('v1/ModifyHunt', { hunt_id: id, tags });
