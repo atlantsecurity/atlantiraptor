@@ -25,6 +25,57 @@ func groupsJSON(w http.ResponseWriter, status int, v interface{}) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+// checkGroupGrants applies the same rules as granting roles to a user
+// directly: org_admin needs ORG_ADMIN on the root org (whether it is
+// being added or kept), and every member must be an existing user of
+// this org. It returns a message when the request must be refused.
+func checkGroupGrants(r *http.Request, org_manager services.OrgManager,
+	org_config_obj *config_proto.Config, principal string,
+	groups []acl_manager.Group) string {
+
+	current, _ := acl_manager.GetGroups(org_config_obj)
+	touchesOrgAdmin := false
+	for _, list := range [][]acl_manager.Group{groups, current} {
+		for _, g := range list {
+			if utils.InString(g.Roles, "org_admin") {
+				touchesOrgAdmin = true
+			}
+		}
+	}
+	if touchesOrgAdmin {
+		root, err := org_manager.GetOrgConfig(services.ROOT_ORG_ID)
+		if err != nil {
+			return "Server not ready."
+		}
+		ok, err := services.CheckAccess(root, principal, acls.ORG_ADMIN)
+		if err != nil || !ok {
+			return "Only org administrators can manage groups that grant the org admin role."
+		}
+	}
+
+	users_manager := services.GetUserManager()
+	org_id := org_config_obj.OrgId
+	for _, g := range groups {
+		for _, member := range g.Members {
+			record, err := users_manager.GetUser(r.Context(), principal, member)
+			if err != nil || record == nil {
+				return "Unknown user " + member + " in group " + g.Name + "."
+			}
+			inOrg := false
+			for _, o := range record.Orgs {
+				if o.Id == org_id || (utils.IsRootOrg(o.Id) && utils.IsRootOrg(org_id)) {
+					inOrg = true
+					break
+				}
+			}
+			if !inOrg {
+				return "User " + member + " is not a member of this org."
+			}
+		}
+	}
+	return ""
+}
+
 func groupsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		principal := ""
@@ -69,6 +120,10 @@ func groupsHandler() http.Handler {
 			}
 			if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2<<20)).Decode(&body); err != nil {
 				groupsJSON(w, http.StatusBadRequest, map[string]string{"message": "Bad request"})
+				return
+			}
+			if msg := checkGroupGrants(r, org_manager, org_config_obj, principal, body.Groups); msg != "" {
+				groupsJSON(w, http.StatusForbidden, map[string]string{"message": msg})
 				return
 			}
 			saved, err := acl_manager.SetGroups(org_config_obj, body.Groups)

@@ -170,20 +170,19 @@ func (self *ACLManager) GetEffectivePolicy(
 	}
 
 	policy, err := self.GetPolicy(config_obj, principal)
+	if err != nil {
+		return nil, err
+	}
 
-	// Roles granted through groups are added to the user's own roles.
-	// A group can grant roles to a user who has none of their own in
-	// this org. If the groups can't be read, the user keeps only their
-	// own roles: a storage problem never grants anything.
+	// Roles granted through groups are added to the user's own roles,
+	// but only for users who still have their own ACL record in this
+	// org: removing a user from the org also ends their group access,
+	// even if a group still lists them. If the groups can't be read, the
+	// user keeps only their own roles: a storage problem never grants
+	// anything.
 	var extra []string
 	if groups, gerr := GetGroups(config_obj); gerr == nil {
 		extra = groupRoles(groups, principal)
-	}
-	if err != nil {
-		if !errors.Is(err, utils.NotFoundError) || len(extra) == 0 {
-			return nil, err
-		}
-		policy = &acl_proto.ApiClientACL{}
 	}
 	for _, role := range extra {
 		if role == "org_admin" && !utils.IsRootOrg(config_obj.OrgId) {

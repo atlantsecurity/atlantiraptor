@@ -36,9 +36,13 @@ button:disabled{opacity:.6;cursor:default} .err{color:#b42318;font-size:13px;min
     var r = new URLSearchParams(location.search).get('return') || '';
     if (!r || r.charAt(0) !== '/' || /[\u0000-\u001f\u007f\\]/.test(r) || r.indexOf('//') === 0) return home;
     try {
+      // Navigate to the fully resolved URL (never a re-serialised path,
+      // which "/..//host" would turn into "//host"), and only into the
+      // console itself.
       var u = new URL(r, location.origin);
-      if (u.origin !== location.origin || u.pathname.indexOf('/app/mfa.html') >= 0) return home;
-      return u.pathname + u.search + u.hash;
+      if (u.origin !== location.origin) return home;
+      if (u.pathname.indexOf(base + '/app/') !== 0 || u.pathname.indexOf('/app/mfa.html') >= 0) return home;
+      return u.href;
     } catch (e) { return home; }
   }
   var form = document.getElementById('f'), btn = document.getElementById('go'), err = document.getElementById('err');
