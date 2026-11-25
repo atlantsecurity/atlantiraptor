@@ -24,7 +24,11 @@ parameters:
   - name: MaxPerHour
     type: int
     default: 30
-    description: At most this many alert emails per hour in total. Critical alerts are always sent; capped ones are listed as Skipped rows in this artifact's results.
+    description: At most this many non-critical alert emails per hour. Capped ones are listed as Skipped rows in this artifact's results.
+  - name: MaxCriticalPerHour
+    type: int
+    default: 60
+    description: Separate hourly budget for critical alerts.
 
 sources:
   - query: |
@@ -47,6 +51,7 @@ sources:
       // A global hourly cap on top of the per-name dedup, so a burst of
       // many different alert names cannot flood the mailbox either.
       LET budget <= dict(window=0, count=0)
+      LET crit_budget <= dict(window=0, count=0)
       LET hour_now() = int(int=now() / 3600)
       LET reset_if_new() = if(condition=budget.window != hour_now(),
           then=set(item=budget, field="window", value=hour_now()) AND set(item=budget, field="count", value=0),
@@ -54,14 +59,22 @@ sources:
       LET under_cap() = reset_if_new() AND budget.count < MaxPerHour
           AND set(item=budget, field="count", value=budget.count + 1)
 
+      // Severity is reported by the client, so critical alerts get their
+      // own budget rather than unlimited mail.
+      LET crit_reset() = if(condition=crit_budget.window != hour_now(),
+          then=set(item=crit_budget, field="window", value=hour_now()) AND set(item=crit_budget, field="count", value=0),
+          else=TRUE)
+      LET under_crit_cap() = crit_reset() AND crit_budget.count < MaxCriticalPerHour
+          AND set(item=crit_budget, field="count", value=crit_budget.count + 1)
+
       LET to_send = SELECT *,
              due(key=name) AS _Due
         FROM alerts
 
-      // Critical alerts are never held back by the cap, and an alert only
+      // Critical alerts use their own budget, and an alert only
       // counts as mailed (for the per-name dedup) when it was sent.
       LET decided = SELECT *,
-             _Due AND (level_of(e=event_data) = "critical" OR under_cap()) AS _Send
+             _Due AND if(condition=level_of(e=event_data) = "critical", then=under_crit_cap(), else=under_cap()) AS _Send
         FROM to_send
 
       LET marked = SELECT *, _Send AND set(item=last_sent, field=name, value=now()) AS _Marked
