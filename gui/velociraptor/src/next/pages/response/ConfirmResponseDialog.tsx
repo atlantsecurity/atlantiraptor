@@ -13,12 +13,14 @@ interface ConfirmResponseDialogProps {
   targetText: string;
   hostCount: number | undefined;
   dryRun: boolean;
+  reason: string;
+  needsApproval: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }
 
 export function ConfirmResponseDialog({
-  action, params, targetText, hostCount, dryRun, onClose, onConfirm,
+  action, params, targetText, hostCount, dryRun, reason, needsApproval, onClose, onConfirm,
 }: ConfirmResponseDialogProps) {
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,7 +47,7 @@ export function ConfirmResponseDialog({
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant={dryRun ? 'primary' : 'danger'} icon={<Play className="tw:size-3.5" />}
           loading={busy} disabled={!armed} onClick={submit}>
-          {dryRun ? 'Start dry run' : `Run on ${hostCount ?? '?'} hosts`}
+          {dryRun ? 'Start dry run' : needsApproval ? 'Send for approval' : `Run on ${hostCount ?? '?'} hosts`}
         </Button>
       </>}>
       <dl className="tw:space-y-2 tw:text-xs">
@@ -62,7 +64,11 @@ export function ConfirmResponseDialog({
             </div>
           </Row>
         )}
-        <Row label="Mode">{dryRun ? <Badge tone="info">Dry run</Badge> : <Badge tone="bad">Live</Badge>}</Row>
+        <Row label="Mode">
+          {dryRun ? <Badge tone="info">Dry run</Badge> : <Badge tone="bad">Live</Badge>}
+          {needsApproval && <span className="tw:ml-2 tw:text-muted">Starts paused until another user approves it.</span>}
+        </Row>
+        {reason && <Row label="Reason"><span className="tw:whitespace-pre-wrap">{reason}</span></Row>}
       </dl>
       {!dryRun && (
         <div className="tw:mt-4 tw:rounded-md tw:border tw:border-bad/40 tw:bg-bad-soft tw:p-3">

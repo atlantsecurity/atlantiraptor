@@ -9,7 +9,15 @@ import {
   runArtifacts, useClient, useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest,
 } from '../../lib/queries';
 import type { HuntCondition } from '../../lib/types';
-import { Badge, Button, Card, CardHeader, Input, Select, Switch, Textarea, cn } from '../../ui/primitives';
+import * as api from '../../lib/api';
+import { Badge, Button, Card, CardHeader, Input, Segmented, Select, Switch, Textarea, cn } from '../../ui/primitives';
+import { useMe } from '../cases/hooks';
+import { newId } from '../cases/model';
+import { ApprovalsPanel } from './ApprovalsPanel';
+import { AuditLog } from './AuditLog';
+import {
+  encodeUserData, HUNT_PAUSED, ONE_OFF_LABEL_PREFIX, oneLine, PENDING_TAG, useApprovalPolicy, usePendingApprovals,
+} from './approval';
 import { TagInput } from '../hunts/TagInput';
 import { ACTIONS, GROUPS, RESPONSE_TAG, type ResponseAction } from './actions';
 import { ConfirmResponseDialog } from './ConfirmResponseDialog';
@@ -36,23 +44,37 @@ export default function ResponsePage() {
   const action = ACTIONS.find(a => a.id === actionId) ?? ACTIONS[0];
   const canHunt = usePermission('start_hunt');
   const canCollect = usePermission('collect_client');
+  // Hunts need START_HUNT; a single host needs COLLECT_CLIENT, plus
+  // START_HUNT when the action has to wait for approval.
   const canRun = clientId ? canCollect : canHunt;
+  const [tab, setTab] = useState<'actions' | 'approvals' | 'audit'>(query.get('tab') === 'audit' ? 'audit' : 'actions');
+  const pending = usePendingApprovals();
 
   return (
     <div className="tw:flex-1 tw:overflow-auto tw:bg-canvas">
       <div className="tw:p-3 tw:md:p-6 tw:space-y-5">
-        <div>
-          <h1 className="tw:text-xl tw:font-semibold tw:flex tw:items-center tw:gap-2"><Siren className="tw:size-5 tw:text-bad" />Response</h1>
-          <p className="tw:text-xs tw:text-muted tw:mt-1">
-            Send a response action to many clients at once. Each action runs as a hunt, so hosts that are offline act when they next check in.
-          </p>
+        <div className="tw:flex tw:flex-wrap tw:items-end tw:gap-3">
+          <div className="tw:flex-1">
+            <h1 className="tw:text-xl tw:font-semibold tw:flex tw:items-center tw:gap-2"><Siren className="tw:size-5 tw:text-bad" />Response</h1>
+            <p className="tw:text-xs tw:text-muted tw:mt-1">
+              Send a response action to many clients at once. Each action runs as a hunt, so hosts that are offline act when they next check in.
+            </p>
+          </div>
+          <Segmented value={tab} onChange={v => setTab(v as typeof tab)}
+            options={[{ value: 'actions', label: 'Actions' },
+              { value: 'approvals', label: pending.length ? `Approvals (${pending.length})` : 'Approvals' },
+              { value: 'audit', label: 'Audit log' }]} />
         </div>
-        <div className="tw:grid tw:grid-cols-1 tw:lg:grid-cols-[280px_1fr] tw:gap-4 tw:items-start">
-          <ActionList selected={action.id}
-            onSelect={id => history.push(`/response/${id}${clientId ? `?client=${clientId}` : ''}`)} />
-          <ActionForm key={`${action.id}-${clientId}`} action={action} canRun={canRun} clientId={clientId} prefill={query} />
-        </div>
-        <ResponseHistory />
+        {tab === 'actions' && <>
+          <div className="tw:grid tw:grid-cols-1 tw:lg:grid-cols-[280px_1fr] tw:gap-4 tw:items-start">
+            <ActionList selected={action.id}
+              onSelect={id => history.push(`/response/${id}${clientId ? `?client=${clientId}` : ''}`)} />
+            <ActionForm key={`${action.id}-${clientId}`} action={action} canRun={canRun} clientId={clientId} prefill={query} />
+          </div>
+          <ResponseHistory />
+        </>}
+        {tab === 'approvals' && <ApprovalsPanel />}
+        {tab === 'audit' && <AuditLog />}
       </div>
     </div>
   );
@@ -97,6 +119,14 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
   const [os, setOs] = useState('WINDOWS');
   const [dryRun, setDryRun] = useState(!!action.armParam);
   const [confirming, setConfirming] = useState(false);
+  const [reason, setReason] = useState('');
+  const me = useMe();
+  const canHunt = usePermission('start_hunt');
+  const policy = useApprovalPolicy();
+  const needsApproval = !dryRun && policy.required;
+  const userData = encodeUserData({
+    reason: reason.trim(), requested_by: me, approval: needsApproval ? 'required' : 'not-required',
+  });
 
   const condition: HuntCondition = useMemo(() => {
     const c: HuntCondition = {};
@@ -110,7 +140,11 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
   const hostCount = mode === 'client' ? 1 : missingLabels ? undefined : estimate.data;
 
   const missing = action.fields.filter(f => f.required && !(values[f.key] ?? '').trim());
-  const blocked = !canRun || missingLabels || missing.length > 0;
+  const missingReason = !dryRun && !reason.trim();
+  // A single host waiting for approval becomes a labelled hunt, which
+  // needs the hunt permission too.
+  const permitted = canRun && (!(needsApproval && mode === 'client') || canHunt);
+  const blocked = !permitted || !policy.loaded || missingLabels || missing.length > 0 || missingReason;
 
   const params: Record<string, string> = useMemo(() => {
     const p: Record<string, string> = { ...action.fixed };
@@ -128,38 +162,54 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
     : `Clients labelled ${labels.join(', ') || '…'}`;
   const fullTarget = excluded.length && mode !== 'client' ? `${targetText}, except ${excluded.join(', ')}` : targetText;
 
-  // A single host is handled as a direct collection rather than a hunt.
+  // A single host is handled as a direct collection rather than a hunt,
+  // unless it must wait for approval: then the host gets a one-off label
+  // and a paused hunt targets that label.
   const startOnClient = async () => {
-    try {
-      const per = Object.fromEntries(action.artifacts.map(a => [a, params]));
-      const r = await runArtifacts(clientId, action.artifacts, per, true);
-      toast.success(dryRun ? 'Dry run started' : `${action.title} started on ${hostname}`);
-      setConfirming(false);
-      if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
-    } catch (e) {
-      toast.error((e as Error).message);
+    if (needsApproval) {
+      const label = `${ONE_OFF_LABEL_PREFIX}${newId()}`;
+      await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'set' });
+      try {
+        return await startHunt({ labels: { label: [label] } });
+      } catch (e) {
+        await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'remove' }).catch(() => undefined);
+        throw e;
+      }
     }
+    const per = Object.fromEntries(action.artifacts.map(a => [a, params]));
+    const r = await runArtifacts(clientId, action.artifacts, per, true, userData);
+    toast.success(dryRun ? 'Dry run started' : `${action.title} started on ${hostname}`);
+    setConfirming(false);
+    if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
   };
 
-  const start = async () => {
-    if (mode === 'client') return startOnClient();
+  const startHunt = async (cond: HuntCondition) => {
     const env = Object.entries(params).map(([key, value]) => ({ key, value }));
+    const why = reason.trim() ? ` – reason: ${oneLine(reason)}` : '';
     const req: CreateHuntRequest = {
-      hunt_description: `Response: ${action.summary(values)}${dryRun ? ' (dry run)' : ''}`,
-      tags: [RESPONSE_TAG, action.id, ...(dryRun ? ['dry-run'] : [])],
+      hunt_description: `Response: ${action.summary(values)}${dryRun ? ' (dry run)' : ''}${why}`,
+      tags: [RESPONSE_TAG, action.id, ...(dryRun ? ['dry-run'] : []), ...(needsApproval ? [PENDING_TAG] : [])],
       start_request: {
         artifacts: action.artifacts,
         specs: action.artifacts.map(artifact => ({ artifact, parameters: { env } })),
         urgent: true,
+        user_data: userData,
       },
-      condition,
-      state: 2,
+      condition: cond,
+      // Paused (1) while waiting for approval, otherwise running (2).
+      state: needsApproval ? HUNT_PAUSED : 2,
     };
+    const r = await create.mutateAsync(req);
+    toast.success(needsApproval ? 'Sent for approval. Another user must approve it in Response › Approvals.'
+      : dryRun ? 'Dry run started' : `${action.title} started`);
+    setConfirming(false);
+    if (r.flow_id) history.push(`/hunts/${r.flow_id}`);
+  };
+
+  const start = async () => {
     try {
-      const r = await create.mutateAsync(req);
-      toast.success(dryRun ? 'Dry run started' : `${action.title} started`);
-      setConfirming(false);
-      if (r.flow_id) history.push(`/hunts/${r.flow_id}`);
+      if (mode === 'client') await startOnClient();
+      else await startHunt(condition);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -222,21 +272,31 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
           </>}
         </section>
 
+        <label className="tw:block">
+          <span className="tw:block tw:text-xs tw:font-medium tw:mb-1.5">
+            Reason{!dryRun && <span className="tw:text-bad"> *</span>}
+            <span className="tw:font-normal tw:text-muted"> · recorded in the audit log</span>
+          </span>
+          <Textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}
+            placeholder={dryRun ? 'Optional for dry runs' : 'Why this action is needed, e.g. case number or alert'} />
+        </label>
+
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-t tw:border-line tw:pt-4">
           {action.armParam
             ? <Switch checked={dryRun} onChange={setDryRun} label="Dry run: only report what would change" />
             : <span className="tw:text-2xs tw:text-muted">This action has no dry run mode.</span>}
+          {needsApproval && <Badge tone="warn">Needs a second approver</Badge>}
           <Button className="tw:ml-auto" variant={dryRun ? 'primary' : 'danger'} icon={<Play className="tw:size-3.5" />}
             disabled={blocked} onClick={() => setConfirming(true)}>
-            {dryRun ? 'Review dry run' : 'Review and run'}
+            {dryRun ? 'Review dry run' : needsApproval ? 'Review and request approval' : 'Review and run'}
           </Button>
         </div>
-        {!canRun && <div className="tw:text-2xs tw:text-bad">You need permission to start hunts.</div>}
+        {!permitted && <div className="tw:text-2xs tw:text-bad">You need permission to start hunts.</div>}
       </div>
 
       {confirming && (
         <ConfirmResponseDialog action={action} params={params} targetText={fullTarget}
-          hostCount={hostCount} dryRun={dryRun}
+          hostCount={hostCount} dryRun={dryRun} reason={reason.trim()} needsApproval={needsApproval}
           onClose={() => setConfirming(false)} onConfirm={start} />
       )}
     </Card>

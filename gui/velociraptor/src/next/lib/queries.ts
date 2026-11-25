@@ -638,6 +638,7 @@ export async function runArtifact(clientId: string, artifact: string, params: Re
 // its parameter values; artifacts without an entry use their defaults.
 export async function runArtifacts(
   clientId: string, artifacts: string[], params: Record<string, Record<string, string>> = {}, urgent = false,
+  userData?: string,
 ) {
   return api.post<{ flow_id?: string }>('v1/CollectArtifact', {
     client_id: clientId,
@@ -647,7 +648,24 @@ export async function runArtifacts(
       parameters: { env: Object.entries(params[artifact] ?? {}).map(([key, value]) => ({ key, value })) },
     })),
     urgent,
+    user_data: userData || undefined,
   });
+}
+
+// Server metadata is a small key/value store on the server. Reading it
+// needs server admin rights; callers treat a failed read as unknown.
+export function useServerMetadata() {
+  return useQuery({
+    queryKey: ['client-metadata', 'server'],
+    queryFn: ({ signal }) => api.get<{ items?: { key: string; value: string }[] }>('v1/GetClientMetadata/server', {}, signal),
+    select: d => Object.fromEntries((d.items ?? []).map(i => [i.key, i.value])) as Record<string, string>,
+    retry: false,
+    staleTime: 30_000,
+  });
+}
+
+export async function setServerMetadata(key: string, value: string) {
+  return api.post('v1/SetClientMetadata', { client_id: 'server', add: [{ key, value }], remove: [] });
 }
 
 // ----------------------------------------------------------- Artifacts

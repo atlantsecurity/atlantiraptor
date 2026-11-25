@@ -64,6 +64,9 @@ export interface ArtifactCollectorArgs {
   cpu_limit?: number;
   progress_timeout?: number;
   urgent?: boolean;
+  // Free-form context stored with the request and recorded in the
+  // server audit log (used for response reasons).
+  user_data?: string;
   trace_freq_sec?: Num;
   compiled_collector_args?: unknown[];
 }
