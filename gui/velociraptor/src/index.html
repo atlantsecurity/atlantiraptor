@@ -40,7 +40,22 @@
   </head>
   <body id="body" class="{{.UserTheme}}">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <!-- Shown until the app renders (React replaces #root's content). -->
+    <div id="root"><div id="atl-boot" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:14px system-ui,sans-serif;color:#8a94a6;background:inherit">
+      <div style="text-align:center">
+        <div>Loading Atlantiraptor…</div>
+        <div id="atl-boot-slow" style="display:none;margin-top:8px;font-size:12px;max-width:360px">
+          This is taking longer than usual. The server may be busy or restarting; the page will continue on its own.
+          <a href="" style="color:inherit;text-decoration:underline">Reload</a>
+        </div>
+      </div>
+    </div></div>
+    <script>
+      setTimeout(function () {
+        var el = document.getElementById('atl-boot-slow');
+        if (el) el.style.display = 'block';
+      }, 6000);
+    </script>
     <!-- Note: magefile.go will mutate the vite geneated code to rebase on base_path -->
     <script type="module" src="./index.jsx"></script>
   </body>
