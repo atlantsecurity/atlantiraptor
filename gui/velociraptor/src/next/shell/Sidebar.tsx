@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server, Users, KeyRound,
-  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase,
+  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch,
 } from 'lucide-react';
 import { getItem, schema } from '../../components/core/storage.jsx';
 import { EncodePathInURL } from '../../components/utils/paths.jsx';
@@ -65,6 +65,7 @@ export default function Sidebar({ collapsed, onToggle, className }: { collapsed:
     { to: '/hunts', label: 'Hunts', icon: <Crosshair />, match: /^\/hunts/ },
     { to: '/response', label: 'Response', icon: <Siren />, match: /^\/response/ },
     { to: '/cases', label: 'Cases', icon: <Briefcase />, match: /^\/cases/ },
+    { to: '/ioc', label: 'IOC sweep', icon: <ScanSearch />, match: /^\/ioc/ },
     { to: '/search/all', label: 'Clients', icon: <Monitor />, match: /^\/search/ },
     { to: remembered(schema.CurrentNotebookIdKey, '/notebooks'), label: 'Notebooks', icon: <BookOpen />, match: /^\/notebooks/ },
   ];
