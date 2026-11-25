@@ -69,6 +69,7 @@
         "start_public": "vite serve --force --host",
         "lint": "eslint ./src --ignore-pattern '*.test.jsx' --ext .js,.jsx",
         "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        "test:unit": "node --test \"src/next/**/*.test.ts\"",
         "postinstall": "patch-package",
         "typecheck": "tsc -p tsconfig.json"
     },

@@ -30,6 +30,8 @@ export function classify(raw: string): IocType | null {
   if (/^[a-f0-9]{40}$/i.test(v)) return 'sha1';
   if (/^[a-f0-9]{32}$/i.test(v)) return 'md5';
   if (IPV4.test(v) || (IPV6.test(v) && v.includes(':'))) return 'ip';
+  // Dotted numbers that are not a valid IPv4 address are a typo, not a file.
+  if (/^\d+(\.\d+){3}$/.test(v)) return null;
   if (WIN_PATH.test(v) || v.startsWith('/')) return 'path';
   if (DOMAIN.test(v)) return /\.(exe|dll|ps1|bat|cmd|vbs|js|jar|scr|zip|rar|7z|doc|docx|xls|xlsx|pdf|lnk|hta|msi|iso|bin|sh|py)$/i.test(v) ? 'filename' : 'domain';
   if (FILENAME.test(v)) return 'filename';

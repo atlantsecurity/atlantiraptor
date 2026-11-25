@@ -96,11 +96,11 @@ export function parseCase(description: unknown, fallbackTitle = ''): CaseRecord 
         id: s(l.id, 100) || newId(),
         kind: l.kind as LinkKind,
         ref: s(l.ref, 300),
-        clientId: s(l.clientId, 100) || undefined,
+        ...(s(l.clientId, 100) ? { clientId: s(l.clientId, 100) } : {}),
         label: s(l.label, 500),
         addedBy: s(l.addedBy, 200),
         addedAt: n(l.addedAt),
-        data: l.data && typeof l.data === 'object' ? l.data as Record<string, unknown> : undefined,
+        ...(l.data && typeof l.data === 'object' ? { data: l.data as Record<string, unknown> } : {}),
       })),
     timeline: timeline
       .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object')
