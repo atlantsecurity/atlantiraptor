@@ -13,14 +13,25 @@ export function clip(s: string, max = MAX_CONTEXT_CHARS): string {
 
 export async function flowContext(clientId: string, flowId: string, artifacts: string[], hostname: string): Promise<string> {
   const parts: string[] = [`Host: ${hostname} (${clientId})`, `Collection: ${flowId}`];
+  let length = parts.join('\n').length;
+  const push = (s: string) => { parts.push(s); length += s.length + 1; };
   for (const artifact of artifacts) {
-    const resp = await api.get<TableResponse>('v1/GetTable', {
-      client_id: clientId, flow_id: flowId, artifact, start_row: 0, rows: ROWS_PER_ARTIFACT,
-    }).catch(() => undefined);
+    if (length > MAX_CONTEXT_CHARS) break;
+    let resp: TableResponse | undefined;
+    try {
+      resp = await api.get<TableResponse>('v1/GetTable', {
+        client_id: clientId, flow_id: flowId, artifact, start_row: 0, rows: ROWS_PER_ARTIFACT,
+      });
+    } catch (e) {
+      push(`\n## ${artifact}: results could not be read (${(e as Error).message})`);
+      continue;
+    }
     const t = parseTable(resp);
-    parts.push(`\n## ${artifact} (${t.rows.length} of ${t.total || t.rows.length} rows shown)`);
-    parts.push(...t.rows.map(r => JSON.stringify(r)));
-    if (parts.join('\n').length > MAX_CONTEXT_CHARS) break;
+    push(`\n## ${artifact} (${t.rows.length} of ${t.total || t.rows.length} rows shown)`);
+    for (const r of t.rows) {
+      if (length > MAX_CONTEXT_CHARS) break;
+      push(JSON.stringify(r));
+    }
   }
   return clip(parts.join('\n'));
 }

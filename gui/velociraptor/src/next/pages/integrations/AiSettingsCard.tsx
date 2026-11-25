@@ -59,8 +59,9 @@ function Form({ initial, secrets, canAdmin, onSaved }: {
         Context: 'No investigation data. This is a test.',
       }, { timeoutMs: 120_000 });
       const answer = String(r.rows[0]?.Summary ?? '');
-      if (/^Error from/.test(answer)) toast.error(answer.slice(0, 300));
-      else toast.success(`AI answered: ${answer.slice(0, 200)}`);
+      const status = Number(r.rows[0]?.Status ?? 0);
+      if (status >= 200 && status < 300) toast.success(`AI answered: ${answer.slice(0, 200)}`);
+      else toast.error(answer.slice(0, 300) || 'The AI request failed.');
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
