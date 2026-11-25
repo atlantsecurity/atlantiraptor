@@ -159,7 +159,14 @@ function RapidResults({ entry, onClose }: { entry: Recent; onClose: () => void }
           {running ? ' · results update live' : state ? ` · hunt ${state.toLowerCase()}` : ''}
         </span>
         <span className="tw:ml-auto tw:flex tw:items-center tw:gap-2">
-          <Link to={`/hunts/${entry.huntId}`} className="tw:text-xs tw:text-accent tw:hover:underline">Open hunt</Link>
+          {hosts.length > 0 && (
+            <Link to={`/response/quarantine?client=${hosts.slice(0, 100).map(h => h.clientId).join(",")}`}
+              className="tw:text-xs tw:font-medium tw:text-bad tw:hover:underline"
+              title="Opens Response with these machines selected; pick any action there">
+              Respond to {hosts.length > 1 ? `all ${Math.min(hosts.length, 100)}` : "this machine"}
+            </Link>
+          )}
+                    <Link to={`/hunts/${entry.huntId}`} className="tw:text-xs tw:text-accent tw:hover:underline">Open hunt</Link>
           {running && (
             <button type="button" className="tw:text-xs tw:text-muted tw:hover:text-fg tw:underline"
               onClick={() => stop.mutate([entry.huntId])}>Stop</button>

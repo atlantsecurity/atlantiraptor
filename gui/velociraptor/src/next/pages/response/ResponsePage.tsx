@@ -6,7 +6,7 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Play, Siren } from 'lucide-react';
 import {
-  runArtifacts, useClient, useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest,
+  runArtifacts, useCreateHunt, useEstimateHunt, usePermission, type CreateHuntRequest,
 } from '../../lib/queries';
 import type { HuntCondition } from '../../lib/types';
 import * as api from '../../lib/api';
@@ -21,7 +21,7 @@ import {
 import { TagInput } from '../hunts/TagInput';
 import { ACTIONS, GROUPS, RESPONSE_TAG, type ResponseAction } from './actions';
 import { ConfirmResponseDialog } from './ConfirmResponseDialog';
-import { ClientPicker, type PickedClient } from './ClientPicker';
+import { ClientPicker, MAX_PICKED_CLIENTS, type PickedClient } from './ClientPicker';
 import { ResponseHistory } from './ResponseHistory';
 
 type TargetMode = 'clients' | 'labels' | 'os' | 'all';
@@ -40,14 +40,18 @@ export default function ResponsePage() {
   const history = useHistory();
   const { search } = useLocation();
   const query = useMemo(() => new URLSearchParams(search), [search]);
-  const rawClient = query.get('client') ?? '';
-  const clientId = CLIENT_ID_RE.test(rawClient) ? rawClient : '';
+  // ?client= takes one client ID or several, comma separated.
+  const urlClients = useMemo(() => [...new Set((query.get('client') ?? '').split(','))]
+    .filter(id => CLIENT_ID_RE.test(id)).slice(0, MAX_PICKED_CLIENTS), [query]);
+  // The picked clients live here so they survive switching actions.
+  const [picked, setPicked] = useState<PickedClient[]>(() => urlClients.map(id => ({ id, hostname: id })));
+  useClientNames(picked, setPicked);
   const action = ACTIONS.find(a => a.id === actionId) ?? ACTIONS[0];
   const canHunt = usePermission('start_hunt');
   const canCollect = usePermission('collect_client');
   // Hunts need START_HUNT; a single host needs COLLECT_CLIENT, plus
   // START_HUNT when the action has to wait for approval.
-  const canRun = clientId ? canCollect : canHunt;
+  const canRun = picked.length ? canCollect || canHunt : canHunt;
   const [tab, setTab] = useState<'actions' | 'approvals' | 'audit'>(query.get('tab') === 'audit' ? 'audit' : 'actions');
   const pending = usePendingApprovals();
 
@@ -69,8 +73,9 @@ export default function ResponsePage() {
         {tab === 'actions' && <>
           <div className="tw:grid tw:grid-cols-1 tw:lg:grid-cols-[280px_1fr] tw:gap-4 tw:items-start">
             <ActionList selected={action.id}
-              onSelect={id => history.push(`/response/${id}${clientId ? `?client=${clientId}` : ''}`)} />
-            <ActionForm key={`${action.id}-${clientId}`} action={action} canRun={canRun} clientId={clientId} prefill={query} />
+              onSelect={id => history.push(`/response/${id}${picked.length ? `?client=${picked.map(p => p.id).join(',')}` : ''}`)} />
+            <ActionForm key={action.id} action={action} canRun={canRun} startWithClients={urlClients.length > 0}
+              picked={picked} setPicked={setPicked} prefill={query} />
           </div>
           <ResponseHistory />
         </>}
@@ -104,23 +109,35 @@ function ActionList({ selected, onSelect }: { selected: string; onSelect: (id: s
 interface ActionFormProps {
   action: ResponseAction;
   canRun: boolean;
-  clientId: string;
+  startWithClients: boolean;
+  picked: PickedClient[];
+  setPicked: (v: PickedClient[]) => void;
   prefill: URLSearchParams;
 }
 
-function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
+// Fills in hostnames for clients that arrived as bare IDs (from a link).
+function useClientNames(picked: PickedClient[], setPicked: (f: (ps: PickedClient[]) => PickedClient[]) => void) {
+  const unnamed = picked.filter(p => p.hostname === p.id).map(p => p.id);
+  const key = unnamed.join(',');
+  useEffect(() => {
+    if (!key) return;
+    let live = true;
+    void Promise.all(key.split(',').map(id => api.get<{ os_info?: { hostname?: string } }>(`v1/GetClient/${id}`)
+      .then(c => [id, c.os_info?.hostname ?? ''] as const).catch(() => [id, ''] as const)))
+      .then(names => {
+        if (!live) return;
+        const byId = new Map(names.filter(([, n]) => n));
+        if (byId.size) setPicked(ps => ps.map(p => (byId.has(p.id) && p.hostname === p.id ? { ...p, hostname: byId.get(p.id)! } : p)));
+      });
+    return () => { live = false; };
+  }, [key, setPicked]);
+}
+
+function ActionForm({ action, canRun, startWithClients, picked, setPicked, prefill }: ActionFormProps) {
   const history = useHistory();
   const create = useCreateHunt();
-  const { data: client } = useClient(clientId || undefined);
   const [values, setValues] = useState(() => initialValues(action, prefill));
-  const [mode, setMode] = useState<TargetMode>(clientId ? 'clients' : 'labels');
-  const [picked, setPicked] = useState<PickedClient[]>(() => (clientId ? [{ id: clientId, hostname: clientId }] : []));
-  // Show the hostname once the client page's client has loaded.
-  useEffect(() => {
-    if (client?.os_info?.hostname) {
-      setPicked(ps => ps.map(p => (p.id === clientId && p.hostname === clientId ? { ...p, hostname: client.os_info!.hostname! } : p)));
-    }
-  }, [client, clientId]);
+  const [mode, setMode] = useState<TargetMode>(startWithClients || picked.length ? 'clients' : 'labels');
   const [labels, setLabels] = useState<string[]>([]);
   const [excluded, setExcluded] = useState<string[]>([]);
   const [os, setOs] = useState('WINDOWS');
