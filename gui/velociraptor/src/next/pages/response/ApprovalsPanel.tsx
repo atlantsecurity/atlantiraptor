@@ -13,7 +13,9 @@ import type { Hunt } from '../../lib/types';
 import { timeAgo } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Mono, Switch } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
-import { ONE_OFF_LABEL_PREFIX, requestOf, useApprovalActions, useApprovalPolicy, usePendingApprovals } from './approval';
+import {
+  ONE_OFF_LABEL_PREFIX, oneOffLabelOf, requestOf, specsOf, useApprovalActions, useApprovalPolicy, usePendingApprovals,
+} from './approval';
 
 export function ApprovalsPanel() {
   const policy = useApprovalPolicy();
@@ -51,8 +53,7 @@ export function ApprovalsPanel() {
   );
 }
 
-function useOneOffHost(h: Hunt | undefined) {
-  const label = (h?.condition?.labels?.label ?? []).find(l => l.startsWith(ONE_OFF_LABEL_PREFIX));
+function useOneOffHost(label: string | null) {
   return useQuery({
     queryKey: ['one-off-host', label],
     enabled: !!label,
@@ -62,19 +63,24 @@ function useOneOffHost(h: Hunt | undefined) {
   });
 }
 
-function targetOf(h: Hunt, oneOff: string[] | undefined): string {
+// The full condition, always. "Single host" is only claimed when the
+// condition is exactly the recorded one-off label and it resolves to
+// exactly one client.
+function conditionText(h: Hunt): string {
   const c = h.condition ?? {};
+  const parts: string[] = [];
   const labels = c.labels?.label ?? [];
-  const except = c.excluded_labels?.label?.length ? `, except labels ${c.excluded_labels.label.join(', ')}` : '';
-  if (labels.some(l => l.startsWith(ONE_OFF_LABEL_PREFIX))) return `Single host: ${oneOff?.join(', ') || 'resolving…'}`;
-  if (labels.length) return `Clients labelled ${labels.join(', ')}${except}`;
-  if (c.os?.os) return `All ${c.os.os} clients${except}`;
-  return `All clients${except}`;
+  if (labels.length) parts.push(`labels: ${labels.join(', ')}`);
+  if (c.os?.os) parts.push(`OS: ${c.os.os}`);
+  if (c.excluded_labels?.label?.length) parts.push(`except labels: ${c.excluded_labels.label.join(', ')}`);
+  return parts.length ? parts.join(' · ') : 'all clients';
 }
 
 function PendingRow({ id }: { id: string }) {
   const { data: hunt } = useHunt(id);
-  const { data: oneOff } = useOneOffHost(hunt);
+  const oneOffLabel = hunt ? oneOffLabelOf(hunt) : null;
+  const usesOneOffPrefix = (hunt?.condition?.labels?.label ?? []).some(l => l.startsWith(ONE_OFF_LABEL_PREFIX));
+  const { data: oneOff, isFetched: oneOffFetched } = useOneOffHost(oneOffLabel);
   const me = useMe();
   const actions = useApprovalActions();
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
@@ -82,10 +88,13 @@ function PendingRow({ id }: { id: string }) {
 
   const req = requestOf(hunt);
   const own = hunt.creator === me;
-  const specs = hunt.start_request?.specs ?? [];
-  const env = specs.flatMap(s => s.parameters?.env ?? []);
-  const arm = env.find(e => e.key === 'ReallyDoIt');
-  const live = arm ? arm.value === 'Y' : true;
+  const specs = specsOf(hunt);
+  const live = specs.length === 0 || specs.some(s => s.live);
+  // Refuse to approve anything whose target or parameters are ambiguous.
+  const problems: string[] = [];
+  if (specs.some(s => s.duplicateKeys)) problems.push('An artifact has a parameter set twice.');
+  if (usesOneOffPrefix && !oneOffLabel) problems.push('The target label does not match the recorded single-host label.');
+  if (oneOffLabel && oneOffFetched && (oneOff?.length ?? 0) !== 1) problems.push(`The single-host label matches ${oneOff?.length ?? 0} hosts, not 1.`);
 
   const act = async (kind: 'approve' | 'reject') => {
     setBusy(kind);
@@ -109,16 +118,23 @@ function PendingRow({ id }: { id: string }) {
       </div>
 
       <dl className="tw:grid tw:grid-cols-[90px_1fr] tw:gap-x-3 tw:gap-y-1 tw:text-xs tw:rounded-md tw:border tw:border-line tw:bg-canvas/50 tw:p-2.5">
-        <dt className="tw:text-muted">Target</dt><dd>{targetOf(hunt, oneOff)}</dd>
-        <dt className="tw:text-muted">Artifacts</dt><dd className="tw:font-mono tw:text-[11px]">{(hunt.start_request?.artifacts ?? []).join(', ')}</dd>
-        <dt className="tw:text-muted">Parameters</dt>
-        <dd className="tw:space-y-0.5">
-          {env.length === 0 && <span className="tw:text-faint">Defaults</span>}
-          {Array.from(new Map(env.map(e => [e.key, e.value])).entries()).map(([k, v]) => (
-            <div key={k} className="tw:flex tw:gap-2"><span className="tw:text-muted tw:shrink-0">{k}</span><Mono className="tw:text-[11px] tw:whitespace-pre-wrap tw:break-all">{v}</Mono></div>
-          ))}
-        </dd>
+        <dt className="tw:text-muted">Condition</dt><dd className="tw:font-mono tw:text-[11px]">{conditionText(hunt)}</dd>
+        {oneOffLabel && <><dt className="tw:text-muted">Host</dt><dd>{oneOffFetched ? (oneOff?.join(', ') || 'no host has this label') : 'resolving…'}</dd></>}
+        {specs.map(s => (
+          <div key={s.artifact} className="tw:contents">
+            <dt className="tw:text-muted tw:font-mono tw:text-[11px] tw:break-all">{s.artifact}</dt>
+            <dd className="tw:space-y-0.5">
+              {s.params.length === 0 && <span className="tw:text-faint">Defaults</span>}
+              {s.params.map(([k, v], i) => (
+                <div key={`${k}-${i}`} className="tw:flex tw:gap-2"><span className="tw:text-muted tw:shrink-0">{k}</span><Mono className="tw:text-[11px] tw:whitespace-pre-wrap tw:break-all">{v}</Mono></div>
+              ))}
+            </dd>
+          </div>
+        ))}
       </dl>
+      {problems.length > 0 && (
+        <div className="tw:text-xs tw:text-bad">{problems.join(' ')} This request cannot be approved; reject it and ask for a new one.</div>
+      )}
 
       <div className="tw:text-xs">
         <span className="tw:text-muted">Requester's reason (their own words): </span>
@@ -129,7 +145,8 @@ function PendingRow({ id }: { id: string }) {
         <Button size="sm" variant="ghost" icon={<X className="tw:size-3.5" />} loading={busy === 'reject'} disabled={!!busy}
           onClick={() => act('reject')}>{own ? 'Withdraw' : 'Reject'}</Button>
         <Button size="sm" variant="danger" icon={<Check className="tw:size-3.5" />} loading={busy === 'approve'}
-          disabled={!!busy || own || me === 'unknown'} onClick={() => act('approve')}>Approve and run</Button>
+          disabled={!!busy || own || me === 'unknown' || problems.length > 0 || (!!oneOffLabel && !oneOffFetched)}
+          onClick={() => act('approve')}>Approve and run</Button>
       </div>
     </div>
   );

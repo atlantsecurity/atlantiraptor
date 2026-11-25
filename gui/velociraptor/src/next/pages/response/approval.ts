@@ -25,6 +25,22 @@ export interface ResponseUserData {
   reason: string;
   requested_by: string;
   approval?: 'required' | 'not-required';
+  // The exact one-off label a single-host request was aimed at.
+  one_off_label?: string;
+}
+
+const ONE_OFF_RE = /^response-[0-9a-z]{12,40}$/;
+
+// A request counts as single-host only if the condition is exactly the
+// one-off label recorded in the request, with no OS or exclusions.
+export function oneOffLabelOf(h: Hunt): string | null {
+  const recorded = decodeUserData(h.start_request?.user_data)?.one_off_label ?? '';
+  const c = h.condition ?? {};
+  const labels = c.labels?.label ?? [];
+  if (!ONE_OFF_RE.test(recorded)) return null;
+  if (labels.length !== 1 || labels[0] !== recorded) return null;
+  if (c.os?.os || (c.excluded_labels?.label ?? []).length) return null;
+  return recorded;
 }
 
 export function encodeUserData(d: ResponseUserData): string {
@@ -112,12 +128,31 @@ export function useApprovalActions() {
 }
 
 // The single-host approval path labels the host with a one-off label;
-// drop it again once the request is rejected or could not be created.
+// drop exactly that label, from exactly that one host, once the request
+// is rejected. Anything else is left alone.
 export async function removeOneOffLabels(h: Hunt) {
-  const labels = (h.condition?.labels?.label ?? []).filter(l => l.startsWith(ONE_OFF_LABEL_PREFIX));
-  if (!labels.length) return;
+  const label = oneOffLabelOf(h);
+  if (!label) return;
   const found = await api.get<{ items?: { client_id: string }[] }>('v1/SearchClients',
-    { query: `label:${labels[0]}`, limit: 10 });
+    { query: `label:${label}`, limit: 2 });
   const ids = (found.items ?? []).map(c => c.client_id);
-  if (ids.length) await api.post('v1/LabelClients', { client_ids: ids, labels, operation: 'remove' });
+  if (ids.length === 1) await api.post('v1/LabelClients', { client_ids: ids, labels: [label], operation: 'remove' });
+}
+
+export interface SpecView { artifact: string; params: [string, string][]; duplicateKeys: boolean; live: boolean }
+
+// Parameters per artifact, as the client will receive them. A request
+// counts as live if any artifact is armed or has no dry-run switch.
+export function specsOf(h: Hunt): SpecView[] {
+  return (h.start_request?.specs ?? []).map(s => {
+    const env = s.parameters?.env ?? [];
+    const keys = env.map(e => e.key);
+    const arm = env.find(e => e.key === 'ReallyDoIt');
+    return {
+      artifact: s.artifact ?? '',
+      params: env.map(e => [e.key, e.value] as [string, string]),
+      duplicateKeys: new Set(keys).size !== keys.length,
+      live: arm ? arm.value === 'Y' : true,
+    };
+  });
 }

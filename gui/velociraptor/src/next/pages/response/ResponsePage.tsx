@@ -170,7 +170,7 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
       const label = `${ONE_OFF_LABEL_PREFIX}${newId()}`;
       await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'set' });
       try {
-        return await startHunt({ labels: { label: [label] } });
+        return await startHunt({ labels: { label: [label] } }, label);
       } catch (e) {
         await api.post('v1/LabelClients', { client_ids: [clientId], labels: [label], operation: 'remove' }).catch(() => undefined);
         throw e;
@@ -183,7 +183,10 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
     if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
   };
 
-  const startHunt = async (cond: HuntCondition) => {
+  const startHunt = async (cond: HuntCondition, oneOffLabel?: string) => {
+    const huntUserData = oneOffLabel
+      ? encodeUserData({ reason: reason.trim(), requested_by: me, approval: 'required', one_off_label: oneOffLabel })
+      : userData;
     const env = Object.entries(params).map(([key, value]) => ({ key, value }));
     const why = reason.trim() ? ` – reason: ${oneLine(reason)}` : '';
     const req: CreateHuntRequest = {
@@ -193,7 +196,7 @@ function ActionForm({ action, canRun, clientId, prefill }: ActionFormProps) {
         artifacts: action.artifacts,
         specs: action.artifacts.map(artifact => ({ artifact, parameters: { env } })),
         urgent: true,
-        user_data: userData,
+        user_data: huntUserData,
       },
       condition: cond,
       // Paused (1) while waiting for approval, otherwise running (2).
