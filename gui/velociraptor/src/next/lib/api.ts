@@ -58,7 +58,8 @@ function headers() {
 }
 
 export function isMfaRequired(data: unknown): boolean {
-  return !!data && typeof data === 'object' && (data as { message?: string }).message === 'mfa_required';
+  const m = !!data && typeof data === 'object' ? (data as { message?: string }).message : '';
+  return m === 'mfa_required' || m === 'mfa_enroll_required';
 }
 
 let mfaRedirecting = false;

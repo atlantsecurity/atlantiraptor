@@ -22,6 +22,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/file_store"
 	"www.velocidex.com/golang/velociraptor/file_store/api"
 	"www.velocidex.com/golang/velociraptor/file_store/path_specs"
+	"www.velocidex.com/golang/velociraptor/services"
 	"www.velocidex.com/golang/velociraptor/utils"
 )
 
@@ -212,6 +213,32 @@ func SetGroups(config_obj *config_proto.Config, groups []Group) ([]Group, error)
 	groupsCache[orgKey(config_obj)] = groupsCacheEntry{doc: &groupsDoc{Groups: valid}, fetched: time.Now()}
 	groupsMu.Unlock()
 	return valid, nil
+}
+
+// UserRolesAndGroups returns the roles a user holds in this org (their
+// own plus those from groups) and the names of the groups they are in.
+func UserRolesAndGroups(config_obj *config_proto.Config, principal string) ([]string, []string) {
+	roles := []string{}
+	if policy, err := services.GetPolicy(config_obj, principal); err == nil && policy != nil {
+		roles = append(roles, policy.Roles...)
+	}
+	names := []string{}
+	if groups, err := GetGroups(config_obj); err == nil {
+		for _, role := range groupRoles(groups, principal) {
+			if !utils.InString(roles, role) {
+				roles = append(roles, role)
+			}
+		}
+		for _, g := range groups {
+			for _, m := range g.Members {
+				if utils.UsernamesEqual(m, principal) {
+					names = append(names, g.Name)
+					break
+				}
+			}
+		}
+	}
+	return roles, names
 }
 
 // groupRoles returns the roles a principal gets through groups.

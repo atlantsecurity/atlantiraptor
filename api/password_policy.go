@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"unicode"
+
+	"www.velocidex.com/golang/velociraptor/utils"
 )
 
 const (
@@ -22,10 +24,38 @@ var commonPasswords = []string{
 var (
 	errPasswordLength  = errors.New("Password must be at least 12 characters long")
 	errPasswordTooLong = errors.New("Password must be at most 256 characters long")
-	errPasswordClasses = errors.New("Password must mix at least three of: lower case, upper case, digits, symbols")
+	errPasswordClasses = errors.New("Use a passphrase of four or more words (20+ characters), or mix at least three of: lower case, upper case, digits, symbols")
 	errPasswordUser    = errors.New("Password must not contain the user name")
 	errPasswordCommon  = errors.New("Password is too common")
 )
+
+const (
+	PassphraseMinWords  = 4
+	PassphraseMinLength = 20
+	passphraseWordMin   = 2
+)
+
+// IsPassphrase reports whether a password is a passphrase: at least four
+// words (separated by spaces, dashes, dots, underscores or commas), each
+// at least two letters or digits, and at least 20 characters overall.
+// Words must not all be the same.
+func IsPassphrase(password string) bool {
+	if len([]rune(password)) < PassphraseMinLength {
+		return false
+	}
+	words := strings.FieldsFunc(password, func(r rune) bool {
+		return unicode.IsSpace(r) || r == '-' || r == '.' || r == '_' || r == ','
+	})
+	distinct := map[string]bool{}
+	count := 0
+	for _, w := range words {
+		if len([]rune(w)) >= passphraseWordMin {
+			count++
+			distinct[strings.ToLower(w)] = true
+		}
+	}
+	return count >= PassphraseMinWords && len(distinct) >= 2
+}
 
 // CheckPasswordPolicy enforces the server password policy for
 // passwords set through the API (the console's change and reset
@@ -58,7 +88,9 @@ func CheckPasswordPolicy(username, password string) error {
 			classes++
 		}
 	}
-	if classes < 3 {
+	// Passphrases (four or more words, 20+ characters) are accepted
+	// without mixing character types: their length is their strength.
+	if classes < 3 && !IsPassphrase(password) {
 		return errPasswordClasses
 	}
 
@@ -71,6 +103,17 @@ func CheckPasswordPolicy(username, password string) error {
 	for _, common := range commonPasswords {
 		if strings.Contains(lowered, common) && length < len(common)+6 {
 			return errPasswordCommon
+		}
+	}
+
+	// A passphrase must not be built on a common password either.
+	if classes < 3 {
+		for _, w := range strings.FieldsFunc(lowered, func(r rune) bool {
+			return unicode.IsSpace(r) || r == '-' || r == '.' || r == '_' || r == ','
+		}) {
+			if utils.InString(commonPasswords, w) {
+				return errPasswordCommon
+			}
 		}
 	}
 	return nil

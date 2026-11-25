@@ -8,6 +8,7 @@ import {
   PASSWORD_RULES, passwordProblems, useMfaActions, useMfaStatus, type TotpBegin,
 } from '../../lib/security';
 import { Badge, Button, Card, CardHeader, Input, Skeleton } from '../../ui/primitives';
+import { MfaPolicyCard } from './MfaPolicyCard';
 
 export default function SecurityPage() {
   return (
@@ -20,6 +21,7 @@ export default function SecurityPage() {
         <div className="tw:grid tw:grid-cols-1 tw:xl:grid-cols-2 tw:gap-4 tw:items-start">
           <TwoFactorCard />
           <PasswordCard />
+          <MfaPolicyCard />
         </div>
       </div>
     </div>
@@ -120,8 +122,10 @@ function TwoFactorCard() {
               <Input value={code} onChange={e => setCode(e.target.value)} placeholder="Current code" className="tw:font-mono tw:w-40" />
               <Button size="sm" variant="secondary" loading={busy} disabled={!code}
                 onClick={() => run(async () => { setCodes(await actions.regenerate(code)); setCode(''); })}>New recovery codes</Button>
-              <Button size="sm" variant="danger" loading={busy} disabled={!code}
-                onClick={() => run(async () => { await actions.disable(code); setCode(''); toast.success('Two-factor sign in is off'); })}>Turn off</Button>
+              {!status.data?.required && (
+                <Button size="sm" variant="danger" loading={busy} disabled={!code}
+                  onClick={() => run(async () => { await actions.disable(code); setCode(''); toast.success('Two-factor sign in is off'); })}>Turn off</Button>
+              )}
             </div>
           </div>
         )}

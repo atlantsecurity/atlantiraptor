@@ -471,11 +471,15 @@ function UserMfaControl({ user }: { user: string }) {
   const status = useUserMfaStatus(user);
   const reset = useResetUserMfa();
   const [confirm, setConfirm] = useState(false);
+  const { traits } = useTraits();
+  const isSelf = !!traits?.username && traits.username.toLowerCase() === user.toLowerCase();
   if (status.isError || !status.data) return null;
   return <>
     {status.data.enrolled
       ? <Button variant="secondary" icon={<ShieldCheck />} onClick={() => setConfirm(true)}>2FA on · Reset</Button>
-      : <Badge tone="neutral">2FA off</Badge>}
+      : isSelf
+        ? <Button variant="primary" icon={<ShieldCheck />} onClick={() => { window.location.hash = '/account/security'; }}>Set up 2FA</Button>
+        : <Tooltip content="They are asked to set it up at their next sign in when the 2FA policy requires it."><span><Badge tone="warn">2FA not set up</Badge></span></Tooltip>}
     <ConfirmDialog open={confirm} onOpenChange={setConfirm} title={`Reset two-factor sign in for ${user}?`}
       confirmLabel="Reset" danger loading={reset.isPending}
       onConfirm={() => reset.mutate(user, {

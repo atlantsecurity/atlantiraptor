@@ -134,8 +134,20 @@ func mfaGate(w http.ResponseWriter, r *http.Request, config_obj *config_proto.Co
 		jsonError(w, http.StatusForbidden, "Two-factor status could not be read. Ask an administrator.")
 		return false
 	}
-	if !record.Enrolled() || mfaCookieValid(r, root, username, record) {
-		return true
+	reason := ""
+	if record.Enrolled() {
+		if mfaCookieValid(r, root, username, record) {
+			return true
+		}
+		reason = "mfa_required"
+	} else {
+		// Not enrolled: allowed only when the policy does not require
+		// 2FA for this user; otherwise they must enrol first, which the
+		// 2FA page lets them do with their password.
+		if !mfaRequiredFor(root, username) {
+			return true
+		}
+		reason = "mfa_enroll_required"
 	}
 
 	// 403, never 401: a 401 would make the browser ask for the
@@ -146,7 +158,7 @@ func mfaGate(w http.ResponseWriter, r *http.Request, config_obj *config_proto.Co
 		http.Redirect(w, r, target, http.StatusSeeOther)
 		return false
 	}
-	jsonError(w, http.StatusForbidden, "mfa_required")
+	jsonError(w, http.StatusForbidden, reason)
 	return false
 }
 
@@ -183,6 +195,7 @@ func mfaPublicAPI(config_obj *config_proto.Config) http.HandlerFunc {
 			writeJSON(w, http.StatusOK, map[string]interface{}{
 				"user":     user,
 				"enrolled": record.Enrolled(),
+				"required": mfaDisabled() == false && mfaRequiredFor(root, user),
 				"verified": record.Enrolled() && mfaCookieValid(r, root, user, record),
 			})
 
@@ -192,6 +205,23 @@ func mfaPublicAPI(config_obj *config_proto.Config) http.HandlerFunc {
 				return
 			}
 			verifyCode(w, r, root, user, record)
+
+		// Enrolment with the password only, so users who must use 2FA
+		// can set it up at sign in. Both steps refuse once a factor is
+		// enrolled: changing an existing factor needs a current code.
+		case "enroll/begin":
+			if r.Method != http.MethodPost {
+				jsonError(w, http.StatusMethodNotAllowed, "POST only")
+				return
+			}
+			beginTOTP(w, r, root, user)
+
+		case "enroll/confirm":
+			if r.Method != http.MethodPost {
+				jsonError(w, http.StatusMethodNotAllowed, "POST only")
+				return
+			}
+			confirmTOTP(w, r, root, user)
 
 		default:
 			jsonError(w, http.StatusNotFound, "Not found")
@@ -251,7 +281,7 @@ func mfaManageAPI(config_obj *config_proto.Config) http.HandlerFunc {
 			return
 		}
 		action := strings.TrimPrefix(r.URL.Path, api_utils.GetBasePath(config_obj, "/api/v1/atl/mfa/manage/"))
-		if action != "status" && action != "user_status" && r.Method != http.MethodPost {
+		if action != "status" && action != "user_status" && action != "policy" && r.Method != http.MethodPost {
 			jsonError(w, http.StatusMethodNotAllowed, "POST only")
 			return
 		}
@@ -265,8 +295,12 @@ func mfaManageAPI(config_obj *config_proto.Config) http.HandlerFunc {
 			}
 			writeJSON(w, http.StatusOK, map[string]interface{}{
 				"enrolled":            record.Enrolled(),
+				"required":            mfaRequiredFor(root, user),
 				"recovery_codes_left": recoveryLeft(record),
 			})
+
+		case "policy":
+			policyAction(w, r, root, user)
 
 		case "totp/begin":
 			beginTOTP(w, r, root, user)
@@ -275,6 +309,10 @@ func mfaManageAPI(config_obj *config_proto.Config) http.HandlerFunc {
 			confirmTOTP(w, r, root, user)
 
 		case "disable":
+			if mfaRequiredFor(root, user) {
+				jsonError(w, http.StatusConflict, "Two-factor sign in is required for your account by the server policy.")
+				return
+			}
 			disableTOTP(w, r, root, user)
 
 		case "recovery/regenerate":
@@ -289,6 +327,41 @@ func mfaManageAPI(config_obj *config_proto.Config) http.HandlerFunc {
 	}
 }
 
+// policyAction reads (any signed-in user) or changes (server admins of
+// the root org) who must use two-factor sign in.
+func policyAction(w http.ResponseWriter, r *http.Request, root *config_proto.Config, user string) {
+	if r.Method == http.MethodGet {
+		p, err := LoadMFAPolicy(root)
+		if err != nil {
+			jsonError(w, http.StatusInternalServerError, "Could not read the 2FA policy.")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{"policy": p, "break_glass_active": mfaDisabled()})
+		return
+	}
+	if r.Method != http.MethodPost {
+		jsonError(w, http.StatusMethodNotAllowed, "GET or POST")
+		return
+	}
+	ok, err := services.CheckAccess(root, user, acls.SERVER_ADMIN)
+	if err != nil || !ok {
+		jsonError(w, http.StatusForbidden, "Only server administrators can change the 2FA policy.")
+		return
+	}
+	var body MFAPolicy
+	if err := readJSON(r, &body); err != nil {
+		jsonError(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	saved, err := SaveMFAPolicy(root, body)
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	audit(r.Context(), root, user, "mfa_policy_update", ordereddict.NewDict().
+		Set("mode", saved.Mode).Set("roles", saved.Roles).Set("groups", saved.Groups))
+	writeJSON(w, http.StatusOK, map[string]interface{}{"policy": saved})
+}
 func recoveryLeft(r *MFARecord) int {
 	if r == nil {
 		return 0
@@ -520,7 +593,7 @@ func mfaPage(config_obj *config_proto.Config) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Content-Security-Policy",
-			"default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-ancestors 'none'")
+			"default-src 'self'; img-src 'self' data:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-ancestors 'none'")
 		_ = mfaPageTemplate.Execute(w, map[string]string{
 			"CsrfToken": csrf.Token(r),
 			"BasePath":  api_utils.GetBasePath(config_obj),
