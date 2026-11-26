@@ -12,7 +12,6 @@ import {
   useClient, useClientFlowList, useClientMetadata, useExistingArtifacts, useLabelClients, useSetClientMetadata,
   runArtifact, runArtifacts, usePermission,
 } from '../../lib/queries';
-import type { ApiClient } from '../../lib/types';
 import { clientStatus, fmtBytes, fmtCompact, fmtTime, timeAgo, toNum } from '../../lib/format';
 import {
   Badge, Button, Card, CardHeader, CopyButton, Dialog, EmptyState, IconButton, Input, Menu, MenuContent,
@@ -25,11 +24,7 @@ import { MftWindowDialog, type MftWindow } from './MftWindowDialog';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
 
-type OS = 'windows' | 'linux' | 'darwin' | 'other';
-const osOf = (c?: ApiClient): OS => {
-  const s = (c?.os_info?.system ?? '').toLowerCase();
-  return s === 'windows' ? 'windows' : s === 'linux' ? 'linux' : s === 'darwin' || s === 'macos' ? 'darwin' : 'other';
-};
+import { osOf, type OS } from '../../lib/triage';
 
 const QUARANTINE: Record<OS, string> = {
   windows: 'Windows.Remediation.Quarantine',

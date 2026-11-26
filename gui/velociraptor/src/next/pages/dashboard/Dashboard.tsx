@@ -4,12 +4,13 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis,
 } from 'recharts';
 import {
-  Monitor, Wifi, Crosshair, Server, Cpu, MemoryStick, Plug, ArrowRight, Plus, Activity,
+  Monitor, Wifi, Crosshair, Server, Cpu, MemoryStick, Plug, ArrowRight, Plus, BellRing, CircleX,
 } from 'lucide-react';
+import { useAlerts } from './alerts/hooks';
 import {
-  useClientCounts, useClientFlows, useHunts, useRecentClients, useServerHealth, usePermission, useTraits,
+  useClientCounts, useClientFlows, useHunts, useRecentClients, useServerHealth, usePermission,
 } from '../../lib/queries';
-import { clientStatus, fmtBytes, fmtNum, pct, timeAgo, toNum } from '../../lib/format';
+import { clientStatus, fmtBytes, fmtNum, pct, timeAgo, toDate, toNum } from '../../lib/format';
 import {
   Badge, Button, Card, CardHeader, EmptyState, Segmented, Skeleton, Stat, StatusDot, Tooltip,
 } from '../../ui/primitives';
@@ -27,15 +28,7 @@ const RANGES = [
 
 type RangeValue = typeof RANGES[number]['value'];
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export default function Dashboard() {
-  const { traits } = useTraits();
   const history = useHistory();
   const canHunt = usePermission('start_hunt');
   const counts = useClientCounts();
@@ -54,15 +47,24 @@ export default function Dashboard() {
   const total = counts.data?.total ?? 0;
   const online = counts.data?.online ?? 0;
   const runningClients = running.reduce((s, h) => s + huntCounts(h).running, 0);
+  const { alerts, isLoading: alertsLoading } = useAlerts();
+  const newAlerts = useMemo(() => {
+    const since = Date.now() - 24 * 3600 * 1000;
+    return alerts.filter(a => (a.time?.getTime() ?? 0) >= since);
+  }, [alerts]);
+  const severe = newAlerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
+  // Clients that failed in hunts created in the last 7 days.
+  const recentFailures = useMemo(() => {
+    const since = Date.now() - 7 * 24 * 3600 * 1000;
+    return hunts.filter(h => (toDate(h.create_time)?.getTime() ?? 0) >= since)
+      .reduce((s, h) => s + huntCounts(h).errors, 0);
+  }, [hunts]);
 
   return (
     <div className="tw:flex-1 tw:overflow-y-auto">
       <div className="tw:p-3 tw:md:p-6 tw:space-y-5">
-        <div className="tw:flex tw:items-end tw:gap-3">
-          <div className="tw:flex-1">
-            <h1 className="tw:text-xl tw:font-semibold tw:tracking-tight">{greeting()}{traits?.username ? `, ${traits.username}` : ''}</h1>
-            <p className="tw:text-xs tw:text-muted tw:mt-0.5">Here is what is happening across your fleet.</p>
-          </div>
+        <div className="tw:flex tw:items-center tw:gap-3">
+          <h1 className="tw:flex-1 tw:text-lg tw:font-semibold tw:tracking-tight">Dashboard</h1>
           {canHunt && (
             <Button variant="primary" icon={<Plus className="tw:size-3.5" />} onClick={() => history.push('/hunts?new=1')}>
               New hunt
@@ -70,26 +72,29 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* What an analyst opens the page for comes first. */}
+        <RapidHuntPanel canHunt={canHunt} />
+
         <div className="tw:grid tw:grid-cols-2 tw:lg:grid-cols-4 tw:gap-4">
-          <Stat icon={<Monitor />} label="Enrolled clients" tone="accent"
-            value={counts.isLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : fmtNum(total)}
-            sub="All known endpoints" onClick={() => history.push('/search/all')} />
+          <Stat icon={<BellRing />} label="New alerts (24h)" tone={severe ? 'bad' : 'warn'}
+            value={alertsLoading ? <Skeleton className="tw:h-7 tw:w-10" /> : fmtNum(newAlerts.length)}
+            sub={severe ? `${fmtNum(severe)} critical or high` : 'None critical or high'}
+            onClick={() => document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth' })} />
           <Stat icon={<Wifi />} label="Online now" tone="ok"
-            value={counts.isLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : fmtNum(online)}
-            sub={total ? `${Math.round(pct(online, total))}% seen in the last 15 minutes` : 'Seen in the last 15 minutes'}
+            value={counts.isLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : `${fmtNum(online)} / ${fmtNum(total)}`}
+            sub={total ? `${Math.round(pct(online, total))}% of enrolled clients, seen in the last 15 minutes` : 'Seen in the last 15 minutes'}
             onClick={() => history.push('/search/all?online=1')} />
-          <Stat icon={<Crosshair />} label="Running hunts" tone="warn"
+          <Stat icon={<Crosshair />} label="Running hunts" tone="accent"
             value={huntsLoading ? <Skeleton className="tw:h-7 tw:w-10" /> : fmtNum(running.length)}
             sub={running.length ? `${fmtNum(runningClients)} clients still collecting` : `${fmtNum(hunts.length)} hunts in total`}
             onClick={() => history.push('/hunts')} />
-          <Stat icon={<Activity />} label="Rows collected by hunts" tone="info"
-            value={huntsLoading ? <Skeleton className="tw:h-7 tw:w-16" /> : fmtNum(hunts.reduce((s, h) => s + huntCounts(h).rows, 0))}
-            sub="Across all active hunts" />
+          <Stat icon={<CircleX />} label="Failed hunt collections" tone={recentFailures ? 'bad' : 'info'}
+            value={huntsLoading ? <Skeleton className="tw:h-7 tw:w-10" /> : fmtNum(recentFailures)}
+            sub="Clients that errored in hunts from the last 7 days"
+            onClick={() => history.push('/hunts')} />
         </div>
 
-        <RapidHuntPanel canHunt={canHunt} />
-
-        <AlertsPanel />
+        <div id="alerts"><AlertsPanel /></div>
 
         <div className="tw:grid tw:grid-cols-1 tw:xl:grid-cols-3 tw:gap-4">
           <Card className="tw:xl:col-span-2">

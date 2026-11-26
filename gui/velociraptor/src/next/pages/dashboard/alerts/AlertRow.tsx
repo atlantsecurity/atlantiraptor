@@ -6,7 +6,9 @@ import { Briefcase, ChevronDown, ChevronRight, FileSearch, FileX2, Laptop, Shiel
 import { AddToCaseDialog } from '../../cases/AddToCaseDialog';
 import { AiTriageButton } from '../../ai/AiTriage';
 import { jsonContext } from '../../ai/context';
-import { useClient } from '../../../lib/queries';
+import { useClient, usePermission } from '../../../lib/queries';
+import { startFullTriage } from '../../../lib/triage';
+import { toast } from 'sonner';
 import { fmtTime, timeAgo } from '../../../lib/format';
 import { Badge, Button, Mono, Tooltip, cn } from '../../../ui/primitives';
 import { detailEntries, sourceLink, SEVERITY_TONE, type Alert } from './model';
@@ -30,6 +32,20 @@ export function AlertRow({ alert }: { alert: Alert }) {
   const host = client?.os_info?.hostname || alert.clientId || 'server';
   const source = sourceLink(alert);
   const path = typeof alert.data.path === 'string' ? alert.data.path : '';
+  const canCollect = usePermission('collect_client');
+  const [triaging, setTriaging] = useState(false);
+  const triage = async () => {
+    setTriaging(true);
+    try {
+      const flowId = await startFullTriage(alert.clientId, client);
+      toast.success(`Full triage started on ${host}`);
+      history.push(`/collected/${alert.clientId}/${flowId}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTriaging(false);
+    }
+  };
 
   return (
     <div className={cn(open && 'tw:bg-hover/40')}>
@@ -62,8 +78,10 @@ export function AlertRow({ alert }: { alert: Alert }) {
                 onClick={() => history.push(source)}>View source event</Button>
             )}
             {alert.clientId && (
-              <Button size="sm" variant="secondary" icon={<Zap className="tw:size-3.5" />}
-                onClick={() => history.push(`/host/${alert.clientId}`)}>Triage host</Button>
+              <Tooltip content="Collects processes, network connections, autoruns, services, scheduled tasks, users and recently run programs in one go">
+                <Button size="sm" variant="secondary" icon={<Zap className="tw:size-3.5" />} loading={triaging}
+                  disabled={!canCollect} onClick={triage}>Triage host</Button>
+              </Tooltip>
             )}
             {alert.clientId && (
               <Button size="sm" variant="secondary" icon={<ShieldAlert className="tw:size-3.5" />}
