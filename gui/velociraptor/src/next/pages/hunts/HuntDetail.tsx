@@ -440,7 +440,8 @@ function ResultsTab({ hunt, onExport }: { hunt: Hunt; onExport: () => void }) {
   const serverFilter = useDebounced(filter, 400);
   useEffect(() => { setFilter(''); setSort(null); }, [source]);
 
-  const q = useHuntResults(hunt.hunt_id, source, { filter: serverFilter, sort });
+  const live = effectiveState(hunt) === 'running';
+  const q = useHuntResults(hunt.hunt_id, source, { filter: serverFilter, sort, live });
   const rows = useMemo(() => q.data?.pages.flatMap(p => p.rows) ?? [], [q.data]);
   const columns = q.data?.pages[0]?.columns;
   const uploadRenderers = useMemo(() => withUploadCells(columns, rows, {}), [columns, rows]);
@@ -482,6 +483,7 @@ function ResultsTab({ hunt, onExport }: { hunt: Hunt; onExport: () => void }) {
           ) : <Mono className="tw:text-muted">{source}</Mono>}
           <IconButton size="sm" label="Refresh" icon={<RefreshCw className={`tw:size-3.5 ${q.isFetching ? 'tw:animate-spin' : ''}`} />}
             onClick={() => q.refetch()} />
+          {live && <span className="tw:text-2xs tw:text-muted">Updating live while the hunt runs</span>}
         </div>
       }
       empty={serverFilter

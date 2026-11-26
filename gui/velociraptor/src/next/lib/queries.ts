@@ -150,6 +150,9 @@ const RESULTS_PAGE = 2000;
 export interface HuntResultsQuery {
   filter?: string;
   sort?: { column: string; desc: boolean } | null;
+  // Refresh while the hunt runs (only while a few pages are loaded, so
+  // a scrolled-through large result set is not re-downloaded).
+  live?: boolean;
 }
 
 export function useHuntResults(huntId: string | undefined, artifact: string | undefined,
@@ -172,6 +175,7 @@ export function useHuntResults(huntId: string | undefined, artifact: string | un
       }, signal));
       return { ...parseTable(resp), offset: pageParam as number };
     },
+    refetchInterval: q => (opts.live && (q.state.data?.pages.length ?? 0) <= 3 ? POLL.normal : false),
     getNextPageParam: (last: ParsedTable & { offset: number }) => {
       if (last.rows.length < RESULTS_PAGE) return undefined;
       return last.offset + last.rows.length;
