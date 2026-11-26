@@ -14,7 +14,8 @@ import { IOC_TYPES, parseIocs, toCsv, type IocType } from './parse';
 
 export const IOC_ARTIFACT = 'Generic.Detection.IOCSweep';
 export const IOC_TAG = 'ioc-sweep';
-export const IOC_PREFILL_KEY = 'atl-ioc-prefill';
+import { IOC_PREFILL_KEY } from '../../lib/prefill';
+export { IOC_PREFILL_KEY };
 const DEFAULT_GLOB = 'C:/Users/*/{Downloads,Desktop,Documents,AppData/Local/Temp,AppData/Roaming}/**';
 const PLACEHOLDER = `One indicator per line, or type,value,note. Defanged values are fine.
 e.g.

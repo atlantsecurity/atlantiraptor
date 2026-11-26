@@ -1,8 +1,8 @@
 // Rapid hunt: type a domain, URL or IP and see which machines visited it.
 // Starts an urgent hunt of Generic.Detection.RapidHunt on every client
 // and streams results in as clients answer.
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, Globe, Radar, Search, X } from 'lucide-react';
@@ -51,6 +51,22 @@ function useRapidResults(huntId: string | undefined, live: boolean) {
 export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
   const create = useCreateHunt();
   const [indicator, setIndicator] = useState('');
+  const location = useLocation();
+  const history = useHistory();
+  const inputRef = useRef<HTMLInputElement>(null);
+  // ?rapid=<indicator> (from the command palette or a pivot) prefills
+  // the box; the analyst still presses "Hunt the fleet".
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const v = params.get('rapid');
+    if (v) {
+      setIndicator(v);
+      params.delete('rapid');
+      history.replace({ search: params.toString() });
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ block: 'center' });
+    }
+  }, [location.search, history]);
   const [days, setDays] = useState('30');
   const [eventLogs, setEventLogs] = useState(true);
   const [recent, setRecent] = useState<Recent[]>(loadRecent);
@@ -100,7 +116,7 @@ export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
           onSubmit={e => { e.preventDefault(); if (!problem && indicator.trim()) void start(); }}>
           <div className="tw:relative tw:flex-1 tw:min-w-[260px]">
             <Search className="tw:absolute tw:left-2 tw:top-2 tw:size-4 tw:text-faint" />
-            <Input value={indicator} onChange={e => setIndicator(e.target.value)} className="tw:pl-8"
+            <Input ref={inputRef} value={indicator} onChange={e => setIndicator(e.target.value)} className="tw:pl-8"
               placeholder="example.com, https://evil.example/path or 203.0.113.7" disabled={!canHunt} />
           </div>
           <Select value={days} onChange={e => setDays(e.target.value)} aria-label="Look back">

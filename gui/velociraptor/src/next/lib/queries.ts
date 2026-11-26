@@ -62,9 +62,10 @@ export function usePermission(name: string): boolean {
 
 // --------------------------------------------------------------- Hunts
 
-export function useHunts(includeArchived: boolean) {
+export function useHunts(includeArchived: boolean, enabled = true) {
   return useQuery({
     queryKey: ['hunts', { includeArchived }],
+    enabled,
     queryFn: ({ signal }) => api.get<ListHuntsResponse>('v1/ListHunts', {
       count: 2000,
       offset: 0,
@@ -1053,9 +1054,10 @@ export interface NotebookCell {
   more_messages?: boolean;
 }
 
-export function useNotebookList() {
+export function useNotebookList(enabled = true) {
   return useQuery({
     queryKey: ['notebook-list'],
+    enabled,
     queryFn: ({ signal }) => emptyIfNotFound(api.get<TableResponse>('v1/GetTable', { type: 'NOTEBOOKS', start_row: 0, rows: 2000 }, signal)),
     select: d => parseTable(d).rows,
     refetchInterval: POLL.slow,
