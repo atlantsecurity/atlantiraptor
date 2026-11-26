@@ -21,6 +21,7 @@ import { TagInput } from '../hunts/TagInput';
 import { FlowStateBadge } from '../collections/FlowDetail';
 import { useSelectedClient } from '../../shell/client-context';
 import { MftWindowDialog, type MftWindow } from './MftWindowDialog';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
 
@@ -211,6 +212,8 @@ export default function ClientOverview() {
             <Button variant="primary" icon={<Plus className="tw:size-3.5" />} disabled={!canCollect} onClick={() => setCollectOpen(true)}>Collect</Button>
             <Button variant="secondary" icon={<History className="tw:size-3.5" />} onClick={() => history.push(`/collected/${clientId}`)}>Collections</Button>
             <Button variant="secondary" icon={<FolderTree className="tw:size-3.5" />} onClick={() => history.push(`/vfs/${clientId}/`)}>Files</Button>
+            <AddToCaseButton suggestedTitle={`Investigation: ${hostname}`}
+              item={{ kind: 'client', ref: clientId, label: `${hostname} (${clientId})` }} />
             <Menu>
               <MenuTrigger asChild>
                 <IconButton label="More actions" variant="secondary" icon={<MoreHorizontal className="tw:size-4" />} />

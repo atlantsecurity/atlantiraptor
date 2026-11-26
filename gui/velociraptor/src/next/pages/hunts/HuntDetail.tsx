@@ -22,6 +22,7 @@ import { DataTable } from '../../ui/DataTable';
 import type { Row } from '../../lib/table';
 import { effectiveState, HuntStateBadge, huntCounts, huntTitle } from './HuntBits';
 import EditHuntDialog from './EditHuntDialog';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
 import { ClientLink, FlowLink } from '../evidence/links';
 import ExportHuntDialog from '../evidence/ExportHuntDialog';
 import { ArchiveList, useArchiveReadyToast } from '../evidence/ArchiveList';
@@ -139,6 +140,8 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
               onClick={() => setExportOpen(true)}>Export</Button>
             <Button variant="secondary" icon={<Copy className="tw:size-3.5" />} disabled={!canHunt}
               onClick={() => onCopy(hunt)}>Copy</Button>
+            <AddToCaseButton suggestedTitle={huntTitle(hunt)}
+              item={{ kind: 'hunt', ref: hunt.hunt_id, label: `${huntTitle(hunt)} (${hunt.hunt_id})` }} />
             <IconButton label="Edit" variant="secondary" icon={<Pencil className="tw:size-3.5" />}
               onClick={() => setEditOpen(true)} />
             <Menu>

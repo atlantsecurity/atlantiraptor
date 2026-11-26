@@ -17,6 +17,7 @@ import {
   RAPID_KIND_QUESTION, RAPID_KINDS, RAPID_TAG, rapidDescription, type HostHits, type RapidEntry, type RapidKind,
 } from './model';
 import { prefillIocSweep } from '../../../lib/prefill';
+import { AddToCaseButton } from '../../cases/AddToCaseButton';
 
 type Recent = RapidEntry;
 
@@ -207,7 +208,10 @@ function RapidResults({ entry, onClose }: { entry: Recent; onClose: () => void }
               {hosts.length > 100 ? `Respond to the first 100 of ${hosts.length}` : `Respond to ${hosts.length > 1 ? `all ${hosts.length}` : 'this machine'}`}
             </Link>
           )}
-                    <Link to={`/hunts/${entry.huntId}`} className="tw:text-xs tw:text-accent tw:hover:underline">Open hunt</Link>
+                    <AddToCaseButton size="sm" label="Add to case" suggestedTitle={`Rapid hunt: ${entry.indicator}`}
+            item={{ kind: 'hunt', ref: entry.huntId,
+              label: `Rapid hunt for ${entry.indicator}: ${hosts.length} machine${hosts.length === 1 ? '' : 's'} matched (${hosts.map(h => h.hostname).slice(0, 10).join(', ')}${hosts.length > 10 ? ', …' : ''})` }} />
+          <Link to={`/hunts/${entry.huntId}`} className="tw:text-xs tw:text-accent tw:hover:underline">Open hunt</Link>
           {running && (
             <button type="button" className="tw:text-xs tw:text-muted tw:hover:text-fg tw:underline"
               onClick={() => stop.mutate([entry.huntId])}>Stop</button>

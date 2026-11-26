@@ -20,6 +20,7 @@ import {
 } from '../../ui/primitives';
 import { DataTable } from '../../ui/DataTable';
 import { ArchiveList } from '../evidence/ArchiveList';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
 import { promoteColumns, UploadsTable, withUploadCells } from '../evidence/UploadLink';
 
 type TabKey = 'overview' | 'results' | 'files' | 'logs' | 'notebook';
@@ -97,6 +98,8 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
               {preparing ? 'Building zip…' : 'Download zip'}
             </Button>
             <Button variant="secondary" icon={<RotateCcw className="tw:size-3.5" />} onClick={() => onCollectAgain(flow)}>Collect again</Button>
+            <AddToCaseButton suggestedTitle={`${(flow.request?.artifacts ?? []).join(', ')} on ${hostname}`}
+              item={{ kind: 'flow', ref: flow.session_id, clientId, label: `${(flow.request?.artifacts ?? []).join(', ')} on ${hostname} (${flow.session_id})` }} />
             {rows > 0 && (
               <AiTriageButton size="md" task="Triage the results of this collection."
                 getContext={() => flowContext(clientId, flowId, artifacts, hostname)} />
