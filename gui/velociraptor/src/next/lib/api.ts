@@ -1,0 +1,161 @@
+// Thin, typed HTTP client for the Velociraptor gRPC gateway (/api/v1/*).
+//
+// URL building, org header and base path handling mirror the legacy
+// api-service so both UIs can run side by side against the same server.
+import axios, { AxiosError } from 'axios';
+
+// A private instance: the legacy api-service installs axios-retry on the
+// global axios, which silently delays every 5xx by several seconds. Retries
+// for the new UI are handled by TanStack Query instead.
+const http = axios.create();
+import qs from 'qs';
+import legacyApi from '../../components/core/api-service.jsx';
+
+declare global {
+  interface Window {
+    globals: {
+      OrgId?: string;
+      lang?: string;
+      theme?: string;
+      base_path?: string;
+      AuthRedirectTemplate?: string;
+      [k: string]: unknown;
+    };
+    base_path?: string;
+    ErrorState?: { Type: string; [k: string]: unknown };
+  }
+}
+
+export class ApiError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export function basePath(): string {
+  return (legacyApi as { base_path: () => string }).base_path();
+}
+
+function apiUrl(path: string): string {
+  const parsed = new URL(window.location.href);
+  const base = basePath().replace(/\/+$/, '');
+  parsed.pathname = `${base}/api/${path.replace(/^\/+/, '')}`;
+  parsed.hash = '';
+  parsed.search = '';
+  return parsed.href;
+}
+
+export function currentOrgId(): string {
+  let org = window.globals?.OrgId || '';
+  if (org.startsWith('{{')) org = '';
+  return org || 'root';
+}
+
+export function headers() {
+  return { 'Grpc-Metadata-OrgId': currentOrgId() };
+}
+
+export function isMfaRequired(data: unknown): boolean {
+  const m = !!data && typeof data === 'object' ? (data as { message?: string }).message : '';
+  return m === 'mfa_required' || m === 'mfa_enroll_required';
+}
+
+let mfaRedirecting = false;
+export function redirectToMfa() {
+  if (mfaRedirecting) return;
+  mfaRedirecting = true;
+  const base = basePath().replace(/\/+$/, '');
+  const back = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.location.assign(`${base}/app/mfa.html?return=${encodeURIComponent(back)}`);
+}
+
+function toApiError(err: unknown): never {
+  if (axios.isCancel(err)) {
+    throw err;
+  }
+  const e = err as AxiosError<{ message?: string } | string>;
+  const status = e.response?.status;
+
+  // The two-factor session expired or was revoked: go to the code page
+  // and come back to the same screen afterwards.
+  if (status === 403 && isMfaRequired(e.response?.data)) {
+    redirectToMfa();
+  }
+
+  if (status === 401) {
+    const tpl = window.globals?.AuthRedirectTemplate || '';
+    if (tpl) {
+      window.location.assign(
+        tpl.replaceAll('%LOCATION%', encodeURIComponent(window.location.href)));
+    }
+  }
+
+  const data = e.response?.data;
+  let message = e.message;
+  if (data && typeof data === 'object' && data.message) {
+    message = data.message;
+  } else if (typeof data === 'string' && data && !data.trimStart().startsWith('<')) {
+    message = data;
+  }
+  throw new ApiError(message, status);
+}
+
+export async function get<T>(
+  path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.get<T>(apiUrl(path), {
+      params,
+      paramsSerializer: { serialize: p => qs.stringify(p, { indices: false }) },
+      headers: headers(),
+      signal,
+    });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
+export async function post<T>(
+  path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.post<T>(apiUrl(path), body ?? {}, {
+      headers: headers(),
+      signal,
+    });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
+export async function put<T>(
+  path: string, body?: unknown, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.put<T>(apiUrl(path), body ?? {}, { params, headers: headers(), signal });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
+export async function del<T>(
+  path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  try {
+    const resp = await http.delete<T>(apiUrl(path), { params, headers: headers(), signal });
+    return resp.data;
+  } catch (err) {
+    return toApiError(err);
+  }
+}
+
+// Builds an href to a server-side resource (downloads etc).
+export function href(path: string, params?: Record<string, unknown>): string {
+  return (legacyApi as { href: (u: string, p?: unknown, o?: unknown) => string })
+    .href(path, params, { internal: true });
+}
+
+export function srcOf(path: string): string {
+  return (legacyApi as { src_of: (u: string) => string }).src_of(path);
+}

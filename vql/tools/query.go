@@ -149,6 +149,12 @@ func (self QueryPlugin) Call(
 			org_config_obj, arg.Principal)
 	}
 
+	// Keep any restriction of the calling scope (e.g. read-only API
+	// queries) on the new ACL manager.
+	if builder.ACLManager != nil {
+		builder.ACLManager = vql_subsystem.RestrictACLManager(scope, builder.ACLManager)
+	}
+
 	go func() {
 		defer close(output_chan)
 		defer vql_subsystem.RegisterMonitor(ctx, "query", args)()

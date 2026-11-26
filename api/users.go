@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"www.velocidex.com/golang/velociraptor/acls"
 	acl_proto "www.velocidex.com/golang/velociraptor/acls/proto"
+	"www.velocidex.com/golang/velociraptor/api/authenticators"
 	api_proto "www.velocidex.com/golang/velociraptor/api/proto"
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/services"
@@ -25,17 +26,22 @@ func (self *ApiServer) SetPassword(
 
 	defer Instrument("SetPassword")()
 
-	// Enforce a minimum length password
-	if len(in.Password) < 4 {
-		return nil, InvalidStatus("Password is not set or too short")
-	}
-
 	user_manager := services.GetUserManager()
 	user_record, _, err := user_manager.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, Status(self.verbose, err)
 	}
 	principal := user_record.Name
+
+	// Enforce the password policy for the user whose password changes.
+	policy_target := in.Username
+	if policy_target == "" {
+		policy_target = principal
+	}
+	err = CheckPasswordPolicy(policy_target, in.Password)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	org_manager, err := services.GetOrgManager()
 	if err != nil {
@@ -57,6 +63,18 @@ func (self *ApiServer) SetPassword(
 		ctx, org_config_obj, principal, target, in.Password, "")
 	if err != nil {
 		return nil, Status(self.verbose, err)
+	}
+
+	// A new password ends every existing two-factor session for the
+	// user. The password has already changed, so a failure here is
+	// logged rather than reported as a failed password change.
+	canonical := target
+	if target_record, err := user_manager.GetUser(ctx, principal, target); err == nil && target_record.Name != "" {
+		canonical = target_record.Name
+	}
+	if err := authenticators.RevokeMFASessions(org_config_obj, canonical); err != nil {
+		logging.GetLogger(org_config_obj, &logging.FrontendComponent).
+			Error("SetPassword: could not end two-factor sessions for %v: %v", canonical, err)
 	}
 
 	return &emptypb.Empty{}, nil

@@ -49,6 +49,7 @@ type ScheduleCollectionFunctionArg struct {
 	Urgent        bool              `vfilter:"optional,field=urgent,doc=Set the collection as urgent - skips other queues collections on the client."`
 	OrgId         string            `vfilter:"optional,field=org_id,doc=If set the collection will be started in the specified org."`
 	DoNotSchedule bool              `vfilter:"optional,field=do_not_schedule,doc=If set we do not actually schedule the flow, only write the flow object into the filestore."`
+	UserData      string            `vfilter:"optional,field=user_data,doc=Free text stored with the collection request (max 16 KB)"`
 }
 
 type ScheduleCollectionFunction struct{}
@@ -133,6 +134,11 @@ func (self *ScheduleCollectionFunction) Call(ctx context.Context,
 		return vfilter.Null{}
 	}
 
+	if len(arg.UserData) > 16*1024 {
+		scope.Log("collect_client: user_data is too long")
+		return vfilter.Null{}
+	}
+
 	repository, err := vql_utils.GetRepository(scope)
 	if err != nil {
 		scope.Log("collect_client: Command can only run on the server")
@@ -150,6 +156,7 @@ func (self *ScheduleCollectionFunction) Call(ctx context.Context,
 		MaxRows:        arg.MaxRows,
 		MaxUploadBytes: arg.MaxBytes,
 		Urgent:         arg.Urgent,
+		UserData:       arg.UserData,
 		DoNotSchedule:  arg.DoNotSchedule,
 	}
 

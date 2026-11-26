@@ -1,0 +1,62 @@
+name: Generic.Remediation.DeleteFile
+description: |
+  Deletes files matching a glob, optionally only those with a given
+  SHA256 hash. Directories are never deleted.
+
+  Without `ReallyDoIt` the artifact only lists the files it would
+  delete (with their hashes), so it can be used as a dry run first.
+  If a host matches more than `MaxFiles` files, nothing is deleted on
+  that host, as a guard against an overly broad glob.
+
+  WARNING: deleted files cannot be recovered by this artifact. Test the
+  glob with a dry run before deploying widely.
+
+type: CLIENT
+
+required_permissions:
+  - FILESYSTEM_WRITE
+
+parameters:
+  - name: Glob
+    default: C:/ThisIsAUniqueName/*.exe
+    description: Glob of files to delete, e.g. C:/Users/*/AppData/Local/Temp/evil.exe
+  - name: HashFilter
+    default: ""
+    description: Only delete files with this SHA256 hash (optional).
+  - name: MaxFiles
+    type: int
+    default: 50
+  - name: ReallyDoIt
+    type: bool
+    description: Delete the matching files. Otherwise only list them.
+
+sources:
+  - query: |
+      // Links are never followed or deleted, so a symlink or junction
+      // cannot redirect the deletion to another file.
+      LET matches = SELECT OSPath, Size, Mtime,
+                           hash(path=OSPath).SHA256 AS SHA256
+        FROM glob(globs=Glob, nosymlink=TRUE)
+        WHERE NOT IsDir AND NOT IsLink
+
+      LET targets <= SELECT * FROM matches
+        WHERE if(condition=HashFilter,
+                 then=SHA256 = lowcase(string=strip(string=HashFilter)),
+                 else=TRUE)
+
+      // All or nothing: a glob that matches more than MaxFiles files on
+      // a host is treated as a mistake and nothing is deleted there.
+      LET too_many <= len(list=targets) > int(int=MaxFiles)
+
+      // Each file is re-hashed right before deletion; if it changed since it
+      // was matched, it is left alone.
+      SELECT OSPath, Size, Mtime, SHA256,
+             if(condition=too_many,
+                then=format(format="Skipped: %v matches exceed MaxFiles", args=len(list=targets)),
+                else=if(condition=ReallyDoIt,
+                   then=if(condition=hash(path=OSPath).SHA256 != SHA256,
+                      then="Skipped: changed since matched",
+                      else=if(condition=rm(filename=OSPath) AND NOT stat(filename=OSPath),
+                              then="Deleted", else="Failed")),
+                   else="Dry run")) AS Result
+      FROM targets

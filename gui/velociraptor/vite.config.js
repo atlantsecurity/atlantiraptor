@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import viteCompression from 'vite-plugin-compression';
 import eslint from 'vite-plugin-eslint';
 
@@ -15,6 +16,23 @@ export default defineConfig({
         chunkSizeWarningLimit: 10000000,
         sourcemap: false,
         rollupOptions: {
+            output: {
+                // Keep big, rarely changing libraries in their own
+                // chunks so they cache well between releases. React and
+                // the small helpers it shares with recharts get the top
+                // priority so the charts chunk is only fetched by pages
+                // that draw charts.
+                codeSplitting: {
+                    groups: [
+                        { name: 'vendor-react', priority: 30,
+                          test: /node_modules[\\/](react|react-dom|scheduler|prop-types|react-is|clsx|tiny-invariant|object-assign)[\\/]/ },
+                        { name: 'vendor-lodash', priority: 20, test: /node_modules[\\/]lodash[\\/]/ },
+                        { name: 'vendor-ace', priority: 10, test: /node_modules[\\/]ace-builds[\\/]/ },
+                        { name: 'vendor-charts', priority: 10,
+                          test: /node_modules[\\/](recharts|recharts-scale|d3-[a-z-]+|victory-vendor|decimal\.js-light|react-smooth|fast-equals|eventemitter3)[\\/]/ },
+                    ],
+                },
+            },
             onwarn(warning, warn) {
                 // Pointless warning we cant do anything about.
                 if (warning.code === "MODULE_LEVEL_DIRECTIVE") {
@@ -39,7 +57,7 @@ export default defineConfig({
         preserveSymlinks: true,
     },
     plugins: [
-      // …
+      tailwindcss(),
       react({
         // Use React plugin in all *.jsx and *.tsx files
         include: '**/*.{jsx,tsx}',

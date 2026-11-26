@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Atlantiraptor endpoint agent installer (WiX v4/v5).
+
+  Built by scripts/build-msi.ps1, which stages Atlantiraptor.exe (already
+  signed), client.config.yaml and LICENSE.txt next to this file and passes
+  the version. Installs per machine as the "Atlantiraptor" Windows service
+  running as LocalSystem. Silent install for Intune / GPO:
+
+    msiexec /i Atlantiraptor-<version>-amd64.msi /qn
+
+  The client config sits in its own uncompressed cabinet so it can be
+  swapped later; the MSI must be re-signed after that.
+
+  Atlantiraptor is based on Velociraptor (AGPL-3.0); the licence is
+  installed next to the binary.
+-->
+<?ifndef Version ?>
+<?define Version="1.0.0" ?>
+<?endif?>
+<?define RegKey="Software\Atlant Security\Atlantiraptor" ?>
+<?define ProtectedDacl="O:SYG:SYD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)" ?>
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package Name="Atlantiraptor"
+           Manufacturer="Atlant Security EOOD"
+           Version="$(var.Version)"
+           UpgradeCode="62C806C3-04BD-47A1-916A-E570A569ABE9"
+           Scope="perMachine"
+           Compressed="yes"
+           InstallerVersion="500"
+           Language="1033">
+
+    <SummaryInformation Description="Atlantiraptor endpoint agent"
+                        Manufacturer="Atlant Security EOOD"
+                        Keywords="Installer" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Atlantiraptor is already installed."
+                  AllowSameVersionUpgrades="yes"
+                  Schedule="afterInstallValidate" />
+
+    <Media Id="1" Cabinet="main.cab" EmbedCab="yes" />
+    <!-- Config in its own uncompressed cabinet so it can be replaced later. -->
+    <Media Id="2" Cabinet="part2.cab" EmbedCab="yes" CompressionLevel="none" />
+
+    <Property Id="ARPNOREPAIR" Value="1" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPURLINFOABOUT" Value="https://atlantsecurity.com" />
+    <Property Id="ARPCOMMENTS" Value="Atlantiraptor endpoint agent. Based on Velociraptor (AGPL-3.0)." />
+    <Property Id="ARPCONTACT" Value="Atlant Security EOOD" />
+
+    <Launch Condition="VersionNT64" Message="This installer is for 64-bit Windows." />
+
+    <!-- Where we installed, read back on uninstall so the folder
+         (including files the agent created) is removed. -->
+    <Property Id="ATLINSTALLDIR">
+      <RegistrySearch Id="AtlInstallDirSearch" Root="HKLM" Key="$(var.RegKey)"
+                      Name="InstallPath" Type="raw" />
+    </Property>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="COMPANYDIR" Name="Atlant Security">
+        <Directory Id="INSTALLDIR" Name="Atlantiraptor">
+
+          <!-- Only SYSTEM and Administrators may read or change anything here. -->
+          <Component Id="InstallDirAcl" Guid="BA57AB52-2EF0-46C7-9EC8-B1280D7DA0E0">
+            <CreateFolder>
+              <PermissionEx Sddl="$(var.ProtectedDacl)" />
+            </CreateFolder>
+            <RegistryValue Root="HKLM" Key="$(var.RegKey)" Name="InstallPath"
+                           Type="string" Value="[INSTALLDIR]" KeyPath="yes" />
+            <util:RemoveFolderEx On="uninstall" Property="ATLINSTALLDIR" />
+          </Component>
+
+          <Directory Id="TOOLSDIR" Name="Tools">
+            <Component Id="ToolsDir" Guid="42F934B8-7190-4330-9C39-CA7D196FE6E7">
+              <CreateFolder>
+                <PermissionEx Sddl="$(var.ProtectedDacl)" />
+              </CreateFolder>
+            </Component>
+          </Directory>
+
+          <Component Id="MainExecutable" Guid="3AFC1F54-467E-400F-A517-E1DF1FF8E90A">
+            <File Id="ServiceEXE" Name="Atlantiraptor.exe" Source="Atlantiraptor.exe"
+                  DiskId="1" KeyPath="yes" />
+            <ServiceInstall Id="ServiceInstaller"
+                            Type="ownProcess"
+                            Vital="yes"
+                            Name="Atlantiraptor"
+                            DisplayName="Atlantiraptor"
+                            Description="Atlantiraptor endpoint agent by Atlant Security"
+                            Start="auto"
+                            Account="LocalSystem"
+                            Arguments=' --config "[INSTALLDIR]client.config.yaml" service run'
+                            ErrorControl="normal"
+                            Interactive="no">
+              <util:ServiceConfig FirstFailureActionType="restart"
+                                  SecondFailureActionType="restart"
+                                  ThirdFailureActionType="restart"
+                                  RestartServiceDelayInSeconds="30"
+                                  ResetPeriodInDays="1" />
+              <ServiceConfig DelayedAutoStart="yes" OnInstall="yes" OnReinstall="yes" />
+            </ServiceInstall>
+            <ServiceControl Id="StartService" Name="Atlantiraptor"
+                            Stop="both" Start="install" Remove="uninstall" Wait="yes" />
+          </Component>
+
+          <Component Id="Config">
+            <File Id="Config" Name="client.config.yaml" Source="client.config.yaml"
+                  DiskId="2" KeyPath="yes" />
+          </Component>
+
+          <Component Id="License">
+            <File Id="License" Name="LICENSE.txt" Source="LICENSE.txt" DiskId="1" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Complete" Level="1">
+      <ComponentRef Id="InstallDirAcl" />
+      <ComponentRef Id="ToolsDir" />
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="Config" />
+      <ComponentRef Id="License" />
+    </Feature>
+  </Package>
+</Wix>

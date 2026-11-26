@@ -3,7 +3,6 @@ package authenticators
 import (
 	"net"
 	"net/http"
-	"strings"
 
 	api_utils "www.velocidex.com/golang/velociraptor/api/utils"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
@@ -12,10 +11,14 @@ import (
 // Implement a src IP filter if required. This adds an additional
 // layer of protection on the GUI.
 func IpFilter(config_obj *config_proto.Config,
-	parent http.Handler) http.Handler {
+	next http.Handler) http.Handler {
+
+	// The run-time allowlists (Admin > Network access) apply after the
+	// static GUI.allowed_cidr list in the config file.
+	parent := http.Handler(networkAllowlistGate(config_obj, next))
 
 	if config_obj.GUI == nil || len(config_obj.GUI.AllowedCidr) == 0 {
-		return api_utils.HandlerFunc(parent, parent.ServeHTTP)
+		return api_utils.HandlerFunc(next, parent.ServeHTTP)
 	}
 
 	ranges := []*net.IPNet{}
@@ -29,28 +32,12 @@ func IpFilter(config_obj *config_proto.Config,
 		ranges = append(ranges, cidr_net)
 	}
 
-	return api_utils.HandlerFunc(parent,
+	return api_utils.HandlerFunc(next,
 		func(w http.ResponseWriter, r *http.Request) {
 
-			// If the user specified a forwarded header and the header is
-			// there we must check it.
-			if config_obj.GUI.ForwardedProxyHeader != "" {
-				address_string := r.Header.Get(config_obj.GUI.ForwardedProxyHeader)
-				ips := strings.Split(address_string, ", ")
-				if len(ips) > 0 {
-					// CIDR matched allow it.
-					if matchCidr(ranges, ips...) {
-						parent.ServeHTTP(w, r)
-						return
-					}
-					http.Error(w, "rejected", http.StatusUnauthorized)
-					return
-				}
-			}
-
-			// Try to check the remote address now.
-			remote_address := strings.Split(r.RemoteAddr, ":")[0]
-			if matchCidr(ranges, remote_address) {
+			// One address: the socket peer, or the proxy-added forwarded
+			// entry when a proxy header is configured (see ClientIP).
+			if ip := ClientIP(config_obj, r); ip != nil && matchCidr(ranges, ip.String()) {
 				parent.ServeHTTP(w, r)
 				return
 			}

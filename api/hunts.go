@@ -533,16 +533,24 @@ func (self *ApiServer) GetHuntResults(
 			"User is not allowed to view results.")
 	}
 
+	// Pages of up to 5000 rows (100 when no count is given, as before).
+	count := in.Count
+	if count == 0 {
+		count = 100
+	}
+	if count > 5000 {
+		count = 5000
+	}
 	env := ordereddict.NewDict().
 		Set("HuntID", in.HuntId).
-		Set("ArtifactName", in.Artifact)
+		Set("ArtifactName", in.Artifact).
+		Set("StartRow", int64(in.Offset))
 
-	// More than 100 results are not very useful in the GUI -
-	// users should just download the json file for post
-	// processing or process in the notebook.
-	result, err := RunVQL(ctx, org_config_obj, principal, env,
-		"SELECT * FROM hunt_results(hunt_id=HuntID, "+
-			"artifact=ArtifactName) LIMIT 100")
+	// count is a number we bounded above, so it is safe in the query
+	// text (VQL needs a literal LIMIT).
+	result, err := RunVQL(ctx, org_config_obj, principal, env, fmt.Sprintf(
+		"SELECT * FROM hunt_results(hunt_id=HuntID, artifact=ArtifactName) "+
+			"WHERE count() > StartRow LIMIT %d", count))
 	if err != nil {
 		return nil, Status(self.verbose, err)
 	}

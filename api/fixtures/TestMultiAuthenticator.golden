@@ -17,6 +17,10 @@
    " authenticators.authenticateUserHandle",
    " *utils.ServeMux"
   ],
+  "/velociraptor/api/atl/v1/": [
+   "authenticators.IpFilter",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/DownloadTable": [
    "authenticators.IpFilter",
    " api.csrfProtect",
@@ -44,6 +48,27 @@
    " GetLoggingHandler",
    " authenticators.authenticateUserHandle",
    " api.toolUploadHandler"
+  ],
+  "/velociraptor/api/v1/atl/apikeys": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
+  "/velociraptor/api/v1/atl/groups": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
+  "/velociraptor/api/v1/atl/network": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
   ],
   "/velociraptor/app/": [
    "authenticators.IpFilter",
