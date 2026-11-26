@@ -58,3 +58,13 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
 - MSI: `scripts/build-msi.ps1 -Binary dist/release/Atlantiraptor.exe -ClientConfig <client.config.yaml> -Version x.y.z`
   (WiX v5, source `docs/wix/atlantiraptor_amd64.wxs`). Order: build exe -> sign exe ->
   build MSI -> sign MSI -> verify. Keep the UpgradeCode unchanged so new versions upgrade in place.
+
+## Running locally
+
+- Never open a visible console window on the developer's PC, for the server or anything
+  else. Start long-running processes hidden or in the background (for example
+  `Start-Process -WindowStyle Hidden`, or a background task), and read their output from
+  a log file.
+- After a build, restart the local server without asking: stop it, swap in the new
+  binary, start it hidden with `gui --datastore <datastore> --nobrowser`, and check that
+  the console port answers.
