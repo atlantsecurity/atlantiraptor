@@ -22,6 +22,7 @@ import { FlowStateBadge } from '../collections/FlowDetail';
 import { useSelectedClient } from '../../shell/client-context';
 import { MftWindowDialog, type MftWindow } from './MftWindowDialog';
 import { AddToCaseButton } from '../cases/AddToCaseButton';
+import { TriagePanel } from './TriagePanel';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
 
@@ -153,7 +154,9 @@ export default function ClientOverview() {
     setRunning(q.artifact);
     try {
       const r = await runArtifacts(clientId, arts, params, true);
-      if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
+      if (r.flow_id) toast.success(`Collecting ${q.label.toLowerCase()}`, {
+        action: { label: 'Open', onClick: () => history.push(`/collected/${clientId}/${r.flow_id}`) },
+      });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -232,9 +235,11 @@ export default function ClientOverview() {
       </div>
 
       <div className="tw:p-3 tw:md:p-6 tw:grid tw:grid-cols-1 tw:xl:grid-cols-3 tw:gap-4">
+        <TriagePanel clientId={clientId} client={client} canCollect={canCollect} />
+
         {/* --------------------------------------------------- Quick triage */}
         <Card className="tw:xl:col-span-3">
-          <CardHeader icon={<Zap className="tw:size-4" />} title="Quick triage" subtitle="One click collects from this host. Results open in Collections." />
+          <CardHeader icon={<Zap className="tw:size-4" />} title="Quick collect" subtitle="One click collects one thing from this host. You stay here; open it from the notification or Recent collections." />
           <div className="tw:grid tw:grid-cols-2 tw:md:grid-cols-3 tw:xl:grid-cols-5 tw:gap-2 tw:p-3">
             {quick.filter(q => !existing || artifactsOf(q).some(a => existing.has(a))).map(q => (
               <button key={q.artifact} type="button" disabled={!canCollect || running === q.artifact}
