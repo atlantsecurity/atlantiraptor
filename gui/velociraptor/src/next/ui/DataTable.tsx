@@ -286,7 +286,7 @@ export function DataTable(props: DataTableProps) {
           )}
           <span className="tw:text-xs tw:text-faint rx-num tw:mr-2">
             {serverSide
-              ? <>{fmtNum(rows.length)}{total !== undefined && total > rows.length ? ` of ${fmtNum(total)}` : ''} {filter ? 'matching ' : ''}rows</>
+              ? <>{fmtNum(rows.length)}{total !== undefined && total > rows.length ? ` of ${fmtNum(total)}` : ''} {filter ? 'matching ' : ''}{(total ?? rows.length) === 1 ? 'row' : 'rows'}</>
               : <>
                 {filter ? `${fmtNum(modelRows.length)} of ` : ''}
                 {fmtNum(rows.length)}
