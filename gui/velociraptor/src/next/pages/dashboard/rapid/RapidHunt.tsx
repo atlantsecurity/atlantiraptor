@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Globe, Radar, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Cpu, FileText, Fingerprint, Globe, Radar, Search, User, X } from 'lucide-react';
+
+const KIND_ICON = { web: Globe, hash: Fingerprint, file: FileText, process: Cpu, user: User } as const;
 import * as api from '../../../lib/api';
 import { useCreateHunt, useHunt, useHunts, useStopHunts } from '../../../lib/queries';
 import { parseTable, type Row } from '../../../lib/table';
@@ -197,7 +199,7 @@ function RapidResults({ entry, onClose }: { entry: Recent; onClose: () => void }
   return (
     <div className="tw:rounded-md tw:border tw:border-line">
       <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:px-3 tw:py-2 tw:border-b tw:border-line tw:bg-sunken">
-        <Globe className="tw:size-4 tw:text-accent" />
+        {(() => { const Icon = KIND_ICON[entry.kind as keyof typeof KIND_ICON] ?? Globe; return <Icon className="tw:size-4 tw:text-accent" />; })()}
         <span className="tw:text-xs tw:text-muted">Who {RAPID_KIND_QUESTION[entry.kind]}</span>
         <Mono className="tw:font-medium">{entry.indicator}</Mono>
         <Badge tone={hosts.length ? 'bad' : 'neutral'}>{hosts.length} machine{hosts.length === 1 ? '' : 's'} matched</Badge>

@@ -118,7 +118,7 @@ export default function ShellPage() {
               <span className="tw:ml-auto tw:text-2xs tw:text-muted"><Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to run</span>
             </div>
             <Textarea value={command} onChange={e => setCommand(e.target.value)} rows={3}
-              className="tw:font-mono tw:text-[12.5px]" placeholder={shell.id === 'vql' ? 'SELECT * FROM info()' : 'whoami /all'}
+              className="tw:font-mono tw:text-[12.5px]" placeholder={shell.id === 'vql' ? 'SELECT * FROM info()' : shell.id === 'bash' ? 'id && uname -a' : shell.id === 'cmd' ? 'whoami /all' : 'Get-Process | Sort-Object CPU -Descending | Select-Object -First 10'}
               onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); void run(); } }} />
             <div className="tw:flex tw:items-center tw:gap-2">
               <Button type="submit" variant="primary" icon={<Play className="tw:size-3.5" />} loading={busy}
@@ -147,7 +147,7 @@ function RunCard({ clientId, run }: { clientId: string; run: ShellRun }) {
   return (
     <Card>
       <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:px-3 tw:py-2 tw:border-b tw:border-line tw:text-xs">
-        <span className="tw:font-mono tw:font-medium tw:break-all tw:flex-1">{run.artifact === 'Generic.Client.VQL' ? '>' : '$'} {cmd.data ?? '…'}</span>
+        <span className="tw:font-mono tw:font-medium tw:break-all tw:basis-full tw:sm:basis-0 tw:flex-1">{run.artifact === 'Generic.Client.VQL' ? '>' : '$'} {cmd.data ?? '…'}</span>
         <FlowStateBadge state={run.state} />
         <span className="tw:text-muted">{run.creator} · {timeAgo(run.created)}</span>
         <Link to={`/collected/${clientId}/${run.flowId}`} className="tw:text-accent tw:hover:underline">Collection</Link>
