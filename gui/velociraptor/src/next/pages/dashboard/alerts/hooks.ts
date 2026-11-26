@@ -1,4 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import * as api from '../../../lib/api';
+import { useNotebookList, useTraits, type Notebook } from '../../../lib/queries';
+import {
+  EMPTY_TRIAGE, isTriageDescription, parseTriage, serializeTriage, TRIAGE_NOTEBOOK_NAME, type TriageRecord,
+} from './triage';
 import {
   POLL, runArtifact, useEventTable, useMonitoringState, useSetMonitoringState,
   type ClientMonitoringState,
@@ -69,4 +75,44 @@ export function useDetectionSetup() {
 
 export async function sendTestAlert(clientId: string) {
   return runArtifact(clientId, TEST_ALERT, {}, true);
+}
+
+// ------------------------------------------------------ Triage state
+
+async function readTriageNotebook(id: string): Promise<Notebook> {
+  const r = await api.get<{ items?: Notebook[] }>('v1/GetNotebooks', { notebook_id: id });
+  const nb = r.items?.[0];
+  if (!nb) throw new Error('The alert triage notebook was not found.');
+  return nb;
+}
+
+/** The shared alert triage record and a way to change it. */
+export function useAlertTriage() {
+  const list = useNotebookList();
+  const qc = useQueryClient();
+  const { traits } = useTraits();
+  const me = traits?.username ?? 'unknown';
+
+  // If two analysts created it at the same moment, everyone uses the oldest.
+  const found = useMemo(() => (list.data ?? [])
+    .filter(r => isTriageDescription(r.Description))
+    .sort((a, b) => String(a.NotebookId).localeCompare(String(b.NotebookId)))[0], [list.data]);
+  const record = useMemo(() => parseTriage(found?.Description), [found]);
+
+  // Re-reads right before writing so concurrent changes are merged.
+  const update = async (change: (r: TriageRecord) => TriageRecord) => {
+    let id = found ? String(found.NotebookId) : '';
+    if (!id) {
+      const nb = await api.post<Notebook>('v1/NewNotebook', {
+        name: TRIAGE_NOTEBOOK_NAME, description: serializeTriage(EMPTY_TRIAGE), public: true,
+      });
+      id = nb.notebook_id;
+    }
+    const nb = await readTriageNotebook(id);
+    const next = change(parseTriage(nb.description));
+    await api.post('v1/UpdateNotebook', { ...nb, description: serializeTriage(next) });
+    await qc.invalidateQueries({ queryKey: ['notebook-list'] });
+  };
+
+  return { record, me, update, isLoading: list.isLoading };
 }

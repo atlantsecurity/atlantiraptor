@@ -6,7 +6,8 @@ import {
 import {
   Monitor, Wifi, Crosshair, Server, Cpu, MemoryStick, Plug, ArrowRight, Plus, BellRing, CircleX,
 } from 'lucide-react';
-import { useAlerts } from './alerts/hooks';
+import { useAlerts, useAlertTriage } from './alerts/hooks';
+import { isOpen } from './alerts/triage';
 import {
   useClientCounts, useClientFlows, useHunts, useRecentClients, useServerHealth, usePermission,
 } from '../../lib/queries';
@@ -48,10 +49,9 @@ export default function Dashboard() {
   const online = counts.data?.online ?? 0;
   const runningClients = running.reduce((s, h) => s + huntCounts(h).running, 0);
   const { alerts, isLoading: alertsLoading } = useAlerts();
-  const newAlerts = useMemo(() => {
-    const since = Date.now() - 24 * 3600 * 1000;
-    return alerts.filter(a => (a.time?.getTime() ?? 0) >= since);
-  }, [alerts]);
+  const { record: triage } = useAlertTriage();
+  // Open = not acknowledged/closed by anyone, and not suppressed.
+  const newAlerts = useMemo(() => alerts.filter(a => isOpen(triage, a)), [alerts, triage]);
   const severe = newAlerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
   // Clients that failed in hunts created in the last 7 days.
   const recentFailures = useMemo(() => {
@@ -76,7 +76,7 @@ export default function Dashboard() {
         <RapidHuntPanel canHunt={canHunt} />
 
         <div className="tw:grid tw:grid-cols-2 tw:lg:grid-cols-4 tw:gap-4">
-          <Stat icon={<BellRing />} label="New alerts (24h)" tone={severe ? 'bad' : 'warn'}
+          <Stat icon={<BellRing />} label="Open alerts" tone={severe ? 'bad' : 'warn'}
             value={alertsLoading ? <Skeleton className="tw:h-7 tw:w-10" /> : fmtNum(newAlerts.length)}
             sub={severe ? `${fmtNum(severe)} critical or high` : 'None critical or high'}
             onClick={() => document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth' })} />
