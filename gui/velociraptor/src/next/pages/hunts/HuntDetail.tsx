@@ -13,7 +13,8 @@ import {
   HUNT_UPLOADS_MAX_FLOWS,
 } from '../../lib/queries';
 import type { Hunt, AvailableDownloadFile } from '../../lib/types';
-import { fmtBytes, fmtNum, fmtTime, timeAgo, toNum, fmtDuration } from '../../lib/format';
+import { fmtBytes, fmtNum, fmtTime, timeAgo, toDate, toNum, fmtDuration } from '../../lib/format';
+import { runsUntilStopped } from './time';
 import {
   Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, EmptyState, IconButton, Menu, MenuContent,
   MenuItem, MenuSeparator, MenuTrigger, Mono, Select, Skeleton, Spinner, Tabs, Tooltip,
@@ -117,7 +118,8 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
                 <>
                   <span>·</span>
                   <Tooltip content={fmtTime(hunt.expires)}>
-                    <span>{state === 'expired' ? 'Expired' : 'Expires'} {timeAgo(hunt.expires)}</span>
+                    <span>{runsUntilStopped(toDate(hunt.expires)?.getTime()) ? 'Runs until stopped'
+                      : `${state === 'expired' ? 'Stopped' : 'Stops'} ${timeAgo(hunt.expires)}`}</span>
                   </Tooltip>
                 </>
               )}
@@ -327,7 +329,7 @@ function OverviewTab({ hunt, onExport, onTab }: { hunt: Hunt; onExport: () => vo
             <dl className="tw:p-4 tw:space-y-3 tw:text-xs">
               <Def label="Created">{fmtTime(hunt.create_time)}</Def>
               {toNum(hunt.start_time) > 0 && <Def label="Started">{fmtTime(hunt.start_time)}</Def>}
-              <Def label="Expires">{fmtTime(hunt.expires)}</Def>
+              <Def label="Stops">{runsUntilStopped(toDate(hunt.expires)?.getTime()) ? 'When someone stops it' : fmtTime(hunt.expires)}</Def>
               <Def label="Timeout">{toNum(req.timeout) ? fmtDuration(toNum(req.timeout)) : 'Default'}</Def>
               <Def label="Max rows">{toNum(req.max_rows) ? fmtNum(req.max_rows) : 'Default'}</Def>
               <Def label="Max upload">{toNum(req.max_upload_bytes) ? fmtBytes(req.max_upload_bytes) : 'Default'}</Def>

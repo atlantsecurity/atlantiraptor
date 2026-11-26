@@ -11,12 +11,13 @@ import { useCreateHunt, useHunt, useHunts, useStopHunts } from '../../../lib/que
 import { parseTable, type Row } from '../../../lib/table';
 import type { TableResponse } from '../../../lib/types';
 import { timeAgo, toDate, toNum } from '../../../lib/format';
-import { Badge, Button, Card, CardHeader, EmptyState, Input, Mono, Select, Switch, cn } from '../../../ui/primitives';
+import { Badge, Button, Card, CardHeader, EmptyState, Input, Mono, Select, Switch, Tooltip, cn } from '../../../ui/primitives';
 import {
   cleanIndicator, detectKind, groupByHost, kindProblem, parseRapidDescription, RAPID_ARTIFACT, RAPID_KIND_LABEL,
   RAPID_KIND_QUESTION, RAPID_KINDS, RAPID_TAG, rapidDescription, type HostHits, type RapidEntry, type RapidKind,
 } from './model';
 import { prefillIocSweep } from '../../../lib/prefill';
+import { untilStoppedExpiry } from '../../hunts/time';
 import { AddToCaseButton } from '../../cases/AddToCaseButton';
 
 type Recent = RapidEntry;
@@ -60,6 +61,7 @@ export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
   }, [location.search, history]);
   const [days, setDays] = useState('30');
   const [eventLogs, setEventLogs] = useState(true);
+  const [untilStopped, setUntilStopped] = useState(false);
   const [kindChoice, setKindChoice] = useState<RapidKind | 'auto'>('auto');
   const kind: RapidKind = kindChoice === 'auto' ? detectKind(indicator) : kindChoice;
 
@@ -91,8 +93,8 @@ export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
       const r = await create.mutateAsync({
         hunt_description: rapidDescription(value, kind),
         tags: [RAPID_TAG],
-        // Clients that come online within a day still answer.
-        expires: (Date.now() + 24 * 3600 * 1000) * 1000,
+        // One hour unless asked to keep waiting for offline machines.
+        expires: untilStopped ? untilStoppedExpiry() : (Date.now() + 3600 * 1000) * 1000,
         start_request: {
           artifacts: [RAPID_ARTIFACT],
           specs: [{
@@ -144,6 +146,9 @@ export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
             <option value="90">Last 90 days</option>
           </Select>
           <Switch checked={eventLogs} onChange={setEventLogs} label="Event logs" />
+          <Tooltip content="Off: the hunt stops after 1 hour. On: machines that come online later still answer, until you stop it.">
+            <span><Switch checked={untilStopped} onChange={setUntilStopped} label="Run until stopped" /></span>
+          </Tooltip>
           <Button type="submit" variant="primary" icon={<Radar className="tw:size-3.5" />}
             loading={create.isPending} disabled={!canHunt || !indicator.trim() || !!problem}>
             {many ? `IOC sweep for ${pasted.length}…` : 'Hunt the fleet'}

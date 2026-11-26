@@ -9,6 +9,7 @@ import type { HuntCondition } from '../../lib/types';
 import { timeAgo, toNum } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Input, Select, Switch, Textarea, cn } from '../../ui/primitives';
 import { TagInput } from '../hunts/TagInput';
+import { untilStoppedExpiry } from '../hunts/time';
 import { HuntProgress, HuntStateBadge, huntTitle } from '../hunts/HuntBits';
 import { IOC_TYPES, parseIocs, toCsv, type IocType } from './parse';
 
@@ -49,6 +50,7 @@ export default function IocSweepPage() {
   const [glob, setGlob] = useState(DEFAULT_GLOB);
   const [alerts, setAlerts] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [untilStopped, setUntilStopped] = useState(false);
 
   const parsed = useMemo(() => parseIocs(text), [text]);
   const counts = useMemo(() => {
@@ -75,6 +77,7 @@ export default function IocSweepPage() {
         start_request: { artifacts: [IOC_ARTIFACT], specs: [{ artifact: IOC_ARTIFACT, parameters: { env } }] },
         condition,
         state: 2,
+        ...(untilStopped ? { expires: untilStoppedExpiry() } : {}),
       });
       toast.success('IOC sweep started');
       if (r.flow_id) history.push(`/hunts/${r.flow_id}`);
@@ -133,6 +136,7 @@ export default function IocSweepPage() {
                 <Input value={glob} onChange={e => setGlob(e.target.value)} className="tw:font-mono tw:text-xs" />
               </label>
               <Switch checked={alerts} onChange={setAlerts} label="Raise a dashboard alert for each hit" />
+              <Switch checked={untilStopped} onChange={setUntilStopped} label="Run until stopped (otherwise it stops after 1 hour)" />
               <Button variant="primary" className="tw:w-full" icon={<Play className="tw:size-3.5" />} loading={busy}
                 disabled={!canHunt || parsed.iocs.length === 0 || missingLabels} onClick={start}>
                 Sweep for {parsed.iocs.length} indicators
