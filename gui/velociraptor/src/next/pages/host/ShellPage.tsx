@@ -23,7 +23,29 @@ const SHELLS = [
 ];
 const SHELL_RE = '(Windows.System.PowerShell|Windows.System.CmdShell|Linux.Sys.BashShell|Generic.Client.VQL)';
 
-interface ShellRun { flowId: string; artifact: string; command: string; state: string; created: number; creator: string }
+interface ShellRun { flowId: string; artifact: string; state: string; created: number; creator: string }
+
+// The flow list leaves out collection parameters, so read the command
+// from the request that was sent to the host. It never changes.
+interface FlowRequests { items?: { FlowRequest?: { VQLClientActions?: { env?: { key: string; value: string }[] }[] } }[] }
+function useRunCommand(clientId: string, flowId: string) {
+  return useQuery({
+    queryKey: ['shell-command', clientId, flowId],
+    staleTime: Infinity,
+    queryFn: async ({ signal }) => {
+      const r = await api.get<FlowRequests>('v1/GetFlowRequests', { client_id: clientId, flow_id: flowId }, signal);
+      for (const item of r.items ?? []) {
+        for (const a of item.FlowRequest?.VQLClientActions ?? []) {
+          const c = a.env?.find(e => e.key === 'Command');
+          if (c) return c.value;
+        }
+      }
+      return '';
+    },
+  });
+}
+
+const DONE_STATES = new Set(['FINISHED', 'ERROR']);
 
 function useShellRuns(clientId: string) {
   return useQuery({
@@ -37,13 +59,11 @@ function useShellRuns(clientId: string) {
       const runs: ShellRun[] = [];
       for (const r of t.rows) {
         const flow = r._Flow as { session_id?: string; state?: string; create_time?: number;
-          request?: { artifacts?: string[]; creator?: string; specs?: { parameters?: { env?: { key: string; value: string }[] } }[] } } | undefined;
+          request?: { artifacts?: string[]; creator?: string } } | undefined;
         const artifact = flow?.request?.artifacts?.[0] ?? '';
         if (!flow?.session_id || !SHELLS.some(s => s.artifact === artifact)) continue;
-        const env = flow.request?.specs?.[0]?.parameters?.env ?? [];
         runs.push({
           flowId: flow.session_id, artifact, state: String(flow.state ?? ''),
-          command: env.find(e => e.key === 'Command')?.value ?? '',
           created: Number(flow.create_time ?? 0), creator: flow.request?.creator ?? '',
         });
       }
@@ -69,7 +89,7 @@ export default function ShellPage() {
     if (!command.trim()) return;
     setBusy(true);
     try {
-      await runArtifacts(clientId, [shell.artifact], { [shell.artifact]: { Command: command } }, true);
+      await runArtifacts(clientId, [shell.artifact], { [shell.artifact]: shell.id === 'vql' ? { Command: command } : { Command: command, Stateful: 'N' } }, true);
       setCommand('');
       await runs.refetch();
     } catch (e) {
@@ -116,16 +136,18 @@ export default function ShellPage() {
 }
 
 function RunCard({ clientId, run }: { clientId: string; run: ShellRun }) {
-  const live = run.state === 'RUNNING';
+  const live = !DONE_STATES.has(run.state);
+  const cmd = useRunCommand(clientId, run.flowId);
   const q = useFlowTable(clientId, run.flowId, { artifact: run.artifact }, live);
   const output = useMemo(() => (q.data?.pages ?? []).flatMap(p => p.rows), [q.data]);
   const text = run.artifact === 'Generic.Client.VQL'
     ? output.map(r => JSON.stringify(r)).join('\n')
-    : output.map(r => `${String(r.Stdout ?? '')}${r.Stderr ? `\n${String(r.Stderr)}` : ''}`).filter(s => s.trim()).join('\n');
+    : output.map(r => `${String(r.Stdout ?? '')}${r.Stderr ? String(r.Stderr) : ''}`).filter(s => s.trim()).join('')
+      + (output.some(r => r.StdoutUpload || r.StderrUpload) ? '\n[Output over 4 KB was saved as a file. Open the collection to read it.]' : '');
   return (
     <Card>
       <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:px-3 tw:py-2 tw:border-b tw:border-line tw:text-xs">
-        <span className="tw:font-mono tw:font-medium tw:break-all tw:flex-1">$ {run.command}</span>
+        <span className="tw:font-mono tw:font-medium tw:break-all tw:flex-1">{run.artifact === 'Generic.Client.VQL' ? '>' : '$'} {cmd.data ?? '…'}</span>
         <FlowStateBadge state={run.state} />
         <span className="tw:text-muted">{run.creator} · {timeAgo(run.created)}</span>
         <Link to={`/collected/${clientId}/${run.flowId}`} className="tw:text-accent tw:hover:underline">Collection</Link>
