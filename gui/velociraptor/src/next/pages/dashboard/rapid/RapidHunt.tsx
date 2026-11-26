@@ -3,7 +3,7 @@
 // and streams results in as clients answer.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, Globe, Radar, Search, X } from 'lucide-react';
 import * as api from '../../../lib/api';
@@ -31,9 +31,12 @@ function saveRecent(r: Recent[]) {
   localStorage.setItem(STORE_KEY, JSON.stringify(r.slice(0, 6)));
 }
 
-function useRapidResults(huntId: string | undefined, live: boolean) {
+// Re-reads the results only when another machine has answered (the
+// hunt's own stats are polled anyway), instead of every few seconds.
+function useRapidResults(huntId: string | undefined, answered: number) {
   return useQuery({
-    queryKey: ['rapid-results', huntId],
+    queryKey: ['rapid-results', huntId, answered],
+    placeholderData: keepPreviousData,
     enabled: !!huntId,
     queryFn: async ({ signal }) => {
       try {
@@ -44,7 +47,7 @@ function useRapidResults(huntId: string | undefined, live: boolean) {
         throw e;
       }
     },
-    refetchInterval: live ? 2_000 : false,
+    staleTime: Infinity,
   });
 }
 
@@ -158,7 +161,8 @@ function RapidResults({ entry, onClose }: { entry: Recent; onClose: () => void }
   const stop = useStopHunts();
   const state = String(hunt?.state ?? '');
   const running = state === 'RUNNING' || state === '2';
-  const { data, isLoading } = useRapidResults(entry.huntId, running);
+  const answeredKey = toNum(hunt?.stats?.total_clients_with_results) + toNum(hunt?.stats?.total_clients_with_errors);
+  const { data, isLoading } = useRapidResults(entry.huntId, answeredKey);
   const hosts = useMemo(() => groupByHost(data?.rows ?? []), [data]);
   const scheduled = toNum(hunt?.stats?.total_clients_scheduled);
   const done = toNum(hunt?.stats?.total_clients_with_results) + toNum(hunt?.stats?.total_clients_with_errors);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  runArtifact, useEventTable, useMonitoringState, useSetMonitoringState,
+  POLL, runArtifact, useEventTable, useMonitoringState, useSetMonitoringState,
   type ClientMonitoringState,
 } from '../../../lib/queries';
 import { ALERTS_ARTIFACT, DETECTION_MONITORS, SEVERITY_RANK, TEST_ALERT, toAlert, type Alert } from './model';
@@ -15,7 +15,7 @@ export function useAlerts() {
     const now = Math.floor(Date.now() / 1000);
     return { start: now - WINDOW_SECONDS, end: now + WINDOW_SECONDS };
   });
-  const q = useEventTable('server', ALERTS_ARTIFACT, range, false, true);
+  const q = useEventTable('server', ALERTS_ARTIFACT, range, false, true, POLL.slow);
   const alerts: Alert[] = useMemo(() => {
     const rows = (q.data?.pages ?? []).flatMap(p => p.rows);
     return rows.map(toAlert)

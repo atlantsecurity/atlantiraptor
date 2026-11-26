@@ -72,7 +72,7 @@ export function useHunts(includeArchived: boolean, enabled = true) {
       include_archived: includeArchived,
     }, signal),
     select: d => d.items ?? [],
-    refetchInterval: POLL.fast,
+    refetchInterval: POLL.normal,
     placeholderData: keepPreviousData,
   });
 }
@@ -365,7 +365,8 @@ export function useClientSearch(query: string, opts: { limit?: number; onlineOnl
       sort,
       filter: onlineOnly ? 'ONLINE' : 'UNFILTERED',
     }, signal),
-    refetchInterval: POLL.normal,
+    // Big lists (the Clients page asks for 2,000) refresh less often.
+    refetchInterval: limit > 200 ? POLL.slow : POLL.normal,
     placeholderData: keepPreviousData,
   });
 }
@@ -417,8 +418,10 @@ export function useClientCounts() {
 export function useRecentClients(limit = 8) {
   return useQuery({
     queryKey: ['recent-clients', limit],
+    // Online clients were all seen in the last few minutes; a sample of
+    // them is enough to show the latest few.
     queryFn: ({ signal }) => api.get<SearchClientsResponse>('v1/SearchClients', {
-      query: 'all', limit: 500, filter: 'ONLINE',
+      query: 'all', limit: Math.max(limit * 8, 64), filter: 'ONLINE',
     }, signal),
     select: d => [...(d.items ?? [])]
       .sort((a, b) => toNum(b.last_seen_at) - toNum(a.last_seen_at))
@@ -951,7 +954,7 @@ const EVENT_PAGE = 2000;
 // Event tables are indexed by time, not row number: page forward from the
 // last row's timestamp and drop the rows of that second already shown.
 export function useEventTable(clientId: string | undefined, artifact: string | undefined,
-  range: { start: number; end: number }, logs: boolean, live: boolean) {
+  range: { start: number; end: number }, logs: boolean, live: boolean, interval: number = POLL.normal) {
   const server = clientId === 'server';
   const type = logs ? (server ? 'SERVER_EVENT_LOGS' : 'CLIENT_EVENT_LOGS') : (server ? 'SERVER_EVENT' : 'CLIENT_EVENT');
   return useInfiniteQuery({
@@ -976,7 +979,7 @@ export function useEventTable(clientId: string | undefined, artifact: string | u
       return { ...t, rows, next };
     },
     getNextPageParam: last => last.next,
-    refetchInterval: live ? POLL.normal : false,
+    refetchInterval: live ? interval : false,
   });
 }
 
