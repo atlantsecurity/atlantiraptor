@@ -6,7 +6,7 @@ import { AiTriageButton } from '../ai/AiTriage';
 import { flowContext } from '../ai/context';
 import { toast } from 'sonner';
 import {
-  Ban, BookOpen, CircleAlert, Clock, Download, ExternalLink, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
+  Ban, BookOpen, CircleAlert, Clock, Download, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
   Rows3, RotateCcw, ScrollText, Table2,
 } from 'lucide-react';
 import { useCancelFlow, useFlow, useFlowTable, useArtifactDefinitions } from '../../lib/queries';
@@ -110,7 +110,6 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
               </MenuTrigger>
               <MenuContent>
                 <MenuItem icon={<RefreshCw />} onSelect={() => q.refetch()}>Refresh</MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/collected/${clientId}/${flowId}`)}>Open in classic view</MenuItem>
               </MenuContent>
             </Menu>
           </div>

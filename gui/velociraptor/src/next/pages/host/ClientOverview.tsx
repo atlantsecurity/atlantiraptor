@@ -4,7 +4,7 @@ import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Activity, Cpu, ExternalLink, FolderTree, History, Info, Monitor, MoreHorizontal, Network, Plus, RefreshCw,
+  Activity, Cpu, FolderTree, History, Info, Monitor, MoreHorizontal, Network, Plus, RefreshCw,
   ShieldAlert, ShieldCheck, Tags, Trash2, Users, Zap, Clock, Globe, KeyRound, ListTree, Terminal, Save,
   Download, HardDrive, PlayCircle,
 } from 'lucide-react';
@@ -226,8 +226,7 @@ export default function ClientOverview() {
                 {canQuarantine && !quarantined && <MenuItem icon={<ShieldAlert />} danger onSelect={() => setQuarantineOpen(true)}>Quarantine host…</MenuItem>}
                 {canQuarantine && quarantined && <MenuItem icon={<ShieldCheck />} onSelect={unquarantine}>Lift quarantine</MenuItem>}
                 <MenuSeparator />
-                <MenuItem icon={<Terminal />} onSelect={() => history.push(`/classic/host/${clientId}/shell`)}>Shell (classic)</MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/host/${clientId}`)}>Open in classic view</MenuItem>
+                <MenuItem icon={<Terminal />} onSelect={() => history.push(`/host/${clientId}/shell`)}>Shell</MenuItem>
               </MenuContent>
             </Menu>
           </div>

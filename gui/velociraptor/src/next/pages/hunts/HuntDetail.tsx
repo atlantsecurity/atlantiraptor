@@ -3,7 +3,7 @@ import { useDebounced } from '../../lib/hooks';
 import { Link, useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Play, Square, Copy, Pencil, MoreHorizontal, Download, RefreshCw, Archive, Trash2, ExternalLink,
+  Play, Square, Copy, Pencil, MoreHorizontal, Download, RefreshCw, Archive, Trash2,
   Users, CircleCheck, CircleX, Loader, Rows3, HardDrive, BookOpen, Table2, LayoutList, TriangleAlert,
   FileDown, FolderArchive,
 } from 'lucide-react';
@@ -154,9 +154,6 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
                 <MenuItem icon={<RefreshCw />} onSelect={() => run(
                   () => modify.mutateAsync({ hunt_id: hunt.hunt_id, recalculate: true }), 'Statistics recalculated')}>
                   Recalculate statistics
-                </MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/hunts/${hunt.hunt_id}/overview`)}>
-                  Open in classic view
                 </MenuItem>
                 <MenuSeparator />
                 <MenuItem icon={<Archive />} disabled={state === 'archived'} onSelect={() => setConfirm('archive')}>Archive</MenuItem>
