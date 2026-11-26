@@ -12,6 +12,7 @@ import { useArtifactSearch, useClientNameSuggest, useHunts, useNotebookList, use
 import { classify, parseIocs, refang } from '../pages/ioc/parse';
 import { prefillIocSweep, rapidHuntUrl } from '../lib/prefill';
 import { CASE_PREFIX } from '../pages/cases/model';
+import { detectKind, RAPID_KIND_QUESTION } from '../pages/dashboard/rapid/model';
 import { clientStatus, timeAgo } from '../lib/format';
 import { Kbd, StatusDot } from '../ui/primitives';
 import { HuntStateBadge } from '../pages/hunts/HuntBits';
@@ -92,8 +93,10 @@ export default function CommandPalette({ open, onOpenChange, dark }: {
   const single = lines.length === 1 ? refang(lines[0]) : '';
   const singleType = single ? (/^[a-z][a-z0-9+.-]*:\/\//i.test(single) ? 'url' : classify(single)) : null;
   const multi = lines.length > 1 ? parseIocs(lines.join('\n')).iocs.length : 0;
-  const rapidable = singleType === 'domain' || singleType === 'ip' || singleType === 'url';
-  const sweepable = !!singleType && !rapidable;
+  // Anything recognisable can be Rapid hunted; IOC sweep takes the same.
+  const rapidable = !!singleType || /^[^\\\s]+\\[^\\\s]+$/.test(single);
+  const sweepable = !!singleType;
+  const kind = rapidable ? detectKind(single) : 'web';
 
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -117,10 +120,10 @@ export default function CommandPalette({ open, onOpenChange, dark }: {
                 <Command.Group heading="Hunt for this indicator">
                   {rapidable && (
                     <Command.Item value="rapid-hunt" onSelect={() => go(rapidHuntUrl(single))} className={itemCls}>
-                      <Radar /> Rapid hunt: who visited <span className="tw:font-mono tw:truncate">{single}</span>
+                      <Radar /> Rapid hunt: who {RAPID_KIND_QUESTION[kind]} <span className="tw:font-mono tw:truncate">{single}</span>
                     </Command.Item>
                   )}
-                  {(sweepable || rapidable) && (
+                  {sweepable && (
                     <Command.Item value="ioc-sweep-one" onSelect={() => { prefillIocSweep(single); go('/ioc'); }} className={itemCls}>
                       <ScanSearch /> IOC sweep for <span className="tw:font-mono tw:truncate">{single}</span>
                       <span className="tw:ml-auto tw:text-2xs tw:text-faint">{singleType}</span>
