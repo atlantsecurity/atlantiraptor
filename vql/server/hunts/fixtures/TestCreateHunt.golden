@@ -6,7 +6,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
@@ -52,7 +52,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
@@ -98,7 +98,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
@@ -144,7 +144,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
@@ -195,7 +195,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
@@ -239,7 +239,7 @@
    "create_time": "100000000",
    "creator": "admin",
    "start_time": "100000000",
-   "expires": "604900000000",
+   "expires": "3700000000",
    "hunt_description": "foo",
    "start_request": {
     "creator": "admin",
