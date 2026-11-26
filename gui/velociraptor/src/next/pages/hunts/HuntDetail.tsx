@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounced } from '../../lib/hooks';
 import { Link, useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -186,7 +187,7 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
 
       <div className="tw:flex-1 tw:min-h-0 tw:flex tw:flex-col tw:bg-panel">
         {active === 'overview' && <OverviewTab hunt={hunt} onExport={() => setExportOpen(true)} onTab={setTab} />}
-        {active === 'results' && <ResultsTab hunt={hunt} />}
+        {active === 'results' && <ResultsTab hunt={hunt} onExport={() => setExportOpen(true)} />}
         {active === 'clients' && <ClientsTab huntId={huntId} rows={flows?.rows} columns={flows?.columns} loading={!flows} />}
         {active === 'files' && <FilesTab huntId={huntId} flows={flows?.rows} onExport={() => setExportOpen(true)} />}
         {active === 'exports' && <ExportsTab files={archives} onExport={() => setExportOpen(true)} />}
@@ -425,14 +426,21 @@ function ExportsTab({ files, onExport }: { files: AvailableDownloadFile[]; onExp
 
 // ------------------------------------------------------------- Results
 
-function ResultsTab({ hunt }: { hunt: Hunt }) {
+function ResultsTab({ hunt, onExport }: { hunt: Hunt; onExport: () => void }) {
   const sources = hunt.artifact_sources?.length ? hunt.artifact_sources : (hunt.artifacts ?? []);
   const [source, setSource] = useState(sources[0]);
   useEffect(() => {
     if (!source || !sources.includes(source)) setSource(sources[0]);
   }, [sources, source]);
 
-  const q = useHuntResults(hunt.hunt_id, source);
+  // Search and sort run on the server, so they cover every row of the
+  // hunt and not only the pages loaded so far.
+  const [filter, setFilter] = useState('');
+  const [sort, setSort] = useState<{ column: string; desc: boolean } | null>(null);
+  const serverFilter = useDebounced(filter, 400);
+  useEffect(() => { setFilter(''); setSort(null); }, [source]);
+
+  const q = useHuntResults(hunt.hunt_id, source, { filter: serverFilter, sort });
   const rows = useMemo(() => q.data?.pages.flatMap(p => p.rows) ?? [], [q.data]);
   const columns = q.data?.pages[0]?.columns;
   const uploadRenderers = useMemo(() => withUploadCells(columns, rows, {}), [columns, rows]);
@@ -451,6 +459,13 @@ function ResultsTab({ hunt }: { hunt: Hunt }) {
       hasMore={q.hasNextPage}
       loadingMore={q.isFetchingNextPage}
       onLoadMore={() => q.fetchNextPage()}
+      serverSide
+      filter={filter}
+      onFilterChange={setFilter}
+      sort={sort}
+      onSortChange={setSort}
+      total={q.data?.pages[0]?.total || undefined}
+      exportExtra={[{ label: 'Every row of the hunt (zip)…', icon: <FolderArchive />, onSelect: onExport }]}
       storageKey={`hunt-results:${source}`}
       exportName={`${hunt.hunt_id}-${source?.replace(/[^\w.-]+/g, '_')}`}
       renderers={{
@@ -469,9 +484,11 @@ function ResultsTab({ hunt }: { hunt: Hunt }) {
             onClick={() => q.refetch()} />
         </div>
       }
-      empty={<EmptyState icon={<Rows3 />} title="No results yet">
-        Results appear here as clients finish collecting {source}.
-      </EmptyState>}
+      empty={serverFilter
+        ? <EmptyState icon={<Rows3 />} title="No rows match">Nothing in any row of this hunt matches “{serverFilter}”.</EmptyState>
+        : <EmptyState icon={<Rows3 />} title="No results yet">
+          Results appear here as clients finish collecting {source}.
+        </EmptyState>}
     />
   );
 }

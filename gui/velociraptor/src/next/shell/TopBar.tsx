@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useDebounced } from '../lib/hooks';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Popover } from 'radix-ui';
 import {
@@ -18,14 +19,6 @@ const UserSettingsModal = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ 
 const ShowGlobalMessages = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.ShowGlobalMessages })));
 const HelpDialog = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.HelpDialog })));
 
-function useDebounced<T>(v: T, ms: number): T {
-  const [d, setD] = useState(v);
-  useEffect(() => {
-    const t = setTimeout(() => setD(v), ms);
-    return () => clearTimeout(t);
-  }, [v, ms]);
-  return d;
-}
 
 function ClientSearch() {
   const history = useHistory();

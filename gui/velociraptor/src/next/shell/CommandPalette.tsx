@@ -1,3 +1,4 @@
+import { useDebounced } from '../lib/hooks';
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { Dialog as RDialog } from 'radix-ui';
@@ -13,14 +14,6 @@ import { HuntStateBadge } from '../pages/hunts/HuntBits';
 import { setTheme } from './theme';
 import { useSelectedClient } from './client-context';
 
-function useDebounced<T>(v: T, ms: number): T {
-  const [d, setD] = useState(v);
-  useEffect(() => {
-    const t = setTimeout(() => setD(v), ms);
-    return () => clearTimeout(t);
-  }, [v, ms]);
-  return d;
-}
 
 const itemCls = 'tw:flex tw:items-center tw:gap-2.5 tw:h-9 tw:px-3 tw:mx-1 tw:rounded-md tw:text-[13px] tw:cursor-pointer tw:[&>svg]:size-4 tw:[&>svg]:text-faint';
 

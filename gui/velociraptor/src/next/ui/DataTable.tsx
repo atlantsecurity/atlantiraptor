@@ -53,6 +53,14 @@ export interface DataTableProps {
   filter?: string;
   onFilterChange?: (v: string) => void;
   hideSearch?: boolean;
+  // Server-side mode: the filter and sort are applied by the server over
+  // every row, so the table does not filter or sort locally and keeps
+  // loading pages while a filter is set.
+  serverSide?: boolean;
+  sort?: { column: string; desc: boolean } | null;
+  onSortChange?: (s: { column: string; desc: boolean } | null) => void;
+  // Extra export entries, e.g. "Download every row" through the server.
+  exportExtra?: { label: string; icon?: React.ReactNode; onSelect: () => void }[];
 }
 
 function loadState<T>(key: string | undefined, fallback: T): T {
@@ -130,7 +138,16 @@ export function DataTable(props: DataTableProps) {
     return [...seen];
   }, [props.columns, rows]);
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [innerSorting, setInnerSorting] = useState<SortingState>([]);
+  const serverSide = !!props.serverSide;
+  const sorting: SortingState = serverSide
+    ? (props.sort ? [{ id: props.sort.column, desc: props.sort.desc }] : [])
+    : innerSorting;
+  const setSorting = (u: SortingState | ((old: SortingState) => SortingState)) => {
+    const next = typeof u === 'function' ? u(sorting) : u;
+    if (serverSide) props.onSortChange?.(next[0] ? { column: next[0].id, desc: next[0].desc } : null);
+    else setInnerSorting(next);
+  };
   const [innerFilter, setInnerFilter] = useState('');
   const filter = props.filter ?? innerFilter;
   const setFilter = props.onFilterChange ?? setInnerFilter;
@@ -209,6 +226,8 @@ export function DataTable(props: DataTableProps) {
       return false;
     },
     columnResizeMode: 'onChange',
+    manualSorting: serverSide,
+    manualFiltering: serverSide,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -229,10 +248,13 @@ export function DataTable(props: DataTableProps) {
   const items = virtualizer.getVirtualItems();
   const lastIndex = items.length ? items[items.length - 1].index : 0;
   useEffect(() => {
-    if (hasMore && !loadingMore && onLoadMore && !filter && lastIndex >= modelRows.length - 20) {
+    if (hasMore && !loadingMore && onLoadMore && (serverSide || !filter) && lastIndex >= modelRows.length - 20) {
       onLoadMore();
     }
-  }, [hasMore, loadingMore, onLoadMore, lastIndex, modelRows.length, filter]);
+  }, [hasMore, loadingMore, onLoadMore, lastIndex, modelRows.length, filter, serverSide]);
+
+  // A local filter only sees the rows loaded so far; say so.
+  const partialFilter = !serverSide && !!filter && !!hasMore;
 
   const totalWidth = table.getVisibleLeafColumns().reduce((s, c) => s + c.getSize(), 0);
 
@@ -249,10 +271,19 @@ export function DataTable(props: DataTableProps) {
         )}
         {toolbar}
         <div className="tw:ml-auto tw:flex tw:items-center tw:gap-1">
+          {partialFilter && (
+            <span className="tw:text-2xs tw:text-warn tw:mr-1" title="Scroll to the end to load the rest, or use the server-side search where offered.">
+              Filtering only the rows loaded so far
+            </span>
+          )}
           <span className="tw:text-xs tw:text-faint rx-num tw:mr-2">
-            {filter ? `${fmtNum(modelRows.length)} of ` : ''}
-            {fmtNum(rows.length)}
-            {total !== undefined && total > rows.length ? ` / ${fmtNum(total)}` : ''} rows
+            {serverSide
+              ? <>{fmtNum(rows.length)}{total !== undefined && total > rows.length ? ` of ${fmtNum(total)}` : ''} {filter ? 'matching ' : ''}rows</>
+              : <>
+                {filter ? `${fmtNum(modelRows.length)} of ` : ''}
+                {fmtNum(rows.length)}
+                {total !== undefined && total > rows.length ? ` / ${fmtNum(total)}` : ''} rows
+              </>}
           </span>
           {toolbarRight}
           <Menu>
@@ -283,13 +314,17 @@ export function DataTable(props: DataTableProps) {
               <IconButton label="Export" size="sm" icon={<Download className="tw:size-3.5" />} />
             </MenuTrigger>
             <MenuContent>
-              <MenuLabel>Export {fmtNum(modelRows.length)} rows</MenuLabel>
+              <MenuLabel>Export {fmtNum(modelRows.length)} loaded rows</MenuLabel>
               <MenuItem icon={<Download />} onSelect={() =>
                 downloadText(`${exportName}.csv`, toCSV(visibleCols, exportRows()), 'text/csv')}>CSV</MenuItem>
               <MenuItem icon={<FileJson />} onSelect={() =>
                 downloadText(`${exportName}.json`, exportRows().map(r => JSON.stringify(r)).join('\n'), 'application/json')}>
                 JSON lines
               </MenuItem>
+              {(props.exportExtra ?? []).length > 0 && <MenuSeparator />}
+              {(props.exportExtra ?? []).map(x => (
+                <MenuItem key={x.label} icon={x.icon ?? <Download />} onSelect={x.onSelect}>{x.label}</MenuItem>
+              ))}
             </MenuContent>
           </Menu>
         </div>

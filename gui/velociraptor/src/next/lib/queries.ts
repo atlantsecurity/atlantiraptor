@@ -145,17 +145,29 @@ const RESULTS_PAGE = 2000;
 
 // Hunt results are streamed in pages. The table renders whatever has
 // arrived so far and offers to load more.
-export function useHuntResults(huntId: string | undefined, artifact: string | undefined) {
+// filter and sort run on the server over every row of the hunt.
+export interface HuntResultsQuery {
+  filter?: string;
+  sort?: { column: string; desc: boolean } | null;
+}
+
+export function useHuntResults(huntId: string | undefined, artifact: string | undefined,
+  opts: HuntResultsQuery = {}) {
+  const filter = opts.filter?.trim() ?? '';
+  const sort = opts.sort ?? null;
   return useInfiniteQuery({
-    queryKey: ['hunt-results', huntId, artifact],
+    queryKey: ['hunt-results', huntId, artifact, filter, sort?.column ?? '', !!sort?.desc],
     enabled: !!huntId && !!artifact,
     initialPageParam: 0,
+    placeholderData: keepPreviousData,
     queryFn: async ({ pageParam, signal }) => {
       const resp = await emptyIfNotFound(api.get<TableResponse>('v1/GetHuntResults', {
         hunt_id: huntId,
         artifact,
         offset: pageParam,
         count: RESULTS_PAGE,
+        ...(filter ? { filter } : {}),
+        ...(sort ? { sort_column: sort.column, sort_desc: sort.desc } : {}),
       }, signal));
       return { ...parseTable(resp), offset: pageParam as number };
     },
