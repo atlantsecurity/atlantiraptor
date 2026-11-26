@@ -14,7 +14,9 @@ export const STATUS_LABEL: Record<CaseStatus, string> = { open: 'Open', in_progr
 export const STATUS_TONE: Record<CaseStatus, 'warn' | 'accent' | 'neutral'> = { open: 'warn', in_progress: 'accent', closed: 'neutral' };
 export const SEVERITY_TONE: Record<CaseSeverity, 'bad' | 'warn' | 'info'> = { critical: 'bad', high: 'bad', medium: 'warn', low: 'info' };
 
-export type LinkKind = 'hunt' | 'flow' | 'client' | 'alert';
+// indicator: a value worth hunting for (ref is the value).
+// row: one result row, kept as a snapshot in data.
+export type LinkKind = 'hunt' | 'flow' | 'client' | 'alert' | 'indicator' | 'row';
 
 export interface CaseLink {
   id: string;
@@ -65,7 +67,7 @@ export function isCaseDescription(d: unknown): boolean {
 
 const STATUS_SET = new Set<string>(STATUSES);
 const SEVERITY_SET = new Set<string>(CASE_SEVERITIES);
-const KIND_SET = new Set<string>(['hunt', 'flow', 'client', 'alert']);
+const KIND_SET = new Set<string>(['hunt', 'flow', 'client', 'alert', 'indicator', 'row']);
 
 const s = (v: unknown, max = 20_000): string => (typeof v === 'string' ? v.slice(0, max) : '');
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);

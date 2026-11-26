@@ -468,6 +468,7 @@ function ResultsTab({ hunt, onExport }: { hunt: Hunt; onExport: () => void }) {
       total={q.data?.pages[0]?.total || undefined}
       exportExtra={[{ label: 'Every row of the hunt (zip)…', icon: <FolderArchive />, onSelect: onExport }]}
       storageKey={`hunt-results:${source}`}
+      rowSource={{ ref: hunt.hunt_id, label: `Hunt ${hunt.hunt_id} · ${source}` }}
       exportName={`${hunt.hunt_id}-${source?.replace(/[^\w.-]+/g, '_')}`}
       renderers={{
         ...uploadRenderers,

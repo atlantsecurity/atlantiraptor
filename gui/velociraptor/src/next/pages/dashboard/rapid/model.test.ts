@@ -60,3 +60,21 @@ describe('detectKind', () => {
     assert.equal(parseRapidDescription('Sweep: Linux.Sys.Users'), null);
   });
 });
+
+import { pivotKind } from './model.ts';
+
+describe('pivotKind', () => {
+  it('uses the column name as a hint', () => {
+    assert.equal(pivotKind('Username', 'CORP\\alice'), 'user');
+    assert.equal(pivotKind('User', 'bob'), 'user');
+    assert.equal(pivotKind('Name', 'svchost.exe'), 'process');
+    assert.equal(pivotKind('Exe', 'C:\\Windows\\x.exe'), 'file');
+    assert.equal(pivotKind('Hash', 'a'.repeat(64)), 'hash');
+    assert.equal(pivotKind('Raddr', '203.0.113.7'), 'web');
+  });
+  it('skips values that are not indicators', () => {
+    assert.equal(pivotKind('State', 'ESTABLISHED'), null);
+    assert.equal(pivotKind('Detail', 'two\nlines'), null);
+    assert.equal(pivotKind('Hash', 'nothex'), null);
+  });
+});

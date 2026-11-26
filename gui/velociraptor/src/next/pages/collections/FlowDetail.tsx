@@ -293,6 +293,7 @@ function Results({ clientId, flow, live }: { clientId: string; flow: Flow; live:
     <DataTable key={source} rows={rows} columns={ordered} loading={q.isLoading}
       hasMore={q.hasNextPage} loadingMore={q.isFetchingNextPage} onLoadMore={() => q.fetchNextPage()}
       storageKey={`flow-results:${source}`} exportName={`${flow.session_id}-${source?.replace(/[^\w.-]+/g, '_')}`}
+      rowSource={{ ref: String(flow.session_id ?? ''), clientId: String(flow.client_id ?? ''), label: `Collection ${flow.session_id} · ${source}` }}
       renderers={uploadRenderers}
       toolbar={sources.length > 1
         ? <Select value={source} onChange={e => setSource(e.target.value)} className="tw:max-w-[360px] tw:font-mono tw:text-xs">

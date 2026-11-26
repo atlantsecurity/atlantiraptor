@@ -142,3 +142,25 @@ export function parseRapidDescription(d: string): { indicator: string; kind: Rap
   const m = /^Rapid hunt(?: \((web|hash|file|process|user)\))?: (.+)$/s.exec(d ?? '');
   return m ? { kind: (m[1] as RapidKind) ?? 'web', indicator: m[2] } : null;
 }
+
+// ------------------------------------------------ Pivots from tables
+
+const USER_COL = /^(user|username|user_name|targetusername|subjectusername|owner|account|accountname|logonuser)$/i;
+const PROC_COL = /^(name|process|processname|image|exe|binary|program|parentimage|parent)$/i;
+const HASH_COL = /(md5|sha1|sha256|hash)/i;
+
+/** The kind of indicator a cell holds, from its column name and value. */
+export function pivotKind(column: string, value: string): RapidKind | null {
+  const v = cleanIndicator(value);
+  if (!v || v.length > 512 || /[\r\n]/.test(v)) return null;
+  let k: RapidKind = detectKind(v);
+  if (USER_COL.test(column) && !/[\\/]/.test(v.replace(/^[^\\]+\\/, ''))) k = 'user';
+  else if (PROC_COL.test(column)) k = /[\\/]/.test(v) ? 'file' : 'process';
+  else if (HASH_COL.test(column)) k = 'hash';
+  if (k === 'process' && !USER_COL.test(column) && !PROC_COL.test(column) && !/\.(exe|scr|com)$/i.test(v)) {
+    // A bare word in an unrelated column is not worth offering.
+    return null;
+  }
+  return kindProblem(v, k) ? null : k;
+}
+

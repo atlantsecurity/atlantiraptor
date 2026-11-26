@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { BellRing, Crosshair, History, Laptop, Link2, Trash2 } from 'lucide-react';
+import { BellRing, Crosshair, Fingerprint, History, Laptop, Link2, Rows3, Trash2 } from 'lucide-react';
+import { rapidHuntUrl } from '../../lib/prefill';
 import { timeAgo } from '../../lib/format';
 import { Button, Card, CardHeader, IconButton, Input, Select } from '../../ui/primitives';
 import { useLinkToCase, type NewLink } from './hooks';
@@ -11,6 +12,7 @@ import type { CaseLink, CaseRecord, LinkKind } from './model';
 
 const ICON: Record<LinkKind, React.ReactNode> = {
   alert: <BellRing />, hunt: <Crosshair />, flow: <History />, client: <Laptop />,
+  indicator: <Fingerprint />, row: <Rows3 />,
 };
 
 const HUNT_RE = /^H\.[A-Za-z0-9]+$/;
@@ -22,6 +24,9 @@ export function linkHref(l: CaseLink): string | null {
   if (l.kind === 'flow' && l.clientId) return `/collected/${l.clientId}/${l.ref}`;
   if (l.kind === 'client') return `/host/${l.ref}`;
   if (l.kind === 'alert' && l.clientId) return `/host/${l.clientId}`;
+  if (l.kind === 'indicator') return rapidHuntUrl(l.ref);
+  if (l.kind === 'row' && l.clientId && l.ref.startsWith('F.')) return `/collected/${l.clientId}/${l.ref}`;
+  if (l.kind === 'row' && l.ref.startsWith('H.')) return `/hunts/${l.ref}/results`;
   return null;
 }
 
@@ -43,6 +48,15 @@ export function CaseLinks({ caseId, record, onUnlink }: {
                   ? <Link to={href} className="tw:block tw:text-[13px] tw:truncate tw:hover:text-accent tw:hover:underline">{l.label}</Link>
                   : <div className="tw:text-[13px] tw:truncate">{l.label}</div>}
                 <div className="tw:text-2xs tw:text-faint tw:truncate">{l.kind} · {l.addedBy} · {timeAgo(new Date(l.addedAt))}</div>
+                {l.data && (l.kind === 'row' || l.kind === 'alert') && (
+                  // Endpoint data: shown as plain text only.
+                  <details className="tw:mt-1">
+                    <summary className="tw:cursor-pointer tw:text-2xs tw:text-accent">Show data</summary>
+                    <pre className="tw:mt-1 tw:max-h-60 tw:overflow-auto tw:whitespace-pre-wrap tw:break-all tw:rounded tw:bg-sunken tw:p-2 tw:font-mono tw:text-[11px]">
+                      {JSON.stringify(l.data, null, 2)}
+                    </pre>
+                  </details>
+                )}
               </div>
               <IconButton size="xs" variant="ghost" label="Remove link" icon={<Trash2 className="tw:size-3.5" />}
                 className="tw:opacity-0 tw:group-hover:opacity-100" onClick={() => onUnlink(l.id)} />

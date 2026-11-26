@@ -9,10 +9,11 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  ArrowDown, ArrowUp, Columns3, Download, FileJson, X, Braces, ChevronsUpDown,
+  ArrowDown, ArrowUp, MoreHorizontal, Columns3, Download, FileJson, X, Braces, ChevronsUpDown,
 } from 'lucide-react';
 import type { Row } from '../lib/table';
 import { toCSV, downloadText } from '../lib/table';
+import { PivotMenu, type PivotTarget, type RowSource } from './PivotMenu';
 import { cellToString, fmtNum, fmtTime } from '../lib/format';
 import {
   Button, cn, CopyButton, EmptyState, IconButton, Menu, MenuContent, MenuItem, MenuLabel,
@@ -61,6 +62,11 @@ export interface DataTableProps {
   onSortChange?: (s: { column: string; desc: boolean } | null) => void;
   // Extra export entries, e.g. "Download every row" through the server.
   exportExtra?: { label: string; icon?: React.ReactNode; onSelect: () => void }[];
+  // Right-click (or the ⋯ button) on a cell offers hunts, cases and
+  // lookups for its value. Off for tables of settings and the like.
+  pivot?: boolean;
+  // Where the rows came from, for "Add this row to a case".
+  rowSource?: RowSource;
 }
 
 function loadState<T>(key: string | undefined, fallback: T): T {
@@ -164,6 +170,8 @@ export function DataTable(props: DataTableProps) {
   const [sizing, setSizing] = useState<ColumnSizingState>(
     () => loadState(storageKey && `${storageKey}:size`, {}));
   const [inspected, setInspected] = useState<Row | null>(null);
+  const [pivotAt, setPivotAt] = useState<PivotTarget | null>(null);
+  const pivot = props.pivot ?? true;
 
   useEffect(() => saveState(storageKey && `${storageKey}:vis`, visibility), [storageKey, visibility]);
   useEffect(() => saveState(storageKey && `${storageKey}:size`, sizing), [storageKey, sizing]);
@@ -330,6 +338,10 @@ export function DataTable(props: DataTableProps) {
         </div>
       </div>
 
+      {pivotAt && (
+        <PivotMenu target={pivotAt} onClose={() => setPivotAt(null)} source={props.rowSource}
+          onFilter={props.hideSearch ? undefined : v => setFilter(v)} />
+      )}
       <div className="tw:flex tw:flex-1 tw:min-h-0">
         <div ref={scrollRef} className="tw:flex-1 tw:overflow-auto tw:relative tw:min-w-0">
           <div style={{ width: Math.max(totalWidth, 100) }} className="tw:min-w-full">
@@ -386,8 +398,23 @@ export function DataTable(props: DataTableProps) {
                       style={{ top: vr.start, height: rowHeight, width: totalWidth }}>
                       {row.getVisibleCells().map(cell => (
                         <div key={cell.id} style={{ width: cell.column.getSize() }}
-                          className="tw:px-2.5 tw:truncate tw:shrink-0">
+                          onContextMenu={pivot ? e => {
+                            e.preventDefault();
+                            setPivotAt({ value: cell.getValue(), column: cell.column.id, row: row.original, x: e.clientX, y: e.clientY });
+                          } : undefined}
+                          className={cn('tw:px-2.5 tw:truncate tw:shrink-0', pivot && 'tw:relative tw:group/cell')}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {pivot && cell.getValue() !== null && cell.getValue() !== undefined && cell.getValue() !== '' && (
+                            <button type="button" aria-label="Pivot on this value" title="Hunt, filter, add to case…"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const r = e.currentTarget.getBoundingClientRect();
+                                setPivotAt({ value: cell.getValue(), column: cell.column.id, row: row.original, x: r.left, y: r.bottom + 2 });
+                              }}
+                              className="tw:absolute tw:right-0.5 tw:top-1/2 tw:-translate-y-1/2 tw:hidden tw:group-hover/cell:flex tw:items-center tw:justify-center tw:size-5 tw:rounded tw:bg-raised tw:border tw:border-line tw:text-muted tw:hover:text-fg">
+                              <MoreHorizontal className="tw:size-3" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
