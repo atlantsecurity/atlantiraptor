@@ -89,7 +89,13 @@ jobs:
 
       run: |
         # Only run short tests on CI because the CI machines are slow
-        go test -short -v ./... --tags "velomain server_vql" -p 2
+        # Repeat the failures at the end: the job log is long and the
+        # API only returns its tail.
+        status=0
+        go test -short -v ./... --tags "velomain server_vql" -p 2 2>&1 | tee test_output.log || status=$?
+        echo "==== Failed tests ===="
+        grep -E -- '--- FAIL|^FAIL|^panic:|\[build failed\]' test_output.log || echo "none"
+        exit $status
 
     - name: Test Golden Generic
       shell: cmd
