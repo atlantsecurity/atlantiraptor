@@ -1,0 +1,99 @@
+name: Cloud.AWS.ConsoleLogins
+description: |
+  Hunts AWS console sign-ins:
+
+  - **critical**: the root user signed in without MFA; a successful
+    sign-in from an address that guessed passwords for many users.
+  - **high**: the root user signed in; password guessing from one
+    address against many IAM users.
+  - **medium**: an IAM user signed in without MFA; many failed
+    sign-ins for one user.
+
+  Reads `ConsoleLogin` events in every region the account uses. Needs
+  the `SecurityAudit` policy on the role.
+
+type: SERVER
+
+imports:
+  - Cloud.AWS.Rules
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: SprayMinUsers
+    type: int
+    default: 5
+  - name: BruteMinFailures
+    type: int
+    default: 10
+
+sources:
+  - query: |
+      LET Logins <= SELECT * FROM foreach(row={
+          SELECT Region FROM aws_regions(secret=AWSSecret)
+      }, query={
+          SELECT timestamp(string=Time) AS Time, timestamp(string=Time).Unix AS Epoch,
+                 Region, EventSource, EventName, User, UserType, SourceIP, UserAgent,
+                 MFA, ErrorCode, ErrorMessage, Request, Response, Additional
+          FROM aws_cloudtrail(secret=AWSSecret, region=Region, event_name="ConsoleLogin",
+                              start=now() - LookbackHours * 3600)
+          WHERE EventName = "ConsoleLogin"
+      }, workers=4)
+
+      LET Successes <= SELECT * FROM Logins WHERE Response.ConsoleLogin = "Success"
+      LET Failures <= SELECT * FROM Logins WHERE Response.ConsoleLogin = "Failure"
+
+      LET Root = SELECT * FROM foreach(row=Successes, query={
+          SELECT Time, Severity, Detection, User, SourceIP AS IPAddress, Region AS Location,
+                 UserAgent AS Device,
+                 dict(MFA=MFA, Additional=Additional) AS Details
+          FROM foreach(row=AWSMatches(EvSource=EventSource, EvName=EventName,
+               EvText=AWSText(User=User, UserType=UserType, MFA=MFA, ErrorCode=ErrorCode,
+                              Request=Request, Response=Response)))
+          WHERE Category = "signin"
+      })
+
+      LET NoMFA = SELECT Time, "medium" AS Severity,
+             "Console sign-in without MFA" AS Detection,
+             User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(Additional=Additional) AS Details
+      FROM Successes
+      WHERE UserType = "IAMUser" AND NOT MFA
+      GROUP BY User, SourceIP
+
+      // Guessing passwords for many users from one address.
+      LET PerAddressUser <= SELECT SourceIP, User, min(item=Epoch) AS First
+          FROM Failures GROUP BY SourceIP, User
+      LET Sprayers <= SELECT SourceIP, count() AS Users, enumerate(items=User) AS Targets,
+             min(item=First) AS First
+          FROM PerAddressUser GROUP BY SourceIP
+      LET SprayIPs <= to_dict(item={
+          SELECT SourceIP AS _key, Users AS _value FROM Sprayers WHERE Users >= SprayMinUsers })
+
+      LET Spray = SELECT timestamp(epoch=First) AS Time, "high" AS Severity,
+             "Password guessing against many IAM users" AS Detection,
+             format(format="%v users", args=Users) AS User, SourceIP AS IPAddress,
+             "" AS Location, "" AS Device, dict(Users=Targets) AS Details
+      FROM Sprayers WHERE Users >= SprayMinUsers
+
+      LET SprayThenSuccess = SELECT Time, "critical" AS Severity,
+             "Successful console sign-in from a password-guessing address" AS Detection,
+             User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(UsersGuessed=get(item=SprayIPs, field=SourceIP), MFA=MFA) AS Details
+      FROM Successes
+      WHERE get(item=SprayIPs, field=SourceIP)
+      GROUP BY User, SourceIP
+
+      LET PerUser = SELECT User, count() AS N, min(item=Epoch) AS First,
+             enumerate(items=SourceIP) AS Addresses
+          FROM Failures GROUP BY User
+      LET Brute = SELECT timestamp(epoch=First) AS Time, "medium" AS Severity,
+             "Many failed console sign-ins for one user" AS Detection,
+             User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Failures=N, Addresses=Addresses) AS Details
+      FROM PerUser WHERE N >= BruteMinFailures
+
+      SELECT * FROM chain(a=Root, b=NoMFA, c=Spray, d=SprayThenSuccess, e=Brute)

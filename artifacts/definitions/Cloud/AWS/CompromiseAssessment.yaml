@@ -1,0 +1,31 @@
+name: Cloud.AWS.CompromiseAssessment
+description: |
+  Runs every AWS breach hunt against one account in a single
+  collection. All rows share the columns `Time, Severity, Detection,
+  User, IPAddress, Location, Device, Details`.
+
+  See `docs/cloud/aws.md` for the role this needs.
+
+type: SERVER
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: TrustedAccounts
+    type: regex
+    default: "^$"
+    description: AWS account IDs allowed to assume roles (for the Persistence hunt).
+
+sources:
+  - name: ConsoleLogins
+    query: SELECT * FROM Artifact.Cloud.AWS.ConsoleLogins(AWSSecret=AWSSecret)
+  - name: RootActivity
+    query: SELECT * FROM Artifact.Cloud.AWS.RootActivity(AWSSecret=AWSSecret)
+  - name: AccessKeyAbuse
+    query: SELECT * FROM Artifact.Cloud.AWS.AccessKeyAbuse(AWSSecret=AWSSecret)
+  - name: SuspiciousChanges
+    query: SELECT * FROM Artifact.Cloud.AWS.SuspiciousChanges(AWSSecret=AWSSecret)
+  - name: IAMPosture
+    query: SELECT * FROM Artifact.Cloud.AWS.IAMPosture(AWSSecret=AWSSecret)
+  - name: Persistence
+    query: SELECT * FROM Artifact.Cloud.AWS.Persistence(AWSSecret=AWSSecret, TrustedAccounts=TrustedAccounts)

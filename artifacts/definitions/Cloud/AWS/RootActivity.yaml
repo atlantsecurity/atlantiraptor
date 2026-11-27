@@ -1,0 +1,38 @@
+name: Cloud.AWS.RootActivity
+description: |
+  Hunts for use of the AWS root user, which day-to-day work should never
+  need: **high** for changes made as root, **medium** for read-only
+  calls. One row per action and source address. Console sign-ins are
+  reported by `Cloud.AWS.ConsoleLogins`.
+
+  Needs the `SecurityAudit` policy on the role.
+
+type: SERVER
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 720
+
+sources:
+  - query: |
+      LET Events = SELECT * FROM foreach(row={
+          SELECT Region FROM aws_regions(secret=AWSSecret)
+      }, query={
+          SELECT * FROM aws_cloudtrail(secret=AWSSecret, region=Region, username="root",
+                                       start=now() - LookbackHours * 3600)
+          WHERE UserType = "Root" AND EventName != "ConsoleLogin"
+      }, workers=4)
+
+      SELECT timestamp(string=min(item=Time)) AS Time,
+             if(condition=ReadOnly, then="medium", else="high") AS Severity,
+             if(condition=ReadOnly, then="Root user made read-only calls",
+                else="Root user made changes") AS Detection,
+             "root" AS User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(Event=EventName, Service=EventSource, Calls=count(),
+                  LastCall=max(item=Time), Error=ErrorCode, MFA=MFA,
+                  Request=Request) AS Details
+      FROM Events
+      GROUP BY EventName, SourceIP, Region

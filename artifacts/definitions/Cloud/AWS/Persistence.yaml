@@ -1,0 +1,87 @@
+name: Cloud.AWS.Persistence
+description: |
+  Lists what lets someone back into an AWS account from outside, as
+  configured now, of any age:
+
+  - **Roles other accounts can assume**: trust policies naming an AWS
+    account outside `TrustedAccounts`. **critical** when anyone (`*`)
+    can assume the role; **high** when the role was created within the
+    lookback; otherwise **medium** (review the list).
+  - **Identity providers** (SAML and OpenID Connect): **high** when
+    created within the lookback, otherwise **low**.
+
+  Roles that only AWS services can assume are skipped. Needs the
+  `SecurityAudit` policy on the role.
+
+type: SERVER
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 720
+  - name: TrustedAccounts
+    type: regex
+    default: "^$"
+    description: AWS account IDs allowed to assume roles (your organisation, Atlant, known vendors).
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Roles = SELECT RoleName, Arn, CreateDate, AssumeRolePolicyDocument AS Trust,
+             split(string=Arn, sep=":")[4] AS Account
+          FROM aws_iam(secret=AWSSecret, action="ListRoles")
+
+      // Every AWS principal of every Allow statement, as text.
+      // Principal is "*", or a dict whose AWS entry is a string or list.
+      LET Principals(T) = SELECT * FROM foreach(row=T.Statement, query={
+          SELECT * FROM chain(
+            a={ SELECT "*" AS P FROM scope() WHERE Effect = "Allow" AND Principal = "*" },
+            b={ SELECT Principal.AWS AS P FROM scope()
+                WHERE Effect = "Allow" AND Principal.AWS AND NOT Principal.AWS =~ "^\\[" AND format(format="%T", args=Principal.AWS) = "string" },
+            c={ SELECT _value AS P FROM foreach(row=Principal.AWS)
+                WHERE Effect = "Allow" AND format(format="%T", args=Principal.AWS) != "string" })
+      })
+
+      LET External = SELECT *, Principals(T=Trust).P AS AWSPrincipals
+          FROM Roles
+
+      LET Findings = SELECT *,
+             filter(list=AWSPrincipals, condition="x=>x = '*'") AS Anyone,
+             filter(list=AWSPrincipals, condition="x=>x =~ '[0-9]{12}' AND NOT x =~ Account") AS Others
+          FROM External
+
+      LET Foreign = SELECT *,
+             filter(list=Others, condition="x=>NOT regex_replace(source=x, re='''^.*?([0-9]{12}).*$''', replace='$1') =~ TrustedAccounts") AS Untrusted
+          FROM Findings
+
+      LET TrustRows = SELECT timestamp(string=CreateDate) AS Time,
+             if(condition=Anyone, then="critical",
+                else=if(condition=timestamp(string=CreateDate).Unix >= WindowStart,
+                        then="high", else="medium")) AS Severity,
+             if(condition=Anyone, then="Role anyone can assume",
+                else="Role another AWS account can assume") AS Detection,
+             RoleName AS User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Arn=Arn, TrustedPrincipals=Anyone + Untrusted, Created=CreateDate,
+                  TrustPolicy=Trust) AS Details
+      FROM Foreign
+      WHERE Anyone OR Untrusted
+
+      LET Providers = SELECT * FROM chain(
+          a={ SELECT Arn, CreateDate, "SAML" AS Kind
+              FROM aws_iam(secret=AWSSecret, action="ListSAMLProviders") },
+          b={ SELECT Arn, "" AS CreateDate, "OpenID Connect" AS Kind
+              FROM aws_iam(secret=AWSSecret, action="ListOpenIDConnectProviders") })
+
+      LET ProviderRows = SELECT if(condition=CreateDate, then=timestamp(string=CreateDate),
+                else=now()) AS Time,
+             if(condition=CreateDate AND timestamp(string=CreateDate).Unix >= WindowStart,
+                then="high", else="low") AS Severity,
+             format(format="%v identity provider configured", args=Kind) AS Detection,
+             regex_replace(source=Arn, re="^.*/", replace="") AS User, "" AS IPAddress, "" AS Location,
+             "" AS Device, dict(Arn=Arn, Created=CreateDate) AS Details
+      FROM Providers
+
+      SELECT * FROM chain(a=TrustRows, b=ProviderRows)

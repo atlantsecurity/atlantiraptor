@@ -95,6 +95,10 @@ type apiClient struct {
 	client     *http.Client
 	maxRetries int
 
+	// retryIf also retries answers that are not 429 or 5xx (AWS sends
+	// throttling as HTTP 400).
+	retryIf func(status int, body []byte) bool
+
 	// Sleep is replaceable in tests.
 	sleep func(ctx context.Context, d time.Duration) bool
 }
@@ -168,7 +172,8 @@ func (self *apiClient) do(ctx context.Context, req request) (
 		}
 
 		retryable := resp.StatusCode == http.StatusTooManyRequests ||
-			resp.StatusCode >= 500
+			resp.StatusCode >= 500 ||
+			(self.retryIf != nil && self.retryIf(resp.StatusCode, data))
 		if !retryable || attempt >= self.maxRetries {
 			return resp, data, &APIError{
 				StatusCode: resp.StatusCode,

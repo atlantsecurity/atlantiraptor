@@ -1,0 +1,135 @@
+name: Cloud.AWS.Rules
+description: |
+  Shared detection rules for the `Cloud.AWS.*` breach hunts and
+  `Cloud.AWS.Monitor`. Other artifacts import this one; it collects
+  nothing by itself.
+
+  `AWSRules` match single CloudTrail events on the service and event
+  name, optionally on the text of the event (`Params`, a regex over
+  `user=...;type=...;mfa=...;error=...;request=<JSON>;response=<JSON>`).
+  A rule whose `Escalate` regex also matches is raised to `EscalateTo`.
+
+type: SERVER
+
+export: |
+  LET AWSBigInstance <= '''(?i)instanceType\W{1,8}(p[2-6]|g[3-6]|inf[12]|trn[12]|dl[12]|x2?[a-z0-9]*\.|[a-z0-9-]+\.(metal|(1[2-9]|[2-9][0-9])xlarge))'''
+
+  LET AWSRules <= (
+    // Console sign-in and the root user.
+    dict(Category="signin", Source="^signin\\.", Event="^ConsoleLogin$", Params="^user=root;.*ConsoleLogin\\W+Success",
+         Detection="Root user signed in to the console", Severity="high", Escalate="mfa=false", EscalateTo="critical"),
+    dict(Category="signin", Source="^signin\\.", Event="^PasswordRecovery(Requested|Completed)$", Params="",
+         Detection="Root password recovery", Severity="high", Escalate="", EscalateTo=""),
+
+    // IAM persistence and privilege escalation.
+    dict(Category="iam", Source="^iam\\.", Event="^CreateUser$", Params="",
+         Detection="IAM user created", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="iam", Source="^iam\\.", Event="^CreateAccessKey$", Params="",
+         Detection="Access key created", Severity="medium", Escalate="^user=root;", EscalateTo="critical"),
+    dict(Category="iam", Source="^iam\\.", Event="^(CreateLoginProfile|UpdateLoginProfile)$", Params="",
+         Detection="Console password set for an IAM user", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="iam", Source="^iam\\.", Event="^Attach(User|Group|Role)Policy$", Params="",
+         Detection="Managed policy attached", Severity="medium", Escalate="AdministratorAccess|IAMFullAccess|PowerUserAccess", EscalateTo="critical"),
+    dict(Category="iam", Source="^iam\\.", Event="^Put(User|Group|Role)Policy$", Params="",
+         Detection="Inline policy added", Severity="medium", Escalate="(?i)action\\W{1,8}(\\*|iam:\\*)\\W", EscalateTo="critical"),
+    dict(Category="iam", Source="^iam\\.", Event="^AddUserToGroup$", Params="",
+         Detection="User added to a group", Severity="medium", Escalate="(?i)admin", EscalateTo="high"),
+    dict(Category="iam", Source="^iam\\.", Event="^UpdateAssumeRolePolicy$", Params="",
+         Detection="Role trust policy changed (who can assume the role)", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="iam", Source="^iam\\.", Event="^CreatePolicyVersion$", Params="",
+         Detection="Policy version created", Severity="medium", Escalate="(?i)setAsDefault\\W+true", EscalateTo="high"),
+    dict(Category="iam", Source="^iam\\.", Event="^(DeactivateMFADevice|DeleteVirtualMFADevice)$", Params="",
+         Detection="MFA device removed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="iam", Source="^iam\\.", Event="^(CreateOpenIDConnectProvider|CreateSAMLProvider|UpdateSAMLProvider)$", Params="",
+         Detection="Identity provider added or changed (federated access)", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="iam", Source="^iam\\.", Event="^Delete(User|Role)PermissionsBoundary$", Params="",
+         Detection="Permissions boundary removed", Severity="medium", Escalate="", EscalateTo=""),
+
+    // Defence evasion: logging and detection turned off.
+    dict(Category="evasion", Source="^cloudtrail\\.", Event="^(StopLogging|DeleteTrail)$", Params="",
+         Detection="CloudTrail logging stopped or trail deleted", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^cloudtrail\\.", Event="^(UpdateTrail|PutEventSelectors|PutInsightSelectors)$", Params="",
+         Detection="CloudTrail trail changed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^guardduty\\.", Event="^(DeleteDetector|DisassociateFromMasterAccount|DisassociateFromAdministratorAccount|StopMonitoringMembers|DeleteMembers)$", Params="",
+         Detection="GuardDuty turned off", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^guardduty\\.", Event="^UpdateDetector$", Params="",
+         Detection="GuardDuty detector changed", Severity="medium", Escalate="(?i)enable\\W+false", EscalateTo="critical"),
+    dict(Category="evasion", Source="^guardduty\\.", Event="^(CreateFilter|UpdateFilter)$", Params="(?i)archive",
+         Detection="GuardDuty findings set to archive automatically", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^guardduty\\.", Event="^(CreateIPSet|UpdateIPSet)$", Params="",
+         Detection="GuardDuty trusted IP list changed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^ec2\\.", Event="^DeleteFlowLogs$", Params="",
+         Detection="VPC flow logs deleted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^config\\.", Event="^(StopConfigurationRecorder|DeleteConfigurationRecorder|DeleteDeliveryChannel)$", Params="",
+         Detection="AWS Config recording stopped", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^securityhub\\.", Event="^(DisableSecurityHub|BatchDisableStandards)$", Params="",
+         Detection="Security Hub turned off", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^logs\\.", Event="^(DeleteLogGroup|DeleteLogStream)$", Params="",
+         Detection="CloudWatch logs deleted", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="evasion", Source="^access-analyzer\\.", Event="^DeleteAnalyzer$", Params="",
+         Detection="IAM Access Analyzer deleted", Severity="medium", Escalate="", EscalateTo=""),
+
+    // Data exposure: storage and snapshots made public or shared.
+    dict(Category="exposure", Source="^s3\\.", Event="^PutBucketPolicy$", Params="",
+         Detection="Bucket policy changed", Severity="low", Escalate="(?i)principal\\W{1,14}\\*", EscalateTo="high"),
+    dict(Category="exposure", Source="^s3\\.", Event="^PutBucketAcl$", Params="",
+         Detection="Bucket ACL changed", Severity="low", Escalate="AllUsers|AuthenticatedUsers", EscalateTo="high"),
+    dict(Category="exposure", Source="^s3\\.", Event="^(DeleteBucketPublicAccessBlock|DeletePublicAccessBlock)$", Params="",
+         Detection="S3 Block Public Access removed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="exposure", Source="^s3\\.", Event="^(PutBucketPublicAccessBlock|PutPublicAccessBlock)$", Params="(?i)(BlockPublic\\w*|IgnorePublicAcls|RestrictPublicBuckets)\\W+false",
+         Detection="S3 Block Public Access weakened", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="exposure", Source="^ec2\\.", Event="^ModifySnapshotAttribute$", Params="(?i)createVolumePermission.*add",
+         Detection="EBS snapshot shared with another account", Severity="high", Escalate="(?i)group\\W{1,8}all", EscalateTo="critical"),
+    dict(Category="exposure", Source="^ec2\\.", Event="^ModifyImageAttribute$", Params="(?i)launchPermission.*add",
+         Detection="Machine image shared with another account", Severity="high", Escalate="(?i)group\\W{1,8}all", EscalateTo="critical"),
+    dict(Category="exposure", Source="^rds\\.", Event="^ModifyDB(Cluster)?SnapshotAttribute$", Params="(?i)valuesToAdd",
+         Detection="Database snapshot shared with another account", Severity="high", Escalate="(?i)valuesToAdd\\W+all\\W", EscalateTo="critical"),
+    dict(Category="exposure", Source="^s3\\.", Event="^PutBucketReplication$", Params="",
+         Detection="Bucket replication configured (copies data elsewhere)", Severity="medium", Escalate="", EscalateTo=""),
+
+    // Impact: data and keys destroyed.
+    dict(Category="impact", Source="^kms\\.", Event="^(ScheduleKeyDeletion|DisableKey)$", Params="",
+         Detection="KMS key disabled or scheduled for deletion", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="impact", Source="^backup\\.", Event="^(DeleteBackupVault|DeleteRecoveryPoint|DeleteBackupPlan)$", Params="",
+         Detection="Backups deleted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="impact", Source="^rds\\.", Event="^(DeleteDBInstance|DeleteDBCluster)$", Params="",
+         Detection="Database deleted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="impact", Source="^s3\\.", Event="^PutBucketLifecycle$", Params="(?i)expiration",
+         Detection="Bucket lifecycle rule expires data", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="impact", Source="^s3\\.", Event="^DeleteBucket$", Params="",
+         Detection="Bucket deleted", Severity="medium", Escalate="", EscalateTo=""),
+
+    // Resource hijacking: cryptomining and LLMjacking.
+    dict(Category="hijack", Source="^ec2\\.", Event="^(RunInstances|RequestSpotInstances|RequestSpotFleet|CreateFleet)$", Params="",
+         Detection="Instances launched", Severity="low", Escalate=AWSBigInstance, EscalateTo="high"),
+    dict(Category="hijack", Source="^ec2\\.", Event="^(ImportKeyPair|CreateKeyPair)$", Params="",
+         Detection="SSH key pair created", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="hijack", Source="^ec2\\.", Event="^AuthorizeSecurityGroupIngress$", Params="",
+         Detection="Security group rule added", Severity="low", Escalate="0\\.0\\.0\\.0/0|::/0", EscalateTo="medium"),
+    dict(Category="hijack", Source="^servicequotas\\.", Event="^RequestServiceQuotaIncrease$", Params="",
+         Detection="Service quota increase requested", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="hijack", Source="^bedrock\\.", Event="^(PutUseCaseForModelAccess|PutFoundationModelEntitlement|CreateFoundationModelAgreement)$", Params="",
+         Detection="Bedrock model access enabled (LLMjacking?)", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="hijack", Source="^bedrock\\.", Event="^(GetFoundationModelAvailability|ListFoundationModelAgreementOffers)$", Params="",
+         Detection="Bedrock model availability checked (LLMjacking reconnaissance)", Severity="medium", Escalate="", EscalateTo="")
+  )
+
+  // The text that rules' Params and Escalate regexes run against.
+  // One line, so the rules' ".*" spans the whole request.
+  LET AWSJSON(Item) = regex_replace(source=serialize(item=Item, format="json"),
+      re="\\n\\s*", replace="")
+  LET AWSText(User, UserType, MFA, ErrorCode, Request, Response) = format(
+      format="user=%v;type=%v;mfa=%v;error=%v;request=%v;response=%v",
+      args=[User, UserType, MFA, ErrorCode, AWSJSON(Item=Request), AWSJSON(Item=Response)])
+
+  // Parameter names differ from the columns of the rule table, which shadow
+  // them inside foreach().
+  LET AWSMatches(EvSource, EvName, EvText) =
+      SELECT Category, Detection,
+             if(condition=Escalate AND EvText =~ Escalate, then=EscalateTo,
+                else=Severity) AS Severity
+      FROM foreach(row=AWSRules)
+      WHERE EvSource =~ Source AND EvName =~ Event AND (NOT Params OR EvText =~ Params)
+
+  LET AWSRank <= dict(critical=0, high=1, medium=2, low=3, info=4)
+  LET AWSMinRank(Level) = get(item=AWSRank, field=Level, default=3)

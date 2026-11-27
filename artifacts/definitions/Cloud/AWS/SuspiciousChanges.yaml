@@ -1,0 +1,112 @@
+name: Cloud.AWS.SuspiciousChanges
+description: |
+  Hunts every change made in the account (CloudTrail write events, all
+  regions) for what attackers do after getting in (`Cloud.AWS.Rules`):
+
+  - **Persistence and privilege escalation**: users, access keys and
+    console passwords created, admin policies attached, role trust
+    policies changed, MFA removed, identity providers added.
+  - **Defence evasion**: CloudTrail stopped, GuardDuty, Config, Security
+    Hub or flow logs turned off, findings auto-archived.
+  - **Data exposure**: buckets made public, Block Public Access removed,
+    EBS, AMI and database snapshots shared with other accounts,
+    replication to elsewhere.
+  - **Impact**: KMS keys scheduled for deletion, backups and databases
+    deleted.
+  - **Resource hijacking**: GPU or very large instances launched,
+    instances launched in a region the account does not otherwise use,
+    security groups opened to the internet, Bedrock model access
+    enabled or probed (LLMjacking).
+
+  Also reports an access key created for a different user than the
+  one creating it. Needs the `SecurityAudit` policy on the role.
+
+type: SERVER
+
+imports:
+  - Cloud.AWS.Rules
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: BaselineDays
+    type: int
+    default: 30
+    description: Days before the lookback used to tell which regions the account uses.
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+      LET Regions <= SELECT Region FROM aws_regions(secret=AWSSecret)
+
+      LET Columns(Q) = SELECT timestamp(string=Time) AS Time, Region, EventSource, EventName,
+             User, UserType, AccessKeyId, SourceIP, UserAgent, MFA, ErrorCode,
+             Request, Response, EventId
+          FROM Q
+
+      // Changes, plus Bedrock calls (its reconnaissance is read-only).
+      LET Events <= SELECT * FROM foreach(row=Regions, query={
+          SELECT * FROM chain(
+            a={ SELECT * FROM Columns(Q={
+                  SELECT * FROM aws_cloudtrail(secret=AWSSecret, region=Region,
+                      read_only="false", start=WindowStart) }) },
+            b={ SELECT * FROM Columns(Q={
+                  SELECT * FROM aws_cloudtrail(secret=AWSSecret, region=Region,
+                      event_source="bedrock.amazonaws.com", start=WindowStart)
+                  WHERE ReadOnly }) })
+          WHERE NOT ErrorCode
+      }, workers=4)
+
+      LET Matched = SELECT * FROM foreach(row=Events, query={
+          SELECT Time, Severity, Detection, Category, User, SourceIP AS IPAddress,
+                 Region AS Location, UserAgent AS Device,
+                 dict(Category=Category, Event=EventName, Service=EventSource,
+                      UserType=UserType, AccessKeyId=AccessKeyId,
+                      Request=Request, Response=Response, EventId=EventId) AS Details
+          FROM foreach(row=AWSMatches(EvSource=EventSource, EvName=EventName,
+               EvText=AWSText(User=User, UserType=UserType, MFA=MFA, ErrorCode=ErrorCode,
+                              Request=Request, Response=Response)))
+          WHERE Category != "signin"
+      })
+
+      LET Single = SELECT Time, Severity, Detection, User, IPAddress, Location, Device, Details
+          FROM Matched
+          WHERE AWSMinRank(Level=Severity) <= AWSMinRank(Level=MinSeverity)
+
+      // An access key created for someone else.
+      LET KeyForOther = SELECT Time, "high" AS Severity,
+             "Access key created for another user" AS Detection,
+             User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(ForUser=Request.userName, AccessKeyId=Response.accessKey.accessKeyId,
+                  EventId=EventId) AS Details
+      FROM Events
+      WHERE EventName = "CreateAccessKey" AND Request.userName
+        AND Request.userName != User
+        AND NOT User =~ ("/" + Request.userName + "$")
+
+      // Instances launched in a region with no other changes before.
+      LET LaunchRegions = SELECT Region, min(item=Time) AS First, enumerate(items=User) AS Users,
+             count() AS Launches
+          FROM Events
+          WHERE EventName =~ "^(RunInstances|RequestSpotInstances|RequestSpotFleet|CreateFleet)$"
+          GROUP BY Region
+
+      LET UsedBefore(R) = SELECT EventId FROM aws_cloudtrail(secret=AWSSecret, region=R,
+             read_only="false", max_rows=1,
+             start=WindowStart - BaselineDays * 86400, end=WindowStart)
+
+      LET NewRegion = SELECT First AS Time, "high" AS Severity,
+             "Instances launched in a region the account does not otherwise use" AS Detection,
+             join(array=Users, sep=", ") AS User, "" AS IPAddress, Region AS Location,
+             "" AS Device, dict(Launches=Launches, BaselineDays=BaselineDays) AS Details
+      FROM LaunchRegions
+      WHERE NOT UsedBefore(R=Region).EventId
+
+      SELECT * FROM chain(a=Single, b=KeyForOther, c=NewRegion)

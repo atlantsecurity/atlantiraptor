@@ -209,6 +209,7 @@ const (
 	M365_CREDS          = "Microsoft 365 Creds"
 	GWS_CREDS           = "Google Workspace Creds"
 	OKTA_CREDS          = "Okta Creds"
+	AWS_CREDS           = "AWS Creds"
 	SMTP_CREDS          = "SMTP Creds"
 	EXECVE_SECRET       = "Execve Secrets"
 
