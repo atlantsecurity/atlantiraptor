@@ -18,6 +18,8 @@ It does this with a lightweight agent on every endpoint, a central server
 with a web console, and a query language (VQL) that describes what to
 collect and how to analyse it.
 
+![A host page in the Atlantiraptor console](/images/host-triage.webp "Investigating one host: full triage findings, one-click collections, and the host's system and connection details.")
+
 ## How it works
 
 ```text
