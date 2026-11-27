@@ -1,0 +1,153 @@
+{
+ "items": [
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-40hZ",
+    "uniqueQualifier": "1025",
+    "applicationName": "admin",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "admin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "GRANT_ADMIN_PRIVILEGE",
+     "parameters": [
+      {
+       "name": "USER_EMAIL",
+       "value": "mallory@example.com"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-39hZ",
+    "uniqueQualifier": "1026",
+    "applicationName": "admin",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "admin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "CREATE_EMAIL_MONITOR",
+     "parameters": [
+      {
+       "name": "USER_EMAIL",
+       "value": "ceo@example.com"
+      },
+      {
+       "name": "EMAIL_MONITOR_DEST_EMAIL",
+       "value": "x@example.com"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-38hZ",
+    "uniqueQualifier": "1027",
+    "applicationName": "admin",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "admin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "AUTHORIZE_API_CLIENT_ACCESS",
+     "parameters": [
+      {
+       "name": "API_CLIENT_NAME",
+       "value": "1234567"
+      },
+      {
+       "name": "API_SCOPES",
+       "multiValue": [
+        "https://mail.google.com/"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-37hZ",
+    "uniqueQualifier": "1028",
+    "applicationName": "admin",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "admin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "CHANGE_PASSWORD",
+     "parameters": [
+      {
+       "name": "USER_EMAIL",
+       "value": "bob@example.com"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-36hZ",
+    "uniqueQualifier": "1029",
+    "applicationName": "admin",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "admin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "ASSIGN_ROLE",
+     "parameters": [
+      {
+       "name": "ROLE_NAME",
+       "value": "Help Desk Admin"
+      },
+      {
+       "name": "USER_EMAIL",
+       "value": "henry@example.com"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

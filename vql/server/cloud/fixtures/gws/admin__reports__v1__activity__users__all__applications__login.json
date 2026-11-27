@@ -1,0 +1,614 @@
+{
+ "items": [
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-200hZ",
+    "uniqueQualifier": "1001",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-220hZ",
+    "uniqueQualifier": "1002",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-240hZ",
+    "uniqueQualifier": "1003",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-260hZ",
+    "uniqueQualifier": "1004",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-280hZ",
+    "uniqueQualifier": "1005",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-300hZ",
+    "uniqueQualifier": "1006",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-10hZ",
+    "uniqueQualifier": "1007",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "95.1.1.1",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "RU",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-20hZ",
+    "uniqueQualifier": "1008",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "bob@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "suspicious_login",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ],
+   "networkInfo": {
+    "regionCode": "US",
+    "ipAsn": [
+     7922
+    ]
+   }
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1009",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user0@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1010",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user1@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1011",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user2@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1012",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user3@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1013",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user4@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1014",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user5@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1015",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user6@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1016",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user7@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1017",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user8@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1018",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user9@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-5hZ",
+    "uniqueQualifier": "1019",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "user10@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_failure",
+     "parameters": [
+      {
+       "name": "login_failure_type",
+       "value": "login_failure_invalid_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-4hZ",
+    "uniqueQualifier": "1020",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "45.2.2.2",
+   "events": [
+    {
+     "type": "x",
+     "name": "login_success",
+     "parameters": [
+      {
+       "name": "login_type",
+       "value": "google_password"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-3hZ",
+    "uniqueQualifier": "1021",
+    "applicationName": "login",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "dave@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "account_disabled_hijacked",
+     "parameters": []
+    }
+   ]
+  }
+ ]
+}

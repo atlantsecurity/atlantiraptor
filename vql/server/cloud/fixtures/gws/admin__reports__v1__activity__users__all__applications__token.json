@@ -1,0 +1,169 @@
+{
+ "items": [
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-50hZ",
+    "uniqueQualifier": "1030",
+    "applicationName": "token",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "bob@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "authorize",
+     "parameters": [
+      {
+       "name": "app_name",
+       "value": "eM Client"
+      },
+      {
+       "name": "client_id",
+       "value": "c-em"
+      },
+      {
+       "name": "client_type",
+       "value": "NATIVE_DESKTOP"
+      },
+      {
+       "name": "scope",
+       "multiValue": [
+        "https://mail.google.com/",
+        "openid"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-49hZ",
+    "uniqueQualifier": "1031",
+    "applicationName": "token",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "alice@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "authorize",
+     "parameters": [
+      {
+       "name": "app_name",
+       "value": "Shady Reader"
+      },
+      {
+       "name": "client_id",
+       "value": "c-shady"
+      },
+      {
+       "name": "client_type",
+       "value": "WEB"
+      },
+      {
+       "name": "scope",
+       "multiValue": [
+        "https://www.googleapis.com/auth/gmail.readonly"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-48hZ",
+    "uniqueQualifier": "1032",
+    "applicationName": "token",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "erin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "authorize",
+     "parameters": [
+      {
+       "name": "app_name",
+       "value": "Shady Reader"
+      },
+      {
+       "name": "client_id",
+       "value": "c-shady"
+      },
+      {
+       "name": "client_type",
+       "value": "WEB"
+      },
+      {
+       "name": "scope",
+       "multiValue": [
+        "https://www.googleapis.com/auth/gmail.readonly"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-47hZ",
+    "uniqueQualifier": "1033",
+    "applicationName": "token",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "erin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "authorize",
+     "parameters": [
+      {
+       "name": "app_name",
+       "value": "Zoom"
+      },
+      {
+       "name": "client_id",
+       "value": "c-zoom"
+      },
+      {
+       "name": "client_type",
+       "value": "WEB"
+      },
+      {
+       "name": "scope",
+       "multiValue": [
+        "https://www.googleapis.com/auth/calendar"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

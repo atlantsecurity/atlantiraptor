@@ -1,0 +1,992 @@
+{
+ "items": [
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1344",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d0"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1345",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d1"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1346",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d2"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1347",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d3"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1348",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d4"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1349",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d5"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1350",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d6"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1351",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d7"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1352",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d8"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1353",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d9"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1354",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d10"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1355",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d11"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1356",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d12"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1357",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d13"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1358",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d14"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1359",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d15"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1360",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d16"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1361",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d17"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1362",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d18"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1363",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d19"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1364",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d20"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1365",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d21"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1366",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d22"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1367",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d23"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1368",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d24"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1369",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "carol@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_visibility",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "d25"
+      },
+      {
+       "name": "visibility",
+       "value": "people_with_link"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1370",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "dave@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_user_access",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "budget"
+      },
+      {
+       "name": "target_user",
+       "value": "Friend@Gmail.com"
+      },
+      {
+       "name": "visibility_change",
+       "value": "external"
+      },
+      {
+       "name": "visibility",
+       "value": "shared_externally"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-7hZ",
+    "uniqueQualifier": "1371",
+    "applicationName": "drive",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "erin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "acl_change",
+     "name": "change_user_access",
+     "parameters": [
+      {
+       "name": "doc_title",
+       "value": "x"
+      },
+      {
+       "name": "target_user",
+       "value": "bob@example.com"
+      },
+      {
+       "name": "visibility_change",
+       "value": "none"
+      },
+      {
+       "name": "visibility",
+       "value": "private"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

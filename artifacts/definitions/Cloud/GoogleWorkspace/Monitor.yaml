@@ -1,0 +1,69 @@
+name: Cloud.GoogleWorkspace.Monitor
+description: |
+  Collects a Google Workspace domain's audit events continuously and
+  raises alerts in the shared alert queue: sign-ins Google flagged,
+  hijacked accounts, 2-Step Verification turned off, admin roles,
+  email monitors, domain-wide delegation, SSO and mail routing changes,
+  and apps granted risky scopes (`Cloud.GoogleWorkspace.Rules`).
+
+  Google keeps most audit events for 6 months; this keeps them on the
+  Atlantiraptor server for as long as server event data is kept.
+
+  Add it under Server Events and grant the configuring user the secret.
+  Google delivers some logs hours late, so each poll re-reads the last
+  6 hours and drops repeats.
+
+type: SERVER_EVENT
+
+imports:
+  - Cloud.GoogleWorkspace.Rules
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: PollSeconds
+    type: int
+    default: 300
+  - name: BackfillHours
+    type: int
+    default: 24
+  - name: AlertLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low]
+  - name: CollectDrive
+    type: bool
+    default: N
+    description: Also collect Drive events (high volume in large domains).
+
+export: |
+  LET Start <= timestamp(epoch=now() - BackfillHours * 3600)
+
+  LET Raise(Detections, User, IP, What, When) = SELECT alert(
+        name=format(format="Google Workspace: %v (%v)", args=[Detection, User]),
+        dedup=86400, level=Severity, source="Google Workspace", rule=Detection,
+        description=format(format="%v: %v by %v from %v", args=[Detection, What, User, IP || "unknown address"]),
+        user=User, ip=IP, activity=What, time=When, tenant=GWSSecret) AS Raised
+    FROM foreach(row=Detections)
+    WHERE GWSMinRank(Level=Severity) <= GWSMinRank(Level=AlertLevel)
+
+  LET Follow(App) = SELECT * FROM gws_reports(secret=GWSSecret, application=App,
+        start=Start, follow=TRUE, poll=PollSeconds)
+    WHERE (Raise(Detections=GWSMatches(EvApp=App, EvName=EventName,
+                                       EvParams=GWSParamText(P=Parameters)),
+                 User=Actor, IP=IPAddress, What=EventName, When=Time) OR TRUE)
+
+sources:
+  - name: Login
+    query: SELECT * FROM Follow(App="login")
+  - name: Admin
+    query: SELECT * FROM Follow(App="admin")
+  - name: UserAccounts
+    query: SELECT * FROM Follow(App="user_accounts")
+  - name: Token
+    query: SELECT * FROM Follow(App="token")
+  - name: SAML
+    query: SELECT * FROM Follow(App="saml")
+  - name: Drive
+    query: |
+      SELECT * FROM if(condition=CollectDrive, then={ SELECT * FROM Follow(App="drive") })

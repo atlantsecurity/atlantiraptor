@@ -168,6 +168,16 @@ var (
 			"client_secret",
 		},
 	}, {
+		TypeName: constants.GWS_CREDS,
+		Description: "Read-only access to a Google Workspace domain for cloud breach " +
+			"hunting (gws_reports() and gws_api()): a service account JSON key with " +
+			"domain-wide delegation, and the admin user it acts as.",
+		Verifier: "x=>x.service_account_json AND x.admin_email",
+		Fields: []string{
+			"service_account_json",
+			"admin_email",
+		},
+	}, {
 		TypeName:    constants.SMTP_CREDS,
 		Verifier:    "x=>x.server && x.server_port",
 		Description: "Credentials to be used in mail() plugin.",

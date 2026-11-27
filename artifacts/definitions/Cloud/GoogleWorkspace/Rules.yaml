@@ -1,0 +1,82 @@
+name: Cloud.GoogleWorkspace.Rules
+description: |
+  Shared detection rules for the `Cloud.GoogleWorkspace.*` breach hunts
+  and `Cloud.GoogleWorkspace.Monitor`. Other artifacts import this one;
+  it collects nothing by itself.
+
+  `GWSRules` match single Admin SDK Reports events on application and
+  event name, optionally on the event's parameters (`Params`, a regex
+  over `name=value;name=value` text). A rule whose `Escalate` regex
+  also matches is raised to `EscalateTo`.
+
+type: SERVER
+
+export: |
+  // OAuth scopes that read or send mail, read all files, or administer
+  // the domain.
+  LET GWSRiskyScopes <= '''(?i)(https://mail\.google\.com/|auth/gmail\.(modify|readonly|compose|send|insert|metadata|settings\.basic|settings\.sharing)|auth/drive(\.readonly)?(;|,|\s|$|\])|auth/admin\.|auth/cloud-platform|auth/apps\.groups|auth/ediscovery)'''
+
+  LET GWSRules <= (
+    dict(Category="signin", App="login", Event="^(suspicious_login|suspicious_login_less_secure_app|suspicious_programmatic_login)$", Params="",
+         Detection="Google flagged a suspicious sign-in", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", App="login", Event="^login_success$", Params="(^|;)is_suspicious=true",
+         Detection="Google flagged a suspicious sign-in", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", App="login", Event="^gov_attack_warning$", Params="",
+         Detection="Government-backed attack warning", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="signin", App="login", Event="^account_disabled_hijacked$", Params="",
+         Detection="Google disabled the account as hijacked", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="signin", App="login", Event="^account_disabled_password_leak$", Params="",
+         Detection="Google disabled the account after a password leak", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", App="login", Event="^account_disabled_spamming(_through_relay)?$", Params="",
+         Detection="Account disabled for sending spam (often a taken-over account)", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="account", App="user_accounts|login", Event="^2sv_disable$", Params="",
+         Detection="2-Step Verification turned off", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="account", App="user_accounts|login", Event="^titanium_unenroll$", Params="",
+         Detection="Advanced Protection turned off", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="account", App="user_accounts|login", Event="^(recovery_email_edit|recovery_phone_edit|recovery_secret_qa_edit)$", Params="",
+         Detection="Account recovery details changed", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="account", App="user_accounts|login", Event="^2sv_enroll$", Params="",
+         Detection="2-Step Verification enrolled", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="account", App="user_accounts|login", Event="^password_edit$", Params="",
+         Detection="Password changed", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^GRANT_ADMIN_PRIVILEGE$", Params="",
+         Detection="Super admin granted", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^ASSIGN_ROLE$", Params="",
+         Detection="Admin role assigned", Severity="high", Escalate="(?i)super ?admin", EscalateTo="critical"),
+    dict(Category="admin", App="admin", Event="^(CREATE_ROLE|ADD_PRIVILEGE)$", Params="",
+         Detection="Admin role created or extended", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^CREATE_EMAIL_MONITOR$", Params="",
+         Detection="Email monitor created (copies a user's mail)", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^AUTHORIZE_API_CLIENT_ACCESS$", Params="",
+         Detection="Domain-wide delegation granted to an API client", Severity="high", Escalate=GWSRiskyScopes, EscalateTo="critical"),
+    dict(Category="admin", App="admin", Event="^CUSTOMER_TAKEOUT_CREATED$", Params="",
+         Detection="Organisation-wide data export started", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="(?i)SSO", Params="",
+         Detection="Single sign-on settings changed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^(CHANGE_EMAIL_SETTING|CREATE_EMAIL_SETTING|CHANGE_GMAIL_SETTING|CREATE_GMAIL_SETTING)$", Params="(?i)ROUTING|ROUTE|FORWARD|COMPLIANCE|CONTENT_COMPLIANCE",
+         Detection="Mail routing, forwarding or compliance rule changed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^(ENFORCE_STRONG_AUTHENTICATION|CHANGE_ALLOWED_TWO_STEP_VERIFICATION_METHODS|CHANGE_TWO_STEP_VERIFICATION_ENROLLMENT_PERIOD_DURATION)$", Params="",
+         Detection="2-Step Verification policy changed", Severity="medium", Escalate="(^|;)NEW_VALUE=false", EscalateTo="high"),
+    dict(Category="admin", App="admin", Event="^(TURN_OFF_2_STEP_VERIFICATION|UNENROLL_USER_FROM_STRONG_AUTH|UNENROLL_USER_FROM_TITANIUM)$", Params="",
+         Detection="Admin turned off a user's 2-Step Verification", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", App="admin", Event="^CHANGE_PASSWORD$", Params="",
+         Detection="Admin reset a user's password", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="app", App="token", Event="^authorize$", Params="",
+         Detection="App authorised by a user", Severity="low", Escalate=GWSRiskyScopes, EscalateTo="high")
+  )
+
+  LET GWSParamQuery(P) = SELECT format(format="%v=%v", args=[_key, _value]) AS x
+      FROM items(item=P)
+  LET GWSParamText(P) = join(array=GWSParamQuery(P=P).x, sep=";")
+
+  // Parameter names differ from the rule table's columns, which shadow
+  // them inside foreach().
+  LET GWSMatches(EvApp, EvName, EvParams) =
+      SELECT Category, Detection,
+             if(condition=Escalate AND EvParams =~ Escalate, then=EscalateTo,
+                else=Severity) AS Severity
+      FROM foreach(row=GWSRules)
+      WHERE EvApp =~ App AND EvName =~ Event AND (NOT Params OR EvParams =~ Params)
+
+  LET GWSRank <= dict(critical=0, high=1, medium=2, low=3, info=4)
+  LET GWSMinRank(Level) = get(item=GWSRank, field=Level, default=3)

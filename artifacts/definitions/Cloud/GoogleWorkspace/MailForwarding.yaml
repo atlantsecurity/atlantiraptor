@@ -1,0 +1,85 @@
+name: Cloud.GoogleWorkspace.MailForwarding
+description: |
+  Checks every Gmail mailbox's settings as they are now, for what
+  attackers leave behind after taking over a mailbox:
+
+  - **high**: automatic forwarding to an address outside the domain.
+  - **high**: a filter that forwards matching mail outside the domain.
+  - **medium**: a filter that sends mail straight to Trash or skips the
+    inbox and marks it read (hides replies from the real owner).
+  - **medium**: a forwarding address added outside the domain, even if
+    not in use yet.
+
+  Reads Gmail settings as each user through domain-wide delegation, so
+  the service account needs the `gmail.settings.basic` scope as well as
+  `admin.directory.user.readonly`. One set of requests per mailbox.
+
+type: SERVER
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: UserFilter
+    type: regex
+    default: "."
+
+sources:
+  - query: |
+      LET SettingsScope = "https://www.googleapis.com/auth/gmail.settings.basic"
+
+      LET Domains <= SELECT lowcase(string=domainName) AS Domain
+      FROM gws_api(secret=GWSSecret, path="/admin/directory/v1/customer/my_customer/domains",
+                   scope="https://www.googleapis.com/auth/admin.directory.domain.readonly",
+                   items_field="domains")
+      LET Aliases <= SELECT lowcase(string=domainAliasName) AS Domain
+      FROM gws_api(secret=GWSSecret, path="/admin/directory/v1/customer/my_customer/domainaliases",
+                   scope="https://www.googleapis.com/auth/admin.directory.domain.readonly",
+                   items_field="domainAliases", ignore_not_found=TRUE)
+      LET OurDomains <= Domains.Domain + Aliases.Domain
+
+      LET IsExternal(Address) = Address AND
+          NOT lowcase(string=split(string=Address, sep="@")[1]) in OurDomains
+
+      LET Users = SELECT primaryEmail AS User FROM gws_api(secret=GWSSecret,
+          path="/admin/directory/v1/users",
+          params=dict(customer="my_customer", maxResults="500", query="isSuspended=false"),
+          items_field="users")
+      WHERE primaryEmail =~ UserFilter
+
+      LET Gmail(U, P, F) = SELECT * FROM gws_api(secret=GWSSecret, impersonate=U,
+          scope=SettingsScope, ignore_not_found=TRUE, items_field=F,
+          path=format(format="/gmail/v1/users/%v/settings/%v", args=[U, P]))
+
+      LET AutoForwarding = SELECT * FROM foreach(row=Users, query={
+          SELECT now() AS Time, "high" AS Severity,
+                 "Mail automatically forwarded outside the domain" AS Detection,
+                 User, "" AS IPAddress, "" AS Location, "" AS Device,
+                 dict(ForwardTo=emailAddress, Disposition=disposition) AS Details
+          FROM Gmail(U=User, P="autoForwarding", F="")
+          WHERE enabled AND IsExternal(Address=emailAddress)
+      })
+
+      LET ForwardingAddresses = SELECT * FROM foreach(row=Users, query={
+          SELECT now() AS Time, "medium" AS Severity,
+                 "Forwarding address outside the domain added" AS Detection,
+                 User, "" AS IPAddress, "" AS Location, "" AS Device,
+                 dict(Address=forwardingEmail, Status=verificationStatus) AS Details
+          FROM Gmail(U=User, P="forwardingAddresses", F="forwardingAddresses")
+          WHERE IsExternal(Address=forwardingEmail)
+      })
+
+      LET Filters = SELECT * FROM foreach(row=Users, query={
+          SELECT now() AS Time,
+                 if(condition=IsExternal(Address=action.forward), then="high", else="medium") AS Severity,
+                 if(condition=IsExternal(Address=action.forward),
+                    then="Filter forwards mail outside the domain",
+                    else="Filter deletes or hides mail") AS Detection,
+                 User, "" AS IPAddress, "" AS Location, "" AS Device,
+                 dict(Criteria=criteria, Action=action) AS Details
+          FROM Gmail(U=User, P="filters", F="filter")
+          WHERE IsExternal(Address=action.forward)
+             OR "TRASH" in action.addLabelIds
+             OR ("INBOX" in action.removeLabelIds AND "UNREAD" in action.removeLabelIds)
+      })
+
+      SELECT * FROM chain(a=AutoForwarding, b=ForwardingAddresses, c=Filters)
