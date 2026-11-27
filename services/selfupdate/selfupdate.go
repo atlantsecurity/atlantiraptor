@@ -2,8 +2,8 @@
 // release published on GitHub.
 //
 // The server checks atlantsecurity/atlantiraptor's latest GitHub
-// release every few hours. When a newer release has a binary for this
-// platform, it downloads it next to the running binary, checks it
+// release once a week (and shortly after each start). When a newer
+// release has a binary for this platform, it downloads it next to the running binary, checks it
 // against the SHA256SUMS of the release, requires a trusted Authenticode
 // signature from Atlant Security's certificate, runs it once to
 // confirm it starts and reports the expected version, then swaps it in
@@ -48,8 +48,8 @@ const WaitPIDEnv = "ATLANTIRAPTOR_SELF_UPDATE_WAIT_PID"
 const DisableEnv = "ATLANTIRAPTOR_DISABLE_AUTO_UPDATE"
 
 const (
-	DefaultCheckHours = 6
-	MaxCheckHours     = 24 * 7
+	DefaultCheckHours = 24 * 7
+	MaxCheckHours     = 24 * 30
 	settingsFile      = "atlantiraptor_self_update.json"
 	firstCheckDelay   = 2 * time.Minute
 )

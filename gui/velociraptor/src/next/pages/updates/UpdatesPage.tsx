@@ -7,7 +7,7 @@ import { CloudDownload, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-reac
 import { useUpdateAction, useUpdateStatus, type UpdateStatus } from '../../lib/updates';
 import { Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, Mono, Select, Skeleton, Switch } from '../../ui/primitives';
 
-const HOURS = [1, 3, 6, 12, 24, 72, 168];
+const HOURS = [6, 24, 72, 168, 336, 720];
 const STATE_LABEL: Record<UpdateStatus['state'], string> = {
   idle: '', checking: 'Checking GitHub…', downloading: 'Downloading…', verifying: 'Verifying the signature…', restarting: 'Restarting…',
 };
