@@ -27,3 +27,12 @@ sl
 retrnsmt
 uuid
 freelist
+Atlantiraptor
+Atlant
+dlib
+Jsign
+vcruntime
+httptest
+openai
+deepseek
+prefs
