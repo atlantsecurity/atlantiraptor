@@ -127,7 +127,7 @@
 
     ### See also
 
-    - [log]({{< ref "/vql_reference/popular/log/" >}}): alerts and log messages are similar in
+    - [log](https://atlantsecurity.github.io/atlantiraptor/reference/vql/log/): alerts and log messages are similar in
       concept and use the same deduplication mechanism which is explained with
       examples for the `log()` function.
   type: Function
@@ -882,7 +882,7 @@
 
     ### See also
 
-    - [dirname]({{< ref "/vql_reference/other/dirname/" >}})
+    - [dirname](https://atlantsecurity.github.io/atlantiraptor/reference/vql/dirname/)
   type: Function
   args:
   - name: path
@@ -1414,8 +1414,8 @@
     ```
     ### See also
 
-    - [ip]({{< ref "/vql_reference/other/ip/" >}}): Format an IP address.
-    - [geoip]({{< ref "/vql_reference/other/geoip/" >}}): Lookup an IP Address
+    - [ip](https://atlantsecurity.github.io/atlantiraptor/reference/vql/ip/): Format an IP address.
+    - [geoip](https://atlantsecurity.github.io/atlantiraptor/reference/vql/geoip/): Lookup an IP Address
       using the MaxMind GeoIP database.
   type: Function
   args:
@@ -1522,7 +1522,7 @@
     ```
     ### See also
 
-    - [clients]({{< ref "/vql_reference/server/clients/" >}}): Returns client
+    - [clients](https://atlantsecurity.github.io/atlantiraptor/reference/vql/clients/): Returns client
       info for one or more clients from the datastore.
   type: Function
   version: 2
@@ -1553,7 +1553,7 @@
 
     ### See also
 
-    - [client_set_metadata]({{< ref "/vql_reference/server/client_set_metadata/" >}}):
+    - [client_set_metadata](https://atlantsecurity.github.io/atlantiraptor/reference/vql/client_set_metadata/):
       Sets client metadata.
   type: Function
   args:
@@ -1617,7 +1617,7 @@
 
     ### See also
 
-    - [client_metadata]({{< ref "/vql_reference/server/client_metadata/" >}}):
+    - [client_metadata](https://atlantsecurity.github.io/atlantiraptor/reference/vql/client_metadata/):
       Returns client metadata from the datastore.
   type: Function
   version: 3
@@ -1662,7 +1662,7 @@
 
     ### See also
 
-    - [client_info]({{< ref "/vql_reference/server/client_info/" >}}): Returns
+    - [client_info](https://atlantsecurity.github.io/atlantiraptor/reference/vql/client_info/): Returns
       client info for a specific client from the datastore.
   type: Plugin
   args:
@@ -2703,7 +2703,7 @@
 
     ### See also
 
-    - [basename]({{< ref "/vql_reference/popular/basename/" >}})
+    - [basename](https://atlantsecurity.github.io/atlantiraptor/reference/vql/basename/)
   type: Function
   args:
   - name: path
@@ -2729,7 +2729,7 @@
 
     ### See also
 
-    - [watch_ebpf]({{< ref "/vql_reference/linux/watch_ebpf/" >}})
+    - [watch_ebpf](https://atlantsecurity.github.io/atlantiraptor/reference/vql/watch_ebpf/)
   type: Plugin
   category: linux
   platforms:
@@ -3779,12 +3779,12 @@
 
     ### See also
 
-    - [log]({{< ref "/vql_reference/popular/log/" >}}): a function which uses the same string
+    - [log](https://atlantsecurity.github.io/atlantiraptor/reference/vql/log/): a function which uses the same string
       formatting as the `format` function.
-    - [timestamp_format]({{< ref "/vql_reference/other/timestamp_format/" >}}): a function
+    - [timestamp_format](https://atlantsecurity.github.io/atlantiraptor/reference/vql/timestamp_format/): a function
       that simplifies the string formatting of timestamp objects.
-    - [ip]({{< ref "/vql_reference/other/ip/" >}}): Format an IP address.
-    - [typeof]({{< ref "/vql_reference/other/typeof/" >}}): a dedicated function equivalent
+    - [ip](https://atlantsecurity.github.io/atlantiraptor/reference/vql/ip/): Format an IP address.
+    - [typeof](https://atlantsecurity.github.io/atlantiraptor/reference/vql/typeof/): a dedicated function equivalent
       to the special use case: `format(format="%T",args=x)`
   type: Function
   args:
@@ -3981,10 +3981,10 @@
 
     ### See also
 
-    - [cidr_contains]({{< ref "/vql_reference/other/cidr_contains/" >}}):
+    - [cidr_contains](https://atlantsecurity.github.io/atlantiraptor/reference/vql/cidr_contains/):
       Calculates if an IP address falls within a range of CIDR specified
       networks.
-    - [ip]({{< ref "/vql_reference/other/ip/" >}}): Format an IP address.
+    - [ip](https://atlantsecurity.github.io/atlantiraptor/reference/vql/ip/): Format an IP address.
   type: Function
   version: 1
   args:
@@ -4039,7 +4039,7 @@
 
     ### See also
 
-    - [set]({{< ref "/vql_reference/popular/set/" >}}): Sets the member field of
+    - [set](https://atlantsecurity.github.io/atlantiraptor/reference/vql/set/): Sets the member field of
     the item.
   type: Function
   args:
@@ -4762,7 +4762,7 @@
 
     The `secret` form is special: instead of making a request to a
     server, it looks up a [server HTTP
-    secret](/docs/gui/#server-secrets) which supplies the URL,
+    secret](https://atlantsecurity.github.io/atlantiraptor/secrets/) which supplies the URL,
     method, headers and parameters. Secrets are only available on the
     server, not on endpoints.
 
@@ -4785,7 +4785,7 @@
     {{% /notice %}}
 
     See
-    [hardening the http_client() plugin](/docs/deployment/security/#accessing-files-from-vql)
+    [hardening the http_client() plugin](https://atlantsecurity.github.io/atlantiraptor/users/permissions/#limiting-file-and-network-access-from-vql)
     for the security implications of the `file` and `unix` schemes.
   type: Plugin
   version: 3
@@ -5809,9 +5809,9 @@
 
     ### See also
 
-    - [cidr_contains]({{< ref "/vql_reference/other/cidr_contains/" >}}):
+    - [cidr_contains](https://atlantsecurity.github.io/atlantiraptor/reference/vql/cidr_contains/):
       Calculates if an IP address falls within a range of CIDR specified networks.
-    - [geoip]({{< ref "/vql_reference/other/geoip/" >}}): Lookup an IP Address
+    - [geoip](https://atlantsecurity.github.io/atlantiraptor/reference/vql/geoip/): Lookup an IP Address
       using the MaxMind GeoIP database.
   type: Function
   version: 2
@@ -6319,9 +6319,9 @@
 
     ### See also
 
-    - [format]({{< ref "/vql_reference/popular/format/" >}}): a function that uses the same
+    - [format](https://atlantsecurity.github.io/atlantiraptor/reference/vql/format/): a function that uses the same
       string formatting syntax.
-    - [alert]({{< ref "/vql_reference/other/alert/" >}}): alerts are a special type of log
+    - [alert](https://atlantsecurity.github.io/atlantiraptor/reference/vql/alert/): alerts are a special type of log
       message that are added to a server alerts queue, which can be monitored.
   type: Function
   version: 2
@@ -7504,7 +7504,7 @@
 
     ### See also
 
-    - [timestamp]({{< ref "/vql_reference/popular/timestamp/" >}})
+    - [timestamp](https://atlantsecurity.github.io/atlantiraptor/reference/vql/timestamp/)
   type: Function
   version: 2
   args:
@@ -10375,7 +10375,7 @@
     An alias for the `registry` accessor, which accesses the registry using the
     OS APIs.
 
-    Please see [the registry accessor]({{< ref "/vql_reference/accessors/registry/" >}})
+    Please see [the registry accessor](https://atlantsecurity.github.io/atlantiraptor/reference/vql/registry/)
     for more information.
   type: Accessor
   metadata:
@@ -10562,14 +10562,14 @@
 
     ### See also
 
-    - [read_reg_key]({{< ref "/vql_reference/windows/read_reg_key/" >}}):
+    - [read_reg_key](https://atlantsecurity.github.io/atlantiraptor/reference/vql/read_reg_key/):
       A convenience plugin which applies the globs to the registry accessor to
       find keys.
-    - [reg_rm_key]({{< ref "/vql_reference/windows/reg_rm_key/" >}}):
+    - [reg_rm_key](https://atlantsecurity.github.io/atlantiraptor/reference/vql/reg_rm_key/):
       Removes a key and all its values from the registry.
-    - [reg_rm_value]({{< ref "/vql_reference/windows/reg_rm_value/" >}}):
+    - [reg_rm_value](https://atlantsecurity.github.io/atlantiraptor/reference/vql/reg_rm_value/):
       Removes a value in the registry.
-    - [reg_set_value]({{< ref "/vql_reference/windows/reg_set_value/" >}}):
+    - [reg_set_value](https://atlantsecurity.github.io/atlantiraptor/reference/vql/reg_set_value/):
       Set a value in the registry.
   type: Accessor
   platforms:
@@ -10912,9 +10912,8 @@
 
     ### Notes
 
-    It is more convenient to use the [secrets support]({{< ref
-    "/blog/2024/2024-03-10-release-notes-0.72/#secret-management" >}})
-    introduced in version 0.72 to manage these credentials.
+    It is more convenient to use the [secrets support](https://atlantsecurity.github.io/atlantiraptor/secrets/)
+    to manage these credentials.
   type: Accessor
   args:
   - name: secret
@@ -11265,7 +11264,7 @@
 
     ### See also
 
-    - [str]({{< ref "/vql_reference/popular/str/" >}}): Returns the string
+    - [str](https://atlantsecurity.github.io/atlantiraptor/reference/vql/str/): Returns the string
       representation of the provided data.
   type: Function
   args:
@@ -11361,7 +11360,7 @@
 
     ### See also
 
-    - [get]({{< ref "/vql_reference/popular/get/" >}}): Gets the member field from the item.
+    - [get](https://atlantsecurity.github.io/atlantiraptor/reference/vql/get/): Gets the member field from the item.
   type: Function
   args:
   - name: item
@@ -11643,9 +11642,7 @@
 
     ### Notes
 
-    It is more convenient to use the [secrets support]({{< ref
-    "/blog/2024/2024-03-10-release-notes-0.72/#secret-management" >}})
-    in 0.72 to manage these credentials.
+    It is more convenient to use the [secrets support](https://atlantsecurity.github.io/atlantiraptor/secrets/) to manage these credentials.
   type: Accessor
   args:
   - name: hosts
@@ -12047,9 +12044,7 @@
        log instead. A hostkey provided by the secret takes precedence
        over the hostkey parameter.
 
-    It is more convenient to use the [secrets support]({{< ref
-    "/blog/2024/2024-03-10-release-notes-0.72/#secret-management" >}}) in
-    0.72 to manage these credentials.
+    It is more convenient to use the [secrets support](https://atlantsecurity.github.io/atlantiraptor/secrets/) to manage these credentials.
   type: Accessor
   version: 1
   args:
@@ -12183,7 +12178,7 @@
 
     ### See also
 
-    - [serialize]({{< ref "/vql_reference/other/serialize/" >}}): Encode an
+    - [serialize](https://atlantsecurity.github.io/atlantiraptor/reference/vql/serialize/): Encode an
       object as a string.
   type: Function
   args:
@@ -12841,7 +12836,7 @@
 
     ### See also
 
-    - [format]({{< ref "/vql_reference/popular/format/" >}})
+    - [format](https://atlantsecurity.github.io/atlantiraptor/reference/vql/format/)
   type: Function
   metadata:
     File: vql/golang/typeof.go
@@ -14046,7 +14041,7 @@
 
     ### See also
 
-    - [ebpf_events]({{< ref "/vql_reference/linux/ebpf_events/" >}}): Dumps information about
+    - [ebpf_events](https://atlantsecurity.github.io/atlantiraptor/reference/vql/ebpf_events/): Dumps information about
       potential ebpf_events.
   type: Plugin
   version: 2
@@ -14981,7 +14976,7 @@
     You can run this function on the server to produce a smaller rule set
     (removing the metadata etc). Alternatively you can modify your yara
     artifacts to prefilter the rules with it before loading into the
-    [yara]({{< ref "/vql_reference/parsers/yara/" >}})
+    [yara](https://atlantsecurity.github.io/atlantiraptor/reference/vql/yara/)
     plugin.
 
     ### Example

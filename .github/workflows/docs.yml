@@ -1,0 +1,77 @@
+# Builds the documentation website (docs/site) and publishes it to
+# GitHub Pages at https://atlantsecurity.github.io/atlantiraptor/.
+#
+# Pull requests only build the site, which also checks every internal
+# link. Pushes to master build and deploy it. The site's
+# docs_index_v1.zip is the search index the console's "Search
+# documentation" dialog downloads.
+#
+# One-time setup: Settings > Pages > Build and deployment > Source:
+# "GitHub Actions".
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "artifacts/definitions/**"
+      - "api/atlapi_openapi.go"
+      - "bin/**"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "artifacts/definitions/**"
+      - "api/atlapi_openapi.go"
+      - "bin/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        with:
+          go-version: "^1.27.2"
+
+      - name: Build the command line binary (for the CLI reference)
+        run: |
+          go run make.go -v BasicAssets
+          go build -tags "server_vql extras" -o ./output/atlantiraptor ./bin/
+
+      - name: Build the site
+        run: |
+          go run ./docs/site -out public \
+            -cli-binary ./output/atlantiraptor \
+            -docs-index public/docs_index_v1.zip
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: public
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4

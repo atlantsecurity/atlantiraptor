@@ -1,0 +1,143 @@
+# Sidebar of the documentation website, in reading order. Each page is
+# docs/site/content/<path>.md unless "source" names another Markdown
+# file in the repository (paths from the repository root). The
+# Reference section is generated and added after these.
+sections:
+  - title: Getting started
+    pages:
+      - path: ""
+        title: Home
+      - path: overview
+      - path: concepts
+      - path: quickstart
+      - path: whats-new
+
+  - title: Deploying
+    pages:
+      - path: deployment
+      - path: deployment/server
+      - path: deployment/docker
+      - path: deployment/configuration
+      - path: deployment/tls
+      - path: deployment/authentication
+      - path: deployment/clients
+      - path: deployment/network-access
+      - path: deployment/orgs
+      - path: deployment/scaling
+      - path: deployment/updates
+      - path: deployment/storage
+      - path: deployment/backups
+      - path: deployment/logging
+      - path: deployment/performance
+
+  - title: Using the console
+    pages:
+      - path: console
+      - path: console/dashboard
+      - path: console/alerts
+      - path: console/rapid-hunt
+      - path: console/ioc-sweep
+      - path: console/response
+      - path: console/cases
+      - path: console/ai-triage
+      - path: console/fleet-health
+      - path: console/preferences
+
+  - title: Endpoints
+    pages:
+      - path: clients
+      - path: clients/host
+      - path: clients/collections
+      - path: clients/files
+      - path: clients/shell
+      - path: clients/monitoring
+
+  - title: Hunting
+    pages:
+      - path: hunts
+      - path: hunts/feeds
+      - path: cloud
+      - path: cloud/microsoft-365
+        source: docs/cloud/m365.md
+      - path: cloud/google-workspace
+        source: docs/cloud/google-workspace.md
+      - path: cloud/okta
+        source: docs/cloud/okta.md
+      - path: cloud/aws
+        source: docs/cloud/aws.md
+
+  - title: Notebooks and evidence
+    pages:
+      - path: notebooks
+      - path: evidence
+
+  - title: Offline collections
+    pages:
+      - path: offline
+      - path: offline/building
+      - path: offline/running
+      - path: offline/importing
+
+  - title: Users and access
+    pages:
+      - path: users
+      - path: users/permissions
+      - path: secrets
+
+  - title: Artifacts
+    pages:
+      - path: artifacts
+      - path: artifacts/writing
+      - path: artifacts/parameters
+      - path: artifacts/managing
+      - path: artifacts/tools
+      - path: artifacts/events
+      - path: artifacts/security
+      - path: artifacts/tips
+
+  - title: VQL
+    pages:
+      - path: vql
+      - path: vql/fundamentals
+      - path: vql/advanced
+      - path: vql/events
+      - path: vql/artifacts
+      - path: vql/sigma
+      - path: vql/yara
+
+  - title: Forensics
+    pages:
+      - path: forensics
+      - path: forensics/filesystem
+      - path: forensics/ntfs
+      - path: forensics/windows
+      - path: forensics/deaddisk
+      - path: forensics/binary
+      - path: forensics/volatile
+
+  - title: Automation and integrations
+    pages:
+      - path: server-automation
+      - path: server-automation/integrations
+      - path: server-automation/api-keys
+      - path: server-automation/grpc-api
+      - path: server-automation/alerting
+
+  - title: Command line
+    pages:
+      - path: cli
+      - path: cli/collector-and-query
+
+  - title: Troubleshooting
+    pages:
+      - path: troubleshooting
+      - path: troubleshooting/clients
+      - path: troubleshooting/server
+      - path: troubleshooting/vql
+      - path: troubleshooting/debugging
+      - path: kb/tips
+
+  - title: About
+    pages:
+      - path: security
+      - path: support
