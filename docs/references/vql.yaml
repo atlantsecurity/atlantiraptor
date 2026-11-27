@@ -2071,7 +2071,7 @@
     Note that output is a required parameter - you can consult how
     paths are handled in Velociraptor to correctly manipulate paths
 
-    https://docs.velociraptor.app/docs/forensic/filesystem/paths/
+    https://atlantsecurity.github.io/atlantiraptor/forensics/#paths-and-ospath
 
     ## Example
 
@@ -2188,7 +2188,7 @@
     the lazy evaluation property of VQL columns.
 
     For a full discussion of aggregate functions see
-    https://docs.velociraptor.app/docs/vql/#aggregate-functions
+    https://atlantsecurity.github.io/atlantiraptor/vql/fundamentals/#sorting-limiting-grouping
   type: Function
   args:
   - name: items
@@ -3085,7 +3085,7 @@
     installed (e.g. Sysinternals' `autoruns.exe`) you will need to use
     Velociraptor's external tools feature to deliver and manage the
     tools on the client. See
-    https://docs.velociraptor.app/docs/vql/extending_vql/
+    https://atlantsecurity.github.io/atlantiraptor/artifacts/tools/
     for more information.
 
     ### Notes
@@ -5687,7 +5687,7 @@
     Velociraptor is managing. This plugin will display this.
 
     See
-    https://docs.velociraptor.app/docs/vql/extending_vql/
+    https://atlantsecurity.github.io/atlantiraptor/artifacts/tools/
     for more information.
   type: Plugin
   category: server
@@ -7950,7 +7950,7 @@
     then the object is emitted with its required fields.
 
     Please refer to [Binary
-    Parsing](https://docs.velociraptor.app/docs/forensic/binary/) for
+    Parsing](https://atlantsecurity.github.io/atlantiraptor/forensics/binary/) for
     a background in parsing binary data for forensic purposes and for
     instructions on how to construct profiles like the example above.
 
@@ -8604,10 +8604,9 @@
     usually fairly expensive to calculate (as they need to hash the
     file and compare signatures etc).
 
-    If you don't need that field you can remove it or select only some
-    fields using
-    [set operations](https://docs.velociraptor.app/knowledge_base/tips/set_operations/).
-    This will make the operations a lot faster.
+    If you don't need that field, select only the fields you need
+    instead of the whole result. This will make the operations a lot
+    faster.
 
     ```vql
     LET FieldMask <= dict(VersionInformation=TRUE, Imports=TRUE)
@@ -11483,9 +11482,7 @@
     Evaluate sigma rules.
 
     For a full description of this plugin see
-    * https://docs.velociraptor.app/blog/2023/2023-11-15-sigma_in_velociraptor/
-    * https://docs.velociraptor.app/blog/2024/2024-05-09-detection-engineering/
-    * https://docs.velociraptor.app/blog/2025/2025-02-02-sigma/
+    https://atlantsecurity.github.io/atlantiraptor/vql/sigma/
 
     A Curated set of Sigma Models and rules is maintained at https://sigma.velocidex.com/
 
@@ -13088,7 +13085,7 @@
     NOTE: This plugin is optional and not included by default from
     Version 0.76 on. Use the `upload_s3()` plugin instead.
 
-    You can read how to [How To Set Up A GCS Bucket For File Uploads](https://docs.velociraptor.app/knowledge_base/tips/setup_gcs_storage)
+    See [Sending results somewhere](https://atlantsecurity.github.io/atlantiraptor/offline/running/#sending-results-somewhere).
   type: Function
   args:
   - name: file
@@ -13127,13 +13124,9 @@
     This function can be used to upload to an AWS S3 bucket or to a
     MinIO self hosted bucket.
 
-    Read [How To Set Up A MinIO For File
-    Uploads](https://docs.velociraptor.app/knowledge_base/tips/dropbox_server)
-
-    [This
-    presentation](https://training.velociraptor.app//modules/offline_collection/cloud_upload.html#/8)
-    shows how to safely configure an AWS bucket for use with this
-    plugin.
+    Give the bucket's credentials write-only access, so that a
+    collector cannot read or delete what other collectors uploaded.
+    See [Sending results somewhere](https://atlantsecurity.github.io/atlantiraptor/offline/running/#sending-results-somewhere).
   type: Function
   version: 3
   args:
@@ -14076,10 +14069,8 @@
     eventing system in Windows. This plugin provides an interface to
     this capability.
 
-    To learn more about ETW see
-    https://docs.velociraptor.app/blog/2021/2021-08-18-velociraptor-and-etw/
-    or
-    https://docs.velociraptor.app/blog/2021/2021-09-03-process-spoofing/
+    To learn more about event queries see
+    https://atlantsecurity.github.io/atlantiraptor/artifacts/events/
 
     ## The NT Kernel Logger
 
@@ -15037,7 +15028,7 @@
     size by a third (about 25Mb) for a single experimental plugin.
 
     Therefore, we have decided to distribute `YaraX` as a [third party
-    tool](https://docs.velociraptor.app/docs/artifacts/tools/) and
+    tool](https://atlantsecurity.github.io/atlantiraptor/artifacts/tools/) and
     load the DLL at runtime.
 
     You must specify a lambda function to the `dll_path` parameter

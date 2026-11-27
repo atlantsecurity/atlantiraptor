@@ -54,5 +54,5 @@ tools:
     version: 0.77.4
 
   - name: DocsIndex
-    url: https://github.com/Velocidex/velociraptor-docs/raw/refs/heads/gh-pages/docs_index/docs_index_v1.zip
+    url: https://atlantsecurity.github.io/atlantiraptor/docs_index_v1.zip
     serve_locally: true

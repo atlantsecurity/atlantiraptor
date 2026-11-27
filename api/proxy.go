@@ -433,7 +433,7 @@ func grpcErrorHandler(ctx context.Context,
 	if rpcSizeError.MatchString(message) {
 		message = fmt.Sprintf(
 			"%s: Request %v. Please see "+
-				"https://docs.velociraptor.app/knowledge_base/tips/grpc_errors/",
+				"https://atlantsecurity.github.io/atlantiraptor/troubleshooting/server/#message-too-large",
 			message, r.URL.Path)
 	}
 

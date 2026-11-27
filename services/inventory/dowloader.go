@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	DeniedAccessError = errors.New("InventoryService: External access is forbidden by configuration https://docs.velociraptor.app/docs/deployment/references/#security.disable_inventory_service_external_access")
+	DeniedAccessError = errors.New("InventoryService: External access is forbidden by configuration https://atlantsecurity.github.io/atlantiraptor/reference/config/#security.disable_inventory_service_external_access")
 )
 
 func DownloadToolFromUpstream(

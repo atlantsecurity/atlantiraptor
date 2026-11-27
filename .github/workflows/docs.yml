@@ -20,12 +20,6 @@ on:
       - "bin/**"
       - ".github/workflows/docs.yml"
   pull_request:
-    paths:
-      - "docs/**"
-      - "artifacts/definitions/**"
-      - "api/atlapi_openapi.go"
-      - "bin/**"
-      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 permissions:
@@ -44,6 +38,22 @@ jobs:
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
         with:
           go-version: "^1.27.2"
+
+      # Our documentation replaces docs.velociraptor.app. Upstream merges
+      # bring such links back; point them at this site instead. The
+      # allowed files fetch artifacts and feeds from there, not docs.
+      - name: No links to the Velociraptor documentation
+        run: |
+          if git grep -nI -e 'docs\.velociraptor\.app' -e 'Velocidex/velociraptor-docs' -- . \
+              ':!vendor' ':!artifacts/testdata' \
+              ':!artifacts/definitions/Server/Import/Extras.yaml' \
+              ':!artifacts/definitions/Server/Import/PreviousReleases.yaml' \
+              ':!artifacts/definitions/Server/Import/ArtifactBundle.yaml' \
+              ':!artifacts/definitions/Server/Monitoring/RSSFeeds.yaml' \
+              ':!.github/workflows/docs.yml'; then
+            echo "::error::Replace the links above with links to https://atlantsecurity.github.io/atlantiraptor/"
+            exit 1
+          fi
 
       - name: Build the command line binary (for the CLI reference)
         run: |

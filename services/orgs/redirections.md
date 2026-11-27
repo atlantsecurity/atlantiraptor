@@ -33,7 +33,7 @@ important problems:
    access controls, it is theoretically possible to access another
    org's data. In particular this is possible if users are allowed to
    run arbitrary notebook queries. See
-   https://docs.velociraptor.app/docs/deployment/security/#managing-org-access
+   https://atlantsecurity.github.io/atlantiraptor/deployment/orgs/#users-in-several-orgs
 3. Since there is still a single physical server, all clients must
    connect to the same server. This does not offer any geo-diversity -
    clients close to the server have high bandwidth but clients located

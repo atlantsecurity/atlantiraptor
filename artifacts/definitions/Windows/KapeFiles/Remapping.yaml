@@ -21,7 +21,7 @@ description: |
   (e.g. pslist, wmi etc).
 
 references:
-  - https://docs.velociraptor.app/blog/2022/2022-08-04-post-processing/
+  - https://atlantsecurity.github.io/atlantiraptor/forensics/deaddisk/
 
 type: CLIENT
 

@@ -1,10 +1,10 @@
 name: Generic.Client.Stats
 description: |
-    Records CPU and memory statistics for the Velociraptor client
+    Records CPU and memory statistics for the Atlantiraptor agent
     process.
 
-    To learn about managing endpoint performance with Velociraptor see
-    this [blog post](https://docs.velociraptor.app/blog/html/2019/02/10/velociraptor_performance/).
+    To learn about managing endpoint performance see
+    [Performance](https://atlantsecurity.github.io/atlantiraptor/deployment/performance/#load-on-endpoints).
 
 parameters:
   - name: Frequency

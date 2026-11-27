@@ -67,7 +67,7 @@ func GetTemplateHandler(
 			`<html><body>
   <h1>This binary was not built with GUI support!</h1>
 
-  Search for building instructions on https://docs.velociraptor.app/
+  See the build instructions in the repository README and https://atlantsecurity.github.io/atlantiraptor/
 </body></html>`)
 	}
 

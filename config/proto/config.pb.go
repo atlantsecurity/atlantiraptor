@@ -3037,7 +3037,7 @@ type DatastoreConfig struct {
 	// and written atomically. This setting places a limit on the size
 	// of these objects to mainain efficiency and speed. If you hit
 	// this limit it means that you need to rethink your approach. See
-	// https://docs.velociraptor.app/knowledge_base/tips/grpc_errors/
+	// https://atlantsecurity.github.io/atlantiraptor/troubleshooting/server/#message-too-large
 	// The default size is 4Mb.
 	MaxObjectSize uint64 `protobuf:"varint,20,opt,name=max_object_size,json=maxObjectSize,proto3" json:"max_object_size,omitempty"`
 	// How long to expire the memcache (default 10 min)

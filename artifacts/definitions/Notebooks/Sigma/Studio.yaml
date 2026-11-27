@@ -41,8 +41,8 @@ sources:
           ## What is Sigma?
 
           Sigma is an open notation for writing detection rules - It
-          is supported natively in Velociraptor as described in [our
-          blog post](https://docs.velociraptor.app/blog/2024/2024-05-09-detection-engineering/)
+          is supported natively in VQL, as described in [Sigma
+          in VQL](https://atlantsecurity.github.io/atlantiraptor/vql/sigma/)
 
           Sigma relies on a set of `Log Sources` (defining possible
           sources for log events) and `Field Mappings` (an agreed upon

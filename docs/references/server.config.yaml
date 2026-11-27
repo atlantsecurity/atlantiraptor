@@ -1085,7 +1085,7 @@ Datastore:
   # atomically. This setting places a limit on the size of these
   # objects to maintain efficiency and speed. If you hit this limit it
   # means that you need to rethink your approach. See
-  # https:docs.velociraptor.app/knowledge_base/tips/grpc_errors/ The
+  # https://atlantsecurity.github.io/atlantiraptor/troubleshooting/server/#message-too-large The
   # default size is 4Mb.
   max_object_size: 4194304
 
@@ -1655,7 +1655,7 @@ security:
   # In future further methods may be implemented (e.g. EKMS).
   #
   # See the following for more information
-  # http://docs.velociraptor.app/docs/deployment/security/#protecting-stored-secrets
+  # https://atlantsecurity.github.io/atlantiraptor/secrets/#protecting-stored-secrets
   secrets_dek: ""
 
   # This controls VQL plugins that may accept secrets as well full

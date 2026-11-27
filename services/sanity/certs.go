@@ -23,7 +23,7 @@ import (
 // In more secure deployments we recommend removing the CA private key
 // from the server config, which prevents us from automatically
 // rekeying the certificates. See
-// https://docs.velociraptor.app/docs/deployment/security/ for
+// https://atlantsecurity.github.io/atlantiraptor/deployment/tls/ for
 // relevant discussion.
 func (self *SanityChecks) CheckCertificates(
 	config_obj *config_proto.Config) error {
@@ -38,7 +38,7 @@ func (self *SanityChecks) CheckCertificates(
 
 	if cert.NotBefore.After(now) || cert.NotAfter.Before(now) {
 		logger := logging.GetLogger(config_obj, &logging.FrontendComponent)
-		msg1 := fmt.Sprintf("<red>Frontend Certificate is not valid</>: Certificate Valid NotBefore %v and Not After %v but Now is %v. See https://docs.velociraptor.app/knowledge_base/tips/rolling_certificates/",
+		msg1 := fmt.Sprintf("<red>Frontend Certificate is not valid</>: Certificate Valid NotBefore %v and Not After %v but Now is %v. See https://atlantsecurity.github.io/atlantiraptor/deployment/tls/#renewing-the-internal-certificates",
 			cert.NotBefore.Format(time.RFC3339),
 			cert.NotAfter.Format(time.RFC3339),
 			now.Format(time.RFC3339),
