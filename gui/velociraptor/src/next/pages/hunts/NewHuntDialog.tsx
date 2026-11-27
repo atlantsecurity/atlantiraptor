@@ -1,15 +1,16 @@
 // One-page "new hunt" form: pick artifacts on the left, configure
 // parameters, targeting and limits on the right, with a live estimate
 // of how many clients the hunt will reach.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Dialog as RDialog } from 'radix-ui';
 import {
-  Check, ChevronDown, ChevronRight, Package, Plus, RotateCcw, Search, Target, Users, X, Settings2, Play, Pause,
+  Check, ChevronDown, ChevronRight, Cloud, Package, Plus, RotateCcw, Target, Users, X, Settings2, Play, Pause,
   Monitor, Server,
 } from 'lucide-react';
 import {
-  useArtifactDefinitions, useArtifactSearch, useCreateHunt, useEstimateHunt, useHuntTags, useTraits,
+  useArtifactDefinitions, useCreateHunt, useEstimateHunt, useHuntTags, useTraits,
   useCollectArtifact, type CreateHuntRequest,
 } from '../../lib/queries';
 import type { ArtifactCollectorArgs, ArtifactDescriptor, ArtifactParameterDef, Hunt, HuntCondition } from '../../lib/types';
@@ -18,23 +19,14 @@ import {
   Badge, Button, cn, Field, Input, Kbd, Segmented, Select, Spinner, Switch, Textarea, Tooltip,
 } from '../../ui/primitives';
 import { TagInput } from './TagInput';
+import { ArtifactPicker, type CatalogItem } from './ArtifactPicker';
+import { type ArtifactFacets, PLATFORM_LABELS, commonOs, facetsOf, isCloudArtifact } from './artifactFacets';
 import { DEFAULT_HUNT_HOURS, fromLocalInput, hoursLabel, runsUntilStopped, toLocalInput, untilStoppedExpiry } from './time';
 
 type Params = Record<string, Record<string, string>>;
 type TargetMode = 'all' | 'labels' | 'os';
 
-function useDebounced<T>(v: T, ms: number): T {
-  const [d, setD] = useState(v);
-  useEffect(() => {
-    const t = setTimeout(() => setD(v), ms);
-    return () => clearTimeout(t);
-  }, [v, ms]);
-  return d;
-}
-
-function firstLine(s: string | undefined): string {
-  return (s ?? '').trim().split('\n')[0] ?? '';
-}
+const OS_CONDITION: Record<'windows' | 'linux' | 'macos', string> = { windows: 'WINDOWS', linux: 'LINUX', macos: 'OSX' };
 
 // With `target` set the same form collects from a single client (or the
 // server) instead of creating a hunt.
@@ -80,9 +72,25 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   const [expanded, setExpanded] = useState<string | null>(null);
 
   // ------------------------------------------------------ Queries
-  const [search, setSearch] = useState('');
-  const dsearch = useDebounced(search.trim(), 150);
-  const { data: matches = [], isFetching: searching } = useArtifactSearch(dsearch, isServer ? 'SERVER' : 'CLIENT', open);
+  const history = useHistory();
+  // Cloud hunts (Cloud.* server artifacts) run once on the server
+  // against the tenant instead of on every client, so picking one turns
+  // the hunt into a server collection.
+  const cloudRun = !isCollection && selected.length > 0 && selected.every(isCloudArtifact);
+  const lockedKind = isCollection || !selected.length ? undefined : cloudRun ? 'cloud' as const : 'endpoint' as const;
+  const facetCache = useRef(new Map<string, ArtifactFacets>());
+  const [, bumpFacets] = useState(0);
+  const onCatalog = useCallback((items: CatalogItem[]) => {
+    let changed = false;
+    for (const i of items) {
+      const old = facetCache.current.get(i.facets.name);
+      if (old?.platforms.join() !== i.facets.platforms.join()) changed = true;
+      facetCache.current.set(i.facets.name, i.facets);
+    }
+    if (changed) bumpFacets(n => n + 1);
+  }, []);
+  const facetsFor = (name: string) => facetCache.current.get(name) ?? facetsOf({ name });
+  const onlyOs = !isCollection && !cloudRun && selected.length ? commonOs(selected.map(facetsFor)) : undefined;
   const { data: defs } = useArtifactDefinitions(selected);
   const { data: allTags = [] } = useHuntTags();
   const create = useCreateHunt();
@@ -103,6 +111,13 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   }, [selected, expanded]);
 
   const toggle = (name: string) => {
+    if (!isCollection && !selected.includes(name) && selected.length
+      && isCloudArtifact(name) !== selected.every(isCloudArtifact)) {
+      toast.info(isCloudArtifact(name)
+        ? 'Cloud hunts run on the server, so they can\'t share a hunt with endpoint artifacts. Remove those first.'
+        : 'Endpoint artifacts run on clients, so they can\'t share a hunt with cloud hunts. Remove those first.');
+      return;
+    }
     setSelected(s => {
       if (s.includes(name)) return s.filter(x => x !== name);
       setExpanded(name);
@@ -157,10 +172,22 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   const expDate = fromLocalInput(expires);
   const expInPast = !untilStopped && !!expDate && expDate.getTime() < Date.now();
   const missingLabels = mode === 'labels' && includeLabels.length === 0;
-  const canSubmit = isCollection ? selected.length > 0 : selected.length > 0 && !expInPast && !missingLabels;
+  const canSubmit = isCollection || cloudRun ? selected.length > 0 : selected.length > 0 && !expInPast && !missingLabels;
 
   const submit = () => {
     if (!canSubmit) return;
+    if (cloudRun) {
+      const { start_request } = buildRequest();
+      collect.mutate({ ...start_request, client_id: 'server' }, {
+        onSuccess: r => {
+          toast.success('Cloud hunt started on the server');
+          onOpenChange(false);
+          if (r?.flow_id) history.push(`/collected/server/${r.flow_id}`);
+        },
+        onError: e => toast.error((e as Error).message),
+      });
+      return;
+    }
     if (target) {
       const { start_request } = buildRequest();
       collect.mutate({ ...start_request, client_id: target.clientId }, {
@@ -219,38 +246,9 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
           <div className="tw:flex tw:flex-1 tw:min-h-0">
             {/* ---------------------------------------- Artifact picker */}
             <div className="tw:w-[380px] tw:shrink-0 tw:border-r tw:border-line tw:flex tw:flex-col tw:min-h-0 tw:bg-canvas/50">
-              <div className="tw:p-3 tw:border-b tw:border-line">
-                <div className="tw:relative">
-                  <Search className="tw:absolute tw:left-2.5 tw:top-1/2 tw:-translate-y-1/2 tw:size-3.5 tw:text-faint" />
-                  <Input autoFocus value={search} onChange={e => setSearch(e.target.value)}
-                    placeholder={isServer ? 'Search server artifacts…' : 'Search client artifacts…'} className="tw:pl-8" />
-                  {searching && <Spinner className="tw:absolute tw:right-2.5 tw:top-1/2 tw:-translate-y-1/2 tw:size-3.5" />}
-                </div>
-              </div>
-              <div className="tw:flex-1 tw:overflow-y-auto">
-                {matches.length === 0 && !searching && (
-                  <div className="tw:p-6 tw:text-center tw:text-xs tw:text-faint">No artifacts match “{search}”</div>
-                )}
-                {matches.map(a => {
-                  const on = selected.includes(a.name);
-                  return (
-                    <button key={a.name} type="button" onClick={() => toggle(a.name)}
-                      className={cn('tw:flex tw:w-full tw:items-start tw:gap-2.5 tw:px-3 tw:py-2 tw:text-left tw:border-b tw:border-line/60',
-                        on ? 'tw:bg-accent-soft' : 'tw:hover:bg-hover')}>
-                      <span className={cn('tw:mt-0.5 tw:flex tw:size-4 tw:shrink-0 tw:items-center tw:justify-center tw:rounded tw:border',
-                        on ? 'tw:bg-accent tw:border-accent tw:text-accent-fg' : 'tw:border-line-strong')}>
-                        {on && <Check className="tw:size-3" />}
-                      </span>
-                      <span className="tw:min-w-0">
-                        <span className="tw:block tw:font-mono tw:text-[12px] tw:font-medium tw:break-all">{a.name}</span>
-                        {a.description && (
-                          <span className="tw:block tw:text-2xs tw:text-muted tw:line-clamp-2 tw:mt-0.5">{firstLine(a.description)}</span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <ArtifactPicker scope={isServer ? 'server' : isCollection ? 'client' : 'hunt'}
+                selected={selected} lockedKind={lockedKind} onCatalog={onCatalog}
+                onToggle={i => toggle(i.artifact.name)} />
             </div>
 
             {/* ------------------------------------------- Configure */}
@@ -261,7 +259,7 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
                   <SectionTitle icon={<Package />} title="Artifacts" hint={selected.length ? `${selected.length} selected` : 'Pick at least one artifact on the left'} />
                   {selected.length === 0 && (
                     <div className="tw:rounded-lg tw:border tw:border-dashed tw:border-line-strong tw:p-6 tw:text-center tw:text-xs tw:text-faint">
-                      {isServer ? 'Search and select server artifacts to run.' : isCollection ? 'Search and select artifacts to collect from this client.' : 'Search and select artifacts to collect from each client.'}
+                      {isServer ? 'Search and select server artifacts to run.' : isCollection ? 'Search and select artifacts to collect from this client.' : 'Search and select artifacts to collect from each client, or a cloud hunt to run against a tenant.'}
                     </div>
                   )}
                   {selected.map(name => (
@@ -275,8 +273,21 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
                   ))}
                 </section>
 
+                {/* Cloud hunts run on the server */}
+                {cloudRun && <section className="tw:space-y-3">
+                  <SectionTitle icon={<Cloud />} title="Runs on the server" />
+                  <div className="tw:flex tw:items-start tw:gap-3 tw:rounded-lg tw:bg-info-soft tw:px-3 tw:py-2.5 tw:text-[13px]">
+                    <Server className="tw:size-4 tw:text-info tw:mt-0.5 tw:shrink-0" />
+                    <div>
+                      Cloud hunts query the tenant's APIs from the Atlantiraptor server, so they don't target clients.
+                      This starts one collection on the server; its results open when it is created. Set the
+                      credential parameter (the secret holding the tenant's credentials) above.
+                    </div>
+                  </div>
+                </section>}
+
                 {/* Targeting */}
-                {!isCollection && <section className="tw:space-y-3">
+                {!isCollection && !cloudRun && <section className="tw:space-y-3">
                   <SectionTitle icon={<Users />} title="Targeting" />
                   <div className="tw:flex tw:items-center tw:gap-3 tw:flex-wrap">
                     <Segmented size="md" value={mode} onChange={setMode} options={[
@@ -292,6 +303,15 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
                       </Select>
                     )}
                   </div>
+                  {onlyOs && !(mode === 'os' && os === OS_CONDITION[onlyOs]) && (
+                    <div className="tw:flex tw:items-center tw:gap-2 tw:text-xs tw:text-muted">
+                      <span>{selected.length === 1 ? 'This artifact runs' : 'These artifacts run'} only on {PLATFORM_LABELS[onlyOs]}.</span>
+                      <button type="button" onClick={() => { setMode('os'); setOs(OS_CONDITION[onlyOs]); }}
+                        className="tw:font-medium tw:text-accent tw:hover:underline">
+                        Target {PLATFORM_LABELS[onlyOs]} clients only
+                      </button>
+                    </div>
+                  )}
                   {mode === 'labels' && (
                     <Field label="Include clients with any of these labels" required>
                       <TagInput value={includeLabels} onChange={setIncludeLabels} tone="accent" placeholder="e.g. servers, finance" />
@@ -336,8 +356,8 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
 
                 {/* Details */}
                 <section className="tw:space-y-3">
-                  <SectionTitle icon={<Settings2 />} title={isCollection ? 'Limits' : 'Details'} />
-                  {!isCollection && <div className="tw:grid tw:grid-cols-2 tw:gap-3">
+                  <SectionTitle icon={<Settings2 />} title={isCollection || cloudRun ? 'Limits' : 'Details'} />
+                  {!isCollection && !cloudRun && <div className="tw:grid tw:grid-cols-2 tw:gap-3">
                     <Field label="Description" className="tw:col-span-2">
                       <Input value={description} onChange={e => setDescription(e.target.value)}
                         placeholder={autoDescription || 'What is this hunt looking for?'} />
@@ -355,12 +375,12 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
                     </Field>
                   </div>}
 
-                  {!isCollection && <button type="button" onClick={() => setShowAdvanced(!showAdvanced)}
+                  {!isCollection && !cloudRun && <button type="button" onClick={() => setShowAdvanced(!showAdvanced)}
                     className="tw:flex tw:items-center tw:gap-1 tw:text-xs tw:font-medium tw:text-muted tw:hover:text-fg">
                     {showAdvanced ? <ChevronDown className="tw:size-3.5" /> : <ChevronRight className="tw:size-3.5" />}
                     Resource limits
                   </button>}
-                  {showAdvanced && (
+                  {(showAdvanced || cloudRun) && (
                     <div className="tw:grid tw:grid-cols-2 tw:md:grid-cols-4 tw:gap-3">
                       <Field label="Timeout (s)"><Input type="number" min={0} value={timeout} onChange={e => setTimeoutS(e.target.value)} placeholder="600" /></Field>
                       <Field label="Max rows"><Input type="number" min={0} value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder="1000000" /></Field>
@@ -378,16 +398,16 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
 
           {/* Footer */}
           <div className="tw:flex tw:items-center tw:gap-3 tw:px-5 tw:h-16 tw:border-t tw:border-line tw:shrink-0 tw:bg-canvas/50 tw:rounded-b-xl">
-            {!isCollection && <Switch checked={startNow} onChange={setStartNow}
+            {!isCollection && !cloudRun && <Switch checked={startNow} onChange={setStartNow}
               label={<span className="tw:text-[13px]">Start immediately <span className="tw:text-faint">(otherwise created paused for review)</span></span>} />}
             <div className="tw:ml-auto tw:flex tw:items-center tw:gap-2">
               <span className="tw:text-2xs tw:text-faint tw:hidden tw:lg:flex tw:items-center tw:gap-1"><Kbd>Ctrl</Kbd><Kbd>Enter</Kbd></span>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Tooltip content={!selected.length ? 'Select at least one artifact' : isCollection ? '' : missingLabels ? 'Add at least one label' : expInPast ? 'Expiry is in the past' : ''}>
+              <Tooltip content={!selected.length ? 'Select at least one artifact' : isCollection || cloudRun ? '' : missingLabels ? 'Add at least one label' : expInPast ? 'Expiry is in the past' : ''}>
                 <span>
                   <Button variant="primary" disabled={!canSubmit} loading={create.isPending || collect.isPending} onClick={submit}
-                    icon={startNow || isCollection ? <Play className="tw:size-3.5" /> : <Pause className="tw:size-3.5" />}>
-                    {isCollection ? 'Collect now' : startNow ? 'Create and start hunt' : 'Create hunt'}
+                    icon={startNow || isCollection || cloudRun ? <Play className="tw:size-3.5" /> : <Pause className="tw:size-3.5" />}>
+                    {isCollection ? 'Collect now' : cloudRun ? 'Run cloud hunt' : startNow ? 'Create and start hunt' : 'Create hunt'}
                   </Button>
                 </span>
               </Tooltip>
@@ -437,7 +457,7 @@ export function ArtifactParams({ name, def, values, expanded, onToggle, onChange
           </Tooltip>
         )}
         <Tooltip content="Remove">
-          <button type="button" onClick={onRemove} className="tw:p-1 tw:rounded tw:text-faint tw:hover:text-bad tw:hover:bg-hover">
+          <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="tw:p-1 tw:rounded tw:text-faint tw:hover:text-bad tw:hover:bg-hover">
             <X className="tw:size-3.5" />
           </button>
         </Tooltip>
