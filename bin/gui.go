@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"github.com/Velocidex/yaml/v2"
 	errors "github.com/go-errors/errors"
@@ -227,6 +228,9 @@ func doGUI() error {
 		return fmt.Errorf("starting frontend: %w", err)
 	}
 	defer sm.Close()
+
+	// Keep the server on the latest signed GitHub release.
+	selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
 
 	// Just try to open the browser in the background.
 	if !*gui_command_no_browser {

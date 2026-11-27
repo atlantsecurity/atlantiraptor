@@ -55,6 +55,15 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   `go build -tags "velomain server_vql extras disable_grpc_modules goexperiment.nojsonv2 release yara"`
   with the `bin/rsrc_windows_*.syso` resources in place, written to `dist/release/`.
   Sign that folder; never sign `output/` (local development builds, rebuilt constantly).
+- Releases and self-update: servers install the latest GitHub release of this repository by
+  themselves (`services/selfupdate`, console page Admin > Server updates). A release needs
+  `Atlantiraptor-windows-amd64.exe` built with
+  `-X www.velocidex.com/golang/velociraptor/config.release_version=x.y.z` (otherwise it is a
+  development build that never auto-updates), signed, plus a `SHA256SUMS` file.
+  `.github/workflows/release.yml` publishes one per merge to master once Azure federated
+  credentials are configured; until then run `pwsh -File scripts/publish-release.ps1` on the
+  developer PC (build -> sign -> verify -> `gh release create`). Servers refuse any binary
+  that isn't Authenticode-signed by Atlant Security EOOD and trusted by Windows.
 - MSI: `scripts/build-msi.ps1 -Binary dist/release/Atlantiraptor.exe -ClientConfig <client.config.yaml> -Version x.y.z`
   (WiX v5, source `docs/wix/atlantiraptor_amd64.wxs`). Order: build exe -> sign exe ->
   build MSI -> sign MSI -> verify. Keep the UpgradeCode unchanged so new versions upgrade in place.
