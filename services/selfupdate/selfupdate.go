@@ -4,7 +4,7 @@
 // The server checks atlantsecurity/atlantiraptor's latest GitHub
 // release every few hours. When a newer release has a binary for this
 // platform, it downloads it next to the running binary, checks it
-// against the release's SHA256SUMS, requires a trusted Authenticode
+// against the SHA256SUMS of the release, requires a trusted Authenticode
 // signature from Atlant Security's certificate, runs it once to
 // confirm it starts and reports the expected version, then swaps it in
 // and restarts hidden in the background. The previous binary is kept

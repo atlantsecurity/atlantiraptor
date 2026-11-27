@@ -138,9 +138,9 @@ function Updates({ status }: { status: UpdateStatus }) {
           <CardHeader icon={<ShieldCheck className="tw:size-4" />} title="What is checked before an install" />
           <ul className="tw:px-4 tw:pb-4 tw:pt-2 tw:text-xs tw:text-muted tw:space-y-1 tw:list-disc tw:list-inside">
             <li>The release comes from <Mono>{status.repository}</Mono> on GitHub, fixed in the binary; nothing at run time can point it elsewhere.</li>
-            <li>The download matches the SHA-256 listed in the release's <Mono>SHA256SUMS</Mono>.</li>
+            <li>The download matches the SHA-256 listed in the <Mono>SHA256SUMS</Mono> file of the release.</li>
             <li>It carries an Authenticode signature from <Mono>Atlant Security EOOD</Mono>, issued by Microsoft's code signing CA, that Windows trusts (with revocation checks).</li>
-            <li>It runs and reports the release's version number. Only then is it swapped in; the previous binary is kept until the next start.</li>
+            <li>It runs and reports the version number of the release. Only then is it swapped in; the previous binary is kept until the next start.</li>
             <li>Every install and settings change is written to the audit log.</li>
           </ul>
         </Card>

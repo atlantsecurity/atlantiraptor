@@ -1,3 +1,6 @@
+Atlantiraptor
+Atlant
+selfupdate
 builtin
 callable's
 emacs
