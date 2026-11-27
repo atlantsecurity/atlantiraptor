@@ -1,11 +1,27 @@
 # Runs Linux tests on every push and pull request. The full
 # multi-architecture build runs on pushes to master and on demand.
+# Changes that only touch the documentation website or Markdown skip
+# this workflow; the Docs and Vale workflows check them.
 name: Linux Build and Test
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - "docs/site/**"
+      - "**/*.md"
+      - ".wordlist.txt"
+      - ".vale.ini"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/vale.yaml"
   pull_request:
+    paths-ignore:
+      - "docs/site/**"
+      - "**/*.md"
+      - ".wordlist.txt"
+      - ".vale.ini"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/vale.yaml"
   workflow_dispatch:
 
 concurrency:
