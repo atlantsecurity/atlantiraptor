@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"www.velocidex.com/golang/velociraptor/services/huntfeeds"
 	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"github.com/Velocidex/yaml/v2"
@@ -231,6 +232,9 @@ func doGUI() error {
 
 	// Keep the server on the latest signed GitHub release.
 	selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
+
+	// Atlant Security premium hunt feeds (licensed).
+	huntfeeds.Start(sm.Ctx, sm.Wg, config_obj)
 
 	// Just try to open the browser in the background.
 	if !*gui_command_no_browser {

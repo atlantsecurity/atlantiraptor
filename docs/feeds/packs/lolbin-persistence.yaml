@@ -1,0 +1,59 @@
+# Example pack: the format Atlant's analysts write packs in.
+# Check a folder of packs with:  Atlantiraptor feeds check docs/feeds/packs
+id: atl-lolbin-persistence
+name: Living-off-the-land persistence
+version: 1
+published: 2026-11-27T00:00:00Z
+updated: 2026-11-27T00:00:00Z
+severity: high
+category: Persistence
+tags: [persistence, lolbin, T1053.005, T1547.001]
+platforms: [windows]
+summary: >-
+  Scheduled tasks and Run keys that start script hosts or download
+  cradles, the way most commodity loaders keep a foothold.
+description: |
+  Looks at every scheduled task and every Run / RunOnce entry and
+  keeps the ones that start a living-off-the-land binary (PowerShell
+  with an encoded or hidden command, mshta, rundll32 or regsvr32 with
+  a URL, wscript/cscript from a user-writable folder, certutil or
+  bitsadmin downloads).
+
+  **Triage:** a hit is not proof of compromise; some management
+  tools do this too. Check the signer of the target, the user it
+  runs as and when it was registered.
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+  - https://attack.mitre.org/techniques/T1547/001/
+changes: First release.
+hunt:
+  description: "Atlant feed: living-off-the-land persistence"
+  os: windows
+  expires_hours: 24
+artifacts:
+  - |
+    name: Atlant.Feed.Windows.LolbinPersistence
+    description: |
+      Scheduled tasks and Run keys that start living-off-the-land
+      binaries in suspicious ways. Delivered by the Atlant Security
+      premium hunt feed.
+    author: Atlant Security
+    type: CLIENT
+    precondition: SELECT OS From info() where OS = 'windows'
+    parameters:
+      - name: SuspiciousCommandRegex
+        description: Command lines that count as suspicious.
+        type: regex
+        default: (?i)(powershell|pwsh).*(-e(nc|ncodedcommand)?\s|-w(indowstyle)?\s+h(idden)?|frombase64string|downloadstring|iex\s*\()|mshta(\.exe)?\s+(http|vbscript|javascript)|(rundll32|regsvr32)(\.exe)?.*(http|scrobj|javascript)|certutil.*-urlcache|bitsadmin.*/transfer|(wscript|cscript)(\.exe)?.*\\(users|programdata|temp)\\
+    sources:
+      - name: ScheduledTasks
+        query: |
+          SELECT TaskName, Command, Arguments, UserId, RunLevel,
+                 RegistrationTime, OSPath
+          FROM Artifact.Windows.System.TaskScheduler()
+          WHERE format(format="%v %v", args=[Command, Arguments]) =~ SuspiciousCommandRegex
+      - name: RunKeys
+        query: |
+          SELECT Name, OSPath, Details AS Command, Enabled
+          FROM Artifact.Windows.Sys.StartupItems()
+          WHERE format(format="%v", args=[Details]) =~ SuspiciousCommandRegex

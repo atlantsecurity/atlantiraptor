@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"www.velocidex.com/golang/velociraptor/services/huntfeeds"
 	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"context"
@@ -480,6 +481,9 @@ func NewVelociraptorServerService(name string) (
 
 			// Keep the server on the latest signed GitHub release.
 			selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
+
+			// Atlant Security premium hunt feeds (licensed).
+			huntfeeds.Start(sm.Ctx, sm.Wg, config_obj)
 
 			tryToLog(name, fmt.Sprintf("%s service started", name))
 			// Wait here until everything is done.

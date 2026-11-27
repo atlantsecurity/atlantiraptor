@@ -67,3 +67,7 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
 - MSI: `scripts/build-msi.ps1 -Binary dist/release/Atlantiraptor.exe -ClientConfig <client.config.yaml> -Version x.y.z`
   (WiX v5, source `docs/wix/atlantiraptor_amd64.wxs`). Order: build exe -> sign exe ->
   build MSI -> sign MSI -> verify. Keep the UpgradeCode unchanged so new versions upgrade in place.
+- Premium hunt feeds (`services/huntfeeds`, console page Hunt feeds, spec in `docs/feeds/README.md`):
+  servers fetch Atlant's signed hunt packs with the customer's licence key. Feeds are
+  verified against the Ed25519 keys in `services/huntfeeds/keys.go`; never add a key there
+  that wasn't generated for Atlant's feed service, and never commit a private key.

@@ -36,3 +36,7 @@ httptest
 openai
 deepseek
 prefs
+Atlant's
+huntfeeds
+keygen
+manifest's
