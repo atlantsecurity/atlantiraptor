@@ -418,3 +418,8 @@ replace github.com/alecthomas/chroma => github.com/Velocidex/chroma v0.6.8-0.202
 replace github.com/go-errors/errors => github.com/Velocidex/errors v0.0.0-20221019164655-9ace6bf61e26
 
 //replace github.com/bradleyjkemp/sigma-go => ../sigma-go
+
+// Size eviction evicts the least recently used item when several items
+// share an expiry time (common on Windows' coarse clock). See
+// third_party/ttlcache/item.go.
+replace github.com/Velocidex/ttlcache/v2 => ./third_party/ttlcache
