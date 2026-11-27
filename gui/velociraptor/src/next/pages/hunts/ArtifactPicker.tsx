@@ -95,13 +95,22 @@ export function ArtifactPicker({ scope, selected, onToggle, onCatalog, lockedKin
     a === OTHER_CATEGORY ? 1 : b === OTHER_CATEGORY ? -1 : a.localeCompare(b));
   const sources = (['builtin', 'custom', 'premium'] as Source[]).filter(s => counts.source.has(s) || filter.source === s);
   const showCloudRow = filter.platform === 'cloud' && clouds.length > 0;
+  // Picking an OS reveals its artifact types as chips, most common
+  // first, so the choice is one click instead of a dropdown.
+  const osPicked = filter.platform === 'windows' || filter.platform === 'linux'
+    || filter.platform === 'macos' || filter.platform === 'any';
+  const typeChips = osPicked
+    ? [...categories].sort((a, b) => a === OTHER_CATEGORY ? 1 : b === OTHER_CATEGORY ? -1
+      : (counts.category.get(b) ?? 0) - (counts.category.get(a) ?? 0) || a.localeCompare(b))
+    : [];
+  const showTypeRow = typeChips.length > 1;
 
   const set = (patch: Partial<FacetFilter>) => setFilter(f => ({ ...f, ...patch }));
   const pickPlatform = (p: FacetFilter['platform']) => set({
     platform: filter.platform === p ? 'all' : p,
-    // A cloud service only means something under Cloud.
+    // Cloud services and types belong to the platform picked.
     cloud: 'all',
-    category: p === 'cloud' ? 'all' : filter.category,
+    category: 'all',
   });
 
   return (
@@ -143,8 +152,22 @@ export function ArtifactPicker({ scope, selected, onToggle, onCatalog, lockedKin
           </div>
         )}
 
+        {showTypeRow && (
+          <div className="tw:flex tw:flex-wrap tw:gap-1.5 tw:pl-2 tw:border-l-2 tw:border-accent/40" role="group"
+            aria-label={`${PLATFORM_LABELS[filter.platform as Platform]} artifact type`}>
+            {typeChips.map(c => {
+              const on = filter.category === c;
+              return (
+                <button key={c} type="button" aria-pressed={on} onClick={() => set({ category: on ? 'all' : c })} className={chipCls(on)}>
+                  {c}<span className="tw:text-2xs tw:opacity-70 rx-num">{counts.category.get(c) ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="tw:flex tw:items-center tw:gap-2">
-          {filter.platform !== 'cloud' && categories.length > 1 && (
+          {filter.platform !== 'cloud' && !showTypeRow && categories.length > 1 && (
             <Select value={filter.category} onChange={e => set({ category: e.target.value })}
               className="tw:h-7 tw:text-xs tw:flex-1 tw:min-w-0" aria-label="Category">
               <option value="all">All categories</option>

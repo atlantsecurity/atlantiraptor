@@ -51,6 +51,7 @@ describe('categoryOf', () => {
     assert.equal(categoryOf('Generic.Forensic.Timeline'), 'Forensics');
     assert.equal(categoryOf('Custom.Windows.Detection.Foo'), 'Detection');
     assert.equal(categoryOf('Triage.Collection.Upload'), 'Triage');
+    assert.equal(categoryOf('Windows.Persistence.PermanentWMIEvents'), 'Persistence');
     assert.equal(categoryOf('Windows.Whatever.X'), 'Other');
   });
 });
@@ -108,5 +109,18 @@ describe('preconditionPlatforms', () => {
   it('reads each OS once', () => {
     assert.deepEqual(preconditionPlatforms(["OS = 'windows' OR OS = 'windows'"]), ['windows']);
     assert.deepEqual(preconditionPlatforms([undefined]), ['any']);
+  });
+});
+
+describe('platform counts', () => {
+  it('ignore the type and cloud service picked under a platform', () => {
+    const all = [
+      facetsOf({ name: 'Windows.Registry.A' }), facetsOf({ name: 'Linux.Sys.B' }),
+      facetsOf({ name: 'Cloud.Okta.C', type: 'SERVER' }),
+    ];
+    const c = facetCounts(all, { ...NO_FILTER, platform: 'windows', category: 'Registry' });
+    assert.equal(c.platform.get('linux'), 1);
+    assert.equal(c.platform.get('cloud'), 1);
+    assert.equal(c.category.get('Registry'), 1);
   });
 });
