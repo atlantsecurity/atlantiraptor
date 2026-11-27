@@ -1,0 +1,34 @@
+name: Server.Alerts.Test
+description: |
+  Puts one harmless alert into the `Server.Internal.Alerts` queue, to
+  check that alert forwarding (webhook, email, SIEM) and the dashboard
+  work end to end.
+
+  Server collections do not forward `alert()` calls, so this writes the
+  alert to the queue directly.
+
+type: SERVER
+
+required_permissions:
+  - SERVER_ADMIN
+
+parameters:
+  - name: Level
+    type: choices
+    default: high
+    choices: [critical, high, medium, low, info]
+
+sources:
+  - query: |
+      LET alert_row <= dict(
+          name="Integration test alert",
+          timestamp=now(),
+          client_id="server",
+          artifact="Server.Alerts.Test",
+          artifact_type="SERVER",
+          event_data=dict(source="test", rule="Integration test alert", level=Level,
+                          description="Test alert from the Integrations page. Nothing happened."))
+
+      SELECT now() AS Time,
+             send_event(artifact="Server.Internal.Alerts", row=alert_row) AS Queued
+      FROM scope()

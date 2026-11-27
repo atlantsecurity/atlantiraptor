@@ -145,6 +145,17 @@ const handle_error = err=>{
         return {data: {}, cancel: true};
     };
 
+    // Two-factor session expired or revoked: go to the code page and
+    // come back to the same screen afterwards.
+    if (err.response && err.response.status === 403 &&
+        err.response.data && (err.response.data.message === "mfa_required" ||
+                              err.response.data.message === "mfa_enroll_required")) {
+        const base = (window.base_path || "").replace(/\/+$/, "");
+        const back = window.location.pathname + window.location.search + window.location.hash;
+        window.location.assign(base + "/app/mfa.html?return=" + encodeURIComponent(back));
+        return {data: {}, cancel: true};
+    }
+
     if (err.response && err.response.status === 401) {
         const redirectTemplate = window.globals.AuthRedirectTemplate || "";
         if (redirectTemplate !== "") {

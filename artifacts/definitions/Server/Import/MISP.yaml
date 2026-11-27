@@ -1,0 +1,67 @@
+name: Server.Import.MISP
+description: |
+  Pulls recent indicators from a MISP instance through its REST API
+  (`/attributes/restSearch`) and returns them as Type, Value, Note rows
+  ready for `Generic.Detection.IOCSweep`.
+
+  The MISP URL and API key live in an `HTTP Secrets` secret: set `url`
+  to `https://<misp>/attributes/restSearch`, `method` to `POST` and add
+  the header `Authorization: <api key>` in `extra_headers`.
+
+type: SERVER
+
+parameters:
+  - name: Secret
+    description: Name of the HTTP Secrets secret for MISP.
+  - name: Days
+    type: int
+    default: 30
+    description: Only attributes published in the last this many days.
+  - name: OnlyIDS
+    type: bool
+    default: Y
+    description: Only attributes flagged for detection (to_ids).
+  - name: MaxResults
+    type: int
+    default: 5000
+
+sources:
+  - query: |
+      // MISP attribute types mapped to sweep indicator types.
+      LET type_map <= dict(
+        md5="md5", sha1="sha1", sha256="sha256",
+        `ip-dst`="ip", `ip-src`="ip", `ip-dst|port`="ip", `ip-src|port`="ip",
+        domain="domain", hostname="domain", url="domain",
+        filename="filename", `filename|md5`="md5", `filename|sha1`="sha1", `filename|sha256`="sha256")
+
+      LET request <= dict(
+        returnFormat="json",
+        type=["md5", "sha1", "sha256", "ip-dst", "ip-src", "ip-dst|port", "ip-src|port",
+              "domain", "hostname", "url", "filename", "filename|md5", "filename|sha1", "filename|sha256"],
+        publish_timestamp=format(format="%vd", args=Days),
+        to_ids=OnlyIDS,
+        `limit`=MaxResults)
+
+      LET response <= SELECT Response, Content FROM http_client(
+        secret=Secret, method="POST",
+        headers=dict(Accept="application/json", `Content-Type`="application/json"),
+        data=serialize(item=request, format="json"))
+
+      LET attributes = SELECT * FROM foreach(
+        row=parse_json(data=response[0].Content).response.Attribute)
+
+      // Composite values ("file.exe|<hash>", "1.2.3.4|443") keep the
+      // part that matches the mapped type; URLs keep their host.
+      LET value_of(t, v) = if(condition=t =~ "^filename\\|",
+          then=split(string=v, sep="\\|")[1],
+          else=if(condition=t =~ "\\|port$",
+            then=split(string=v, sep="\\|")[0],
+            else=if(condition=t = "url",
+              then=url(parse=v).Host || v,
+              else=v)))
+
+      SELECT get(item=type_map, field=type) AS Type,
+             value_of(t=type, v=value) AS Value,
+             format(format="MISP event %v: %v", args=[event_id, comment || category || "no comment"]) AS Note
+      FROM attributes
+      WHERE get(item=type_map, field=type)

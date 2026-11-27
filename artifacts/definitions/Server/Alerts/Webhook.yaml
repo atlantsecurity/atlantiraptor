@@ -1,0 +1,73 @@
+name: Server.Alerts.Webhook
+description: |
+  Forwards alerts from `Server.Internal.Alerts` to a chat or webhook
+  endpoint: Slack, Microsoft Teams, Discord, or any service that
+  accepts JSON.
+
+  The endpoint URL (and any auth headers) live in an `HTTP Secrets`
+  secret, so no token is stored in this artifact's parameters. Create
+  the secret with the webhook URL in `url` and method `POST`.
+
+type: SERVER_EVENT
+
+parameters:
+  - name: Secret
+    description: Name of an HTTP Secrets secret holding the webhook URL.
+  - name: Format
+    type: choices
+    default: slack
+    choices: [slack, teams, discord, generic]
+  - name: MinLevel
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low, info]
+    description: Only forward alerts at this severity or worse.
+
+sources:
+  - query: |
+      // linter: symbol_mask_warn:timestamp
+
+      LET rank <= dict(critical=0, high=1, medium=2, low=3, info=4, informational=4)
+      LET min_rank <= get(item=rank, field=MinLevel, default=2)
+
+      LET level_of(e) = lowcase(string=e.level || "medium")
+
+      // Alert text can come from endpoints, so it is truncated and chat
+      // markup is neutralised: Slack/Teams control characters are
+      // escaped, Discord markdown is escaped and mentions are disabled.
+      LET clip(s) = format(format="%.300v", args=str(str=s || ""))
+      LET slack_escape(s) = regex_replace(source=regex_replace(source=regex_replace(
+          source=clip(s=s), re="&", replace="&amp;"), re="<", replace="&lt;"), re=">", replace="&gt;")
+      LET discord_escape(s) = regex_replace(source=clip(s=s), re="([\\\\*_~`|>@#\\[\\]()])", replace="\\$1")
+      // Teams renders both HTML and markdown: entity-encode, then escape markdown.
+      LET escape(s) = if(condition=Format = "discord", then=discord_escape(s=s),
+                         else=if(condition=Format = "teams", then=discord_escape(s=slack_escape(s=s)),
+                                 else=slack_escape(s=s)))
+
+      LET text_of(name, client_id, level, e, ts) = format(
+          format="[%v] %v on %v: %v (%v)",
+          args=[upcase(string=level), escape(s=name), escape(s=client_id || "server"),
+                escape(s=e.description), ts])
+
+      LET body(name, client_id, level, e, ts, artifact) = if(
+          condition=Format = "generic",
+          then=dict(name=name, client_id=client_id, level=level, artifact=artifact,
+                    timestamp=ts, event_data=e),
+          else=if(condition=Format = "discord",
+             then=dict(content=text_of(name=name, client_id=client_id, level=level, e=e, ts=ts),
+                       allowed_mentions=dict(parse=[])),
+             else=dict(text=text_of(name=name, client_id=client_id, level=level, e=e, ts=ts))))
+
+      LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
+        WHERE get(item=rank, field=level_of(e=event_data), default=2) <= min_rank
+
+      SELECT * FROM foreach(row=alerts, query={
+        SELECT name AS Alert, client_id AS ClientId, Response, Content
+        FROM http_client(
+          secret=Secret,
+          method="POST",
+          headers=dict(`Content-Type`="application/json"),
+          data=serialize(format="json",
+            item=body(name=name, client_id=client_id, level=level_of(e=event_data),
+                      e=event_data, ts=timestamp, artifact=artifact)))
+      })

@@ -1,0 +1,45 @@
+name: Windows.Remediation.DisableLocalUser
+description: |
+  Disables (or re-enables) local Windows user accounts whose name
+  matches a regex, using `net user <name> /active:no`.
+
+  Without `ReallyDoIt` the artifact only lists the accounts it would
+  change. Domain accounts are not affected; disable those in Active
+  Directory.
+
+type: CLIENT
+
+required_permissions:
+  - EXECVE
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: UserRegex
+    type: regex
+    default: ThisIsAUniqueName
+    description: Matched against the local account name.
+  - name: Enable
+    type: bool
+    description: Re-enable the matching accounts instead of disabling them.
+  - name: ReallyDoIt
+    type: bool
+    description: Change the matching accounts. Otherwise only list them.
+
+sources:
+  - query: |
+      LET accounts = SELECT Name, FullName, Disabled, SID
+        FROM wmi(query="SELECT Name, FullName, Disabled, SID FROM Win32_UserAccount WHERE LocalAccount = TRUE",
+                 namespace="ROOT/CIMV2")
+        WHERE Name =~ UserRegex
+
+      LET set_active(name) = SELECT ReturnCode, Stdout, Stderr FROM execve(
+        argv=["net.exe", "user", name, if(condition=Enable, then="/active:yes", else="/active:no")])
+
+      SELECT Name, FullName, Disabled AS WasDisabled, SID,
+             if(condition=ReallyDoIt,
+                then=if(condition=set_active(name=Name)[0].ReturnCode = 0,
+                        then=if(condition=Enable, then="Enabled", else="Disabled"),
+                        else="Failed"),
+                else="Dry run") AS Result
+      FROM accounts

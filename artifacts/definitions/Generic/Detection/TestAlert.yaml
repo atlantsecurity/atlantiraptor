@@ -1,0 +1,23 @@
+name: Generic.Detection.TestAlert
+description: |
+  Raises a single harmless alert from the client, so the alerts
+  pipeline and the dashboard can be checked end to end. Nothing on the
+  host is changed.
+
+type: CLIENT
+
+parameters:
+  - name: Message
+    default: This is a test alert. Nothing happened on this host.
+
+sources:
+  - query: |
+      SELECT Hostname, OS, now() AS Time,
+             alert(name="Test alert",
+                   dedup=1,
+                   source="test",
+                   rule="Test alert",
+                   level="low",
+                   description=Message,
+                   hostname=Hostname) AS _Alert
+      FROM info()

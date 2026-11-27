@@ -1,0 +1,36 @@
+# Weekly sync with Velocidex/velociraptor. See .github/scripts/upstream-sync.sh.
+#
+# Needs the repository secret UPSTREAM_SYNC_TOKEN: a fine-grained PAT for
+# this repo with Contents, Pull requests and Workflows set to read/write.
+# (The default GITHUB_TOKEN cannot push upstream changes to .github/workflows.)
+name: Upstream sync
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'atlantsecurity/atlantiraptor'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+
+      - name: Merge upstream and open PR
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+        run: |
+          # Run a copy: the script checks out other commits while it runs.
+          cp .github/scripts/upstream-sync.sh "$RUNNER_TEMP/"
+          bash "$RUNNER_TEMP/upstream-sync.sh"

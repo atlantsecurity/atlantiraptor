@@ -1,0 +1,125 @@
+name: Generic.Detection.IOCSweep
+description: |
+  Sweeps a host for a list of indicators of compromise in one pass:
+
+  - `sha256`, `sha1`, `md5`: hashes of files under `HashGlob` (files
+    larger than `HashSizeMax` are skipped).
+  - `ip`: remote addresses of current network connections.
+  - `domain`: the Windows DNS client cache (subdomains match too).
+  - `path`: files or directories that exist at the path (globs allowed).
+  - `filename`: file names under `HashGlob` (case-insensitive).
+
+  Each hit is returned as a row and, with `RaiseAlerts`, also raised as
+  a dashboard alert.
+
+type: CLIENT
+
+parameters:
+  - name: IOCs
+    type: csv
+    description: One indicator per row. Type is sha256, sha1, md5, ip, domain, path or filename.
+    default: |
+      Type,Value,Note
+      domain,example-bad-domain.invalid,Sample indicator
+  - name: HashGlob
+    default: C:/Users/*/{Downloads,Desktop,Documents,AppData/Local/Temp,AppData/Roaming}/**
+    description: Where to look for file hashes and file names.
+  - name: HashSizeMax
+    type: int
+    default: 104857600
+  - name: RaiseAlerts
+    type: bool
+    default: Y
+  - name: AlertLevel
+    default: high
+
+sources:
+  - query: |
+      LET info_rows <= SELECT OS FROM info()
+
+      LET iocs <= SELECT lowcase(string=strip(string=Type)) AS Type,
+                         strip(string=Value) AS Value,
+                         lowcase(string=strip(string=Value)) AS Lower,
+                         Note
+        FROM IOCs
+        WHERE Value
+
+      LET hash_iocs <= SELECT * FROM iocs WHERE Type =~ '^(sha256|sha1|md5)$'
+      LET filename_iocs <= SELECT * FROM iocs WHERE Type = "filename"
+      LET ip_iocs <= SELECT * FROM iocs WHERE Type = "ip"
+      LET domain_iocs <= SELECT * FROM iocs WHERE Type = "domain"
+      LET path_iocs <= SELECT * FROM iocs WHERE Type = "path"
+
+      LET filename_set <= filename_iocs.Lower
+      LET ip_set <= ip_iocs.Value
+
+      // One result row per hit, optionally raised as an alert.
+      LET hit(t, v, note, loc, detail) = dict(
+        IOCType=t, IOC=v, Note=note, Location=loc, Detail=detail,
+        _Alert=if(condition=RaiseAlerts,
+          then=alert(name="IOC: " + t + " " + v, dedup=3600, source="ioc",
+                     rule="IOC match: " + t, level=AlertLevel,
+                     description=format(format="%v %v found in %v", args=[t, v, loc]),
+                     ioc=v, ioc_type=t, path=detail)))
+
+      // Files are only walked when there are hash or file name indicators.
+      LET files = SELECT OSPath, Name, Size FROM glob(globs=HashGlob, nosymlink=TRUE)
+        WHERE NOT IsDir AND Size > 0 AND Size < HashSizeMax
+
+      LET name_hits(path, name) = SELECT * FROM foreach(
+          row={ SELECT * FROM filename_iocs WHERE Lower = lowcase(string=name) },
+          query={ SELECT * FROM foreach(row=[hit(t="filename", v=Value, note=Note, loc="file name", detail=path)]) })
+
+      LET hash_hits(path) = SELECT * FROM foreach(
+          row={ SELECT hash(path=path) AS H FROM scope() },
+          query={
+            SELECT * FROM foreach(row=hash_iocs, query={
+              SELECT * FROM foreach(row=[hit(t=Type, v=Value, note=Note, loc="file hash", detail=path)])
+              WHERE Lower = lowcase(string=get(item=H, field=upcase(string=Type)))
+            })
+          })
+
+      LET file_hits = SELECT * FROM if(
+        condition=len(list=hash_iocs) > 0 OR len(list=filename_iocs) > 0,
+        then={
+          SELECT * FROM foreach(row=files, query={
+            SELECT * FROM chain(
+              a={ SELECT * FROM if(condition=lowcase(string=Name) in filename_set,
+                                   then={ SELECT * FROM name_hits(path=OSPath, name=Name) }) },
+              b={ SELECT * FROM if(condition=len(list=hash_iocs) > 0,
+                                   then={ SELECT * FROM hash_hits(path=OSPath) }) })
+          })
+        })
+
+      LET ip_hits = SELECT * FROM if(condition=len(list=ip_iocs) > 0, then={
+          SELECT * FROM foreach(
+            row={ SELECT Raddr.IP AS IP, Raddr.Port AS Port, Pid FROM netstat() WHERE Raddr.IP in ip_set },
+            query={
+              SELECT * FROM foreach(row=ip_iocs, query={
+                SELECT * FROM foreach(row=[hit(t="ip", v=Value, note=Note, loc="network connection",
+                                               detail=format(format="%v:%v pid %v", args=[IP, Port, Pid]))])
+                WHERE Value = IP
+              })
+            })
+        })
+
+      LET dns_entries = SELECT lowcase(string=Entry) AS Entry, Data
+        FROM wmi(query="SELECT Entry, Data FROM MSFT_DNSClientCache", namespace="root/StandardCimv2")
+
+      LET dns_hits = SELECT * FROM if(condition=len(list=domain_iocs) > 0 AND info_rows[0].OS = "windows", then={
+          SELECT * FROM foreach(row=dns_entries, query={
+            SELECT * FROM foreach(row=domain_iocs, query={
+              SELECT * FROM foreach(row=[hit(t="domain", v=Value, note=Note, loc="DNS cache",
+                                             detail=format(format="%v -> %v", args=[Entry, Data]))])
+              WHERE Entry = Lower OR Entry =~ ("\\." + regex_replace(source=Lower, re="\\.", replace="\\.") + "$")
+            })
+          })
+        })
+
+      LET path_hits = SELECT * FROM foreach(row=path_iocs, query={
+          SELECT * FROM foreach(
+            row={ SELECT OSPath FROM glob(globs=Value, nosymlink=TRUE) LIMIT 20 },
+            query={ SELECT * FROM foreach(row=[hit(t="path", v=Value, note=Note, loc="file system", detail=OSPath)]) })
+        })
+
+      SELECT * FROM chain(a=file_hits, b=ip_hits, c=dns_hits, d=path_hits)

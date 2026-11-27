@@ -1,3 +1,6 @@
+Atlantiraptor
+Atlant
+selfupdate
 builtin
 callable's
 emacs
@@ -24,3 +27,12 @@ sl
 retrnsmt
 uuid
 freelist
+Atlantiraptor
+Atlant
+dlib
+Jsign
+vcruntime
+httptest
+openai
+deepseek
+prefs
