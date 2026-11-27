@@ -481,7 +481,10 @@ export default class NewHuntWizard extends React.Component {
             }
         }
 
-        if (hunt_parameters.include_condition === "labels") {
+        // An empty label list matches no clients, so only send a
+        // label condition when at least one label is selected.
+        if (hunt_parameters.include_condition === "labels" &&
+            !_.isEmpty(hunt_parameters.include_labels)) {
             result.condition.labels = {"label": hunt_parameters.include_labels};
         }
         if (hunt_parameters.include_condition === "os" &&
@@ -489,7 +492,8 @@ export default class NewHuntWizard extends React.Component {
             result.condition.os = {"os": hunt_parameters.include_os};
         }
 
-        if (hunt_parameters.exclude_condition === "labels") {
+        if (hunt_parameters.exclude_condition === "labels" &&
+            !_.isEmpty(hunt_parameters.excluded_labels)) {
             result.condition.excluded_labels = {label: hunt_parameters.excluded_labels};
         }
 

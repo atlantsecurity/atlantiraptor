@@ -6,6 +6,7 @@ import (
 
 	"github.com/Velocidex/ordereddict"
 	"github.com/stretchr/testify/suite"
+	api_proto "www.velocidex.com/golang/velociraptor/api/proto"
 	"www.velocidex.com/golang/velociraptor/file_store/test_utils"
 	"www.velocidex.com/golang/velociraptor/json"
 	"www.velocidex.com/golang/velociraptor/logging"
@@ -16,6 +17,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/vql/acl_managers"
 	"www.velocidex.com/golang/velociraptor/vtesting/assert"
 	"www.velocidex.com/golang/velociraptor/vtesting/goldie"
+	"www.velocidex.com/golang/vfilter"
 )
 
 var testArtifacts = []string{`
@@ -127,6 +129,58 @@ func (self *TestSuite) TestCreateHunt() {
 	}
 	goldie.Assert(self.T(), "TestCreateHunt",
 		json.MustMarshalIndent(result))
+}
+
+// An unset or empty label argument must not become a condition on
+// the literal label "Null" (or ""), which would match no clients.
+func (self *TestSuite) TestCreateHuntEmptyLabels() {
+	closer := utils.MockTime(utils.NewMockClock(time.Unix(100, 10)))
+	defer closer()
+
+	repository := self.LoadArtifacts(testArtifacts...)
+	builder := services.ScopeBuilder{
+		Config:     self.ConfigObj,
+		ACLManager: self.acl_manager,
+		Repository: repository,
+		Logger: logging.NewPlainLogger(
+			self.ConfigObj, &logging.FrontendComponent),
+		Env: ordereddict.NewDict(),
+	}
+
+	manager, err := services.GetRepositoryManager(self.ConfigObj)
+	assert.NoError(self.T(), err)
+	scope := manager.BuildScope(builder)
+	defer scope.Close()
+
+	getCondition := func(args *ordereddict.Dict) *api_proto.HuntCondition {
+		hunt_dispatcher.SetHuntIdForTests("H.1234")
+		res, ok := (&ScheduleHuntFunction{}).Call(self.Ctx, scope,
+			args.Set("artifacts", "Test.Artifact")).(*ordereddict.Dict)
+		assert.True(self.T(), ok)
+
+		req, _ := res.Get("Request")
+		hunt, ok := req.(*api_proto.Hunt)
+		assert.True(self.T(), ok)
+		return hunt.Condition
+	}
+
+	for _, empty := range []vfilter.Any{
+		vfilter.Null{}, "", "  ", []vfilter.Any{}, []vfilter.Any{vfilter.Null{}},
+		[]vfilter.Any{vfilter.Null{}, ""},
+	} {
+		// Empty include and exclude labels set no condition at all.
+		cond := getCondition(ordereddict.NewDict().
+			Set("include_labels", empty).
+			Set("exclude_labels", empty))
+		assert.Nil(self.T(), cond, "labels %#v", empty)
+	}
+
+	// NULL entries are dropped but real labels are kept.
+	cond := getCondition(ordereddict.NewDict().
+		Set("include_labels", []vfilter.Any{vfilter.Null{}, "Label1"}).
+		Set("exclude_labels", []vfilter.Any{"", "Label2", vfilter.Null{}}))
+	assert.Equal(self.T(), []string{"Label1"}, cond.GetLabels().Label)
+	assert.Equal(self.T(), []string{"Label2"}, cond.ExcludedLabels.Label)
 }
 
 func TestHuntPlugin(t *testing.T) {

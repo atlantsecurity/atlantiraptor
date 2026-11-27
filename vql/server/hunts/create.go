@@ -19,6 +19,8 @@ package hunts
 
 import (
 	"context"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/Velocidex/ordereddict"
@@ -81,7 +83,8 @@ func (self *ScheduleHuntFunction) Call(ctx context.Context,
 	}
 
 	arg := &ScheduleHuntFunctionArg{}
-	err = arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
+	err = arg_parser.ExtractArgsWithContext(ctx, scope,
+		removeNullLabelArgs(ctx, args), arg)
 	if err != nil {
 		scope.Log("hunt: %v", err)
 		return vfilter.Null{}
@@ -90,6 +93,9 @@ func (self *ScheduleHuntFunction) Call(ctx context.Context,
 		scope.Log("hunt: user_data is too long")
 		return vfilter.Null{}
 	}
+
+	arg.IncludeLabels = removeEmptyLabels(arg.IncludeLabels)
+	arg.ExcludeLabels = removeEmptyLabels(arg.ExcludeLabels)
 
 	var expires uint64
 	if !utils.IsNil(arg.Expires) {
@@ -493,4 +499,55 @@ func (self AddToHuntFunction) Info(scope vfilter.Scope,
 func init() {
 	vql_subsystem.RegisterFunction(&ScheduleHuntFunction{})
 	vql_subsystem.RegisterFunction(&AddToHuntFunction{})
+}
+
+// The arg parser converts a NULL value into the string "Null" when
+// it fills a []string field. For label conditions this turns an
+// unset or empty label (e.g. include_labels=NULL, or a variable that
+// was never set) into a condition on the literal label "Null",
+// which matches no clients and schedules the hunt on 0 clients.
+// Strip NULL values from the label args before parsing.
+func removeNullLabelArgs(
+	ctx context.Context, args *ordereddict.Dict) *ordereddict.Dict {
+	result := ordereddict.NewDict()
+	for _, k := range args.Keys() {
+		v, _ := args.Get(k)
+
+		if k == "include_labels" || k == "exclude_labels" {
+			lazy, ok := v.(vfilter.LazyExpr)
+			if ok {
+				v = lazy.Reduce(ctx)
+			}
+
+			if utils.IsNil(v) {
+				continue
+			}
+
+			rv := reflect.ValueOf(v)
+			if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+				items := []vfilter.Any{}
+				for i := 0; i < rv.Len(); i++ {
+					item := rv.Index(i).Interface()
+					if !utils.IsNil(item) {
+						items = append(items, item)
+					}
+				}
+				v = items
+			}
+		}
+		result.Set(k, v)
+	}
+	return result
+}
+
+// Empty label names never match a client, so drop them.
+func removeEmptyLabels(labels []string) []string {
+	var result []string
+	for _, l := range labels {
+		l = strings.TrimSpace(l)
+		if l != "" {
+			result = append(result, l)
+		}
+	}
+	return result
 }

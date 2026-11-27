@@ -293,6 +293,8 @@ func (self *HuntDispatcher) CreateHunt(
 	// Make a local copy so we can modify it safely.
 	hunt, _ = proto.Clone(hunt).(*api_proto.Hunt)
 
+	normalizeHuntCondition(hunt)
+
 	if hunt.Stats == nil {
 		hunt.Stats = &api_proto.HuntStats{}
 	}
@@ -564,4 +566,48 @@ func HuntDispatcherRefresh(config_obj *config_proto.Config) time.Duration {
 
 func init() {
 	json.RegisterCustomEncoder(&api_proto.Hunt{}, json.MarshalHuntProtobuf)
+}
+
+// Label conditions with no usable labels can not match any client:
+// an include condition with an empty label list (e.g. from the GUI
+// when "Match by label" is picked but no label is selected) would
+// schedule the hunt on 0 clients while the client estimate counts
+// every client. Drop empty label names and treat an empty label
+// condition as no condition at all.
+func normalizeHuntCondition(hunt *api_proto.Hunt) {
+	if hunt.Condition == nil {
+		return
+	}
+
+	labels := hunt.Condition.GetLabels()
+	if labels != nil {
+		labels.Label = cleanLabels(labels.Label)
+		if len(labels.Label) == 0 {
+			hunt.Condition.UnionField = nil
+		}
+	}
+
+	if hunt.Condition.ExcludedLabels != nil {
+		hunt.Condition.ExcludedLabels.Label = cleanLabels(
+			hunt.Condition.ExcludedLabels.Label)
+		if len(hunt.Condition.ExcludedLabels.Label) == 0 {
+			hunt.Condition.ExcludedLabels = nil
+		}
+	}
+
+	if hunt.Condition.UnionField == nil &&
+		hunt.Condition.ExcludedLabels == nil {
+		hunt.Condition = nil
+	}
+}
+
+func cleanLabels(labels []string) []string {
+	var result []string
+	for _, l := range labels {
+		l = strings.TrimSpace(l)
+		if l != "" {
+			result = append(result, l)
+		}
+	}
+	return result
 }
