@@ -11,7 +11,7 @@ import (
 
 var (
 	ALL_ROLES = []string{"org_admin", "administrator", "reader",
-		"analyst", "investigator",
+		"analyst", "investigator", "hunter", "responder",
 		"artifact_writer", "api"}
 
 	ALL_PERMISSIONS = []string{
@@ -242,6 +242,34 @@ func GetRolePermissions(
 			result.LabelClients = true
 			result.AnyQuery = true
 			result.PrepareResults = true
+
+			// Hunters collect from endpoints and run hunts, and
+			// work with the results. They have no EXECVE,
+			// FILESYSTEM_WRITE or NETWORK, so response artifacts
+			// that require those (kill, delete, quarantine) are
+			// refused for them by the launcher.
+		case "hunter":
+			result.ReadResults = true
+			result.NotebookEditor = true
+			result.CollectClient = true
+			result.StartHunt = true
+			result.LabelClients = true
+			result.PrepareResults = true
+
+			// Responders can do everything a hunter can, plus run
+			// response actions: artifacts that need EXECVE,
+			// FILESYSTEM_WRITE or NETWORK on endpoints. NOTE this
+			// is close to administrator on endpoints.
+		case "responder":
+			result.ReadResults = true
+			result.NotebookEditor = true
+			result.CollectClient = true
+			result.StartHunt = true
+			result.LabelClients = true
+			result.PrepareResults = true
+			result.Execve = true
+			result.FilesystemWrite = true
+			result.Network = true
 
 			// Artifact writers are allowed to edit and
 			// create artifacts. NOTE This role is akin to

@@ -837,11 +837,18 @@ func (x *GetHuntRequest) GetIncludeTruncatedRequest() bool {
 }
 
 type GetHuntResultsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Offset        uint64                 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
-	Count         uint64                 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
-	HuntId        string                 `protobuf:"bytes,3,opt,name=hunt_id,json=huntId,proto3" json:"hunt_id,omitempty"`
-	Artifact      string                 `protobuf:"bytes,4,opt,name=artifact,proto3" json:"artifact,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Offset   uint64                 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
+	Count    uint64                 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	HuntId   string                 `protobuf:"bytes,3,opt,name=hunt_id,json=huntId,proto3" json:"hunt_id,omitempty"`
+	Artifact string                 `protobuf:"bytes,4,opt,name=artifact,proto3" json:"artifact,omitempty"`
+	// Optional: keep only rows where any cell matches this
+	// case-insensitive regular expression. Applied on the server so it
+	// covers every row of the hunt, not only the loaded page.
+	Filter string `protobuf:"bytes,5,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Optional: sort every matching row by this column before paging.
+	SortColumn    string `protobuf:"bytes,6,opt,name=sort_column,json=sortColumn,proto3" json:"sort_column,omitempty"`
+	SortDesc      bool   `protobuf:"varint,7,opt,name=sort_desc,json=sortDesc,proto3" json:"sort_desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -902,6 +909,27 @@ func (x *GetHuntResultsRequest) GetArtifact() string {
 		return x.Artifact
 	}
 	return ""
+}
+
+func (x *GetHuntResultsRequest) GetFilter() string {
+	if x != nil {
+		return x.Filter
+	}
+	return ""
+}
+
+func (x *GetHuntResultsRequest) GetSortColumn() string {
+	if x != nil {
+		return x.SortColumn
+	}
+	return ""
+}
+
+func (x *GetHuntResultsRequest) GetSortDesc() bool {
+	if x != nil {
+		return x.SortDesc
+	}
+	return false
 }
 
 type FlowAssignment struct {
@@ -1200,12 +1228,16 @@ const file_hunts_proto_rawDesc = "" +
 	"\x0eGetHuntRequest\x12\x17\n" +
 	"\ahunt_id\x18\x01 \x01(\tR\x06huntId\x12'\n" +
 	"\x0finclude_request\x18\x02 \x01(\bR\x0eincludeRequest\x12:\n" +
-	"\x19include_truncated_request\x18\x03 \x01(\bR\x17includeTruncatedRequest\"z\n" +
+	"\x19include_truncated_request\x18\x03 \x01(\bR\x17includeTruncatedRequest\"\xd0\x01\n" +
 	"\x15GetHuntResultsRequest\x12\x16\n" +
 	"\x06offset\x18\x01 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\x04R\x05count\x12\x17\n" +
 	"\ahunt_id\x18\x03 \x01(\tR\x06huntId\x12\x1a\n" +
-	"\bartifact\x18\x04 \x01(\tR\bartifact\"F\n" +
+	"\bartifact\x18\x04 \x01(\tR\bartifact\x12\x16\n" +
+	"\x06filter\x18\x05 \x01(\tR\x06filter\x12\x1f\n" +
+	"\vsort_column\x18\x06 \x01(\tR\n" +
+	"sortColumn\x12\x1b\n" +
+	"\tsort_desc\x18\a \x01(\bR\bsortDesc\"F\n" +
 	"\x0eFlowAssignment\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x17\n" +
 	"\aflow_id\x18\x02 \x01(\tR\x06flowId\"\xd4\x02\n" +

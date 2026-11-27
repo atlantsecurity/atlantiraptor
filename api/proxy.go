@@ -102,7 +102,9 @@ func AddProxyMux(config_obj *config_proto.Config, mux *api_utils.ServeMux) error
 			handler = auther.AuthenticateUserHandler(handler, acls.READ_RESULTS)
 		}
 
-		mux.Handle(reverse_proxy_config.Route, handler)
+		// Reverse-proxied routes are part of the console: apply the
+		// network allowlists to them too.
+		mux.Handle(reverse_proxy_config.Route, ipFilter(config_obj, handler))
 	}
 
 	return nil
@@ -147,6 +149,37 @@ func PrepareGUIMux(
 	if err != nil {
 		return nil, err
 	}
+
+	// Two-factor sign in for password (basic auth) logins.
+	if _, ok := auther.(*authenticators.BasicAuthenticator); ok {
+		authenticators.AddMFAHandlers(config_obj, mux,
+			func(h http.Handler) http.Handler {
+				return ipFilter(config_obj, csrfProtect(config_obj, h))
+			},
+			auther.AuthenticateUserHandler)
+	}
+
+	// User groups (roles for many users at once). Admin checks are in
+	// the handler; the effective permissions are enforced by the ACL
+	// manager.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/groups"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(groupsHandler(), acls.READ_RESULTS))))
+
+	// SIEM/SOAR API keys (console management) and the key-authenticated
+	// REST API. The REST API uses bearer keys, not cookies, so it needs
+	// no CSRF protection; it still goes through the IP filter.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/apikeys"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(apiKeysHandler(), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/network"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(networkHandler(config_obj), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/update"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(updateHandler(config_obj), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/atl/v1/"),
+		ipFilter(config_obj, AtlAPIHandler(config_obj)))
 
 	base_path := api_utils.GetBasePath(config_obj)
 	grpc_client_factory := grpc_client.Factory

@@ -66,6 +66,7 @@ type ScheduleHuntFunctionArg struct {
 	IncludeLabels []string         `vfilter:"optional,field=include_labels,doc=If specified only include these labels"`
 	ExcludeLabels []string         `vfilter:"optional,field=exclude_labels,doc=If specified exclude these labels"`
 	OS            string           `vfilter:"optional,field=os,doc=If specified target this OS"`
+	UserData      string           `vfilter:"optional,field=user_data,doc=Free text stored with the hunt request (max 16 KB)"`
 	OrgIds        []string         `vfilter:"optional,field=org_id,doc=If set the collection will be started in the specified orgs."`
 }
 
@@ -86,6 +87,10 @@ func (self *ScheduleHuntFunction) Call(ctx context.Context,
 		removeNullLabelArgs(ctx, args), arg)
 	if err != nil {
 		scope.Log("hunt: %v", err)
+		return vfilter.Null{}
+	}
+	if len(arg.UserData) > 16*1024 {
+		scope.Log("hunt: user_data is too long")
 		return vfilter.Null{}
 	}
 
@@ -143,6 +148,7 @@ func (self *ScheduleHuntFunction) Call(ctx context.Context,
 	principal := vql_subsystem.GetPrincipal(scope)
 	request := &flows_proto.ArtifactCollectorArgs{
 		Creator:        principal,
+		UserData:       arg.UserData,
 		OpsPerSecond:   float32(arg.OpsPerSecond),
 		CpuLimit:       float32(arg.CpuLimit),
 		IopsLimit:      float32(arg.IopsLimit),

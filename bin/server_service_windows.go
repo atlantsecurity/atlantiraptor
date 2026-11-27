@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"context"
 
@@ -476,6 +477,9 @@ func NewVelociraptorServerService(name string) (
 				return
 			}
 			defer sm.Close()
+
+			// Keep the server on the latest signed GitHub release.
+			selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
 
 			tryToLog(name, fmt.Sprintf("%s service started", name))
 			// Wait here until everything is done.

@@ -1,0 +1,107 @@
+name: Generic.Detection.YaraMonitor
+description: |
+  Periodically scans recently changed files with YARA rules and raises
+  a server alert for every hit.
+
+  Enable it as a client event artifact. Every `IntervalMinutes` it
+  globs `PathGlob`, keeps files changed since the previous pass and
+  below `SizeMaxBytes`, and scans them with `YaraRules`. Hits are
+  forwarded as rows of this artifact and as alerts
+  (`Server.Internal.Alerts`), which the dashboard shows.
+
+  The default rules include a harmless test rule: any file containing
+  the text ATLANTIRAPTOR-DETECTION-TEST raises an alert, so the
+  pipeline can be checked end to end.
+
+type: CLIENT_EVENT
+
+parameters:
+  - name: PathGlob
+    default: C:/Users/*/{Downloads,Desktop,AppData/Local/Temp}/**
+    description: Files to consider on each pass.
+  - name: IntervalMinutes
+    type: int
+    default: 10
+  - name: SizeMaxBytes
+    type: int
+    default: 52428800
+  - name: DedupSeconds
+    type: int
+    default: 300
+  - name: YaraRules
+    type: yara
+    default: |
+      rule Atlantiraptor_Detection_Test {
+        meta:
+          description = "Harmless test marker used to check the detection pipeline"
+          level = "low"
+        strings:
+          $a = "ATLANTIRAPTOR-DETECTION-TEST"
+        condition:
+          $a
+      }
+
+      rule Mimikatz_Strings {
+        meta:
+          description = "Strings found in Mimikatz and its derivatives"
+          level = "critical"
+        strings:
+          $a = "sekurlsa::logonpasswords" ascii wide nocase
+          $b = "gentilkiwi" ascii wide nocase
+          $c = "lsadump::sam" ascii wide nocase
+        condition:
+          any of them
+      }
+
+      rule CobaltStrike_Beacon_Strings {
+        meta:
+          description = "Strings typical of Cobalt Strike beacons"
+          level = "critical"
+        strings:
+          $a = "%s as %s\\%s: %d" ascii
+          $b = "beacon.x64.dll" ascii
+          $c = "ReflectiveLoader" ascii
+        condition:
+          2 of them
+      }
+
+      rule PowerShell_Download_Cradle {
+        meta:
+          description = "Script that downloads and executes code in memory"
+          level = "high"
+        strings:
+          $iex = /iex\s*\(/ nocase
+          $dl1 = "DownloadString(" nocase
+          $dl2 = "Net.WebClient" nocase
+        condition:
+          $iex and any of ($dl*)
+      }
+
+sources:
+  - query: |
+      LET pass = SELECT * FROM foreach(
+        row={ SELECT * FROM clock(period=IntervalMinutes * 60, start=0) },
+        query={
+          SELECT OSPath, Size, Mtime
+          FROM glob(globs=PathGlob, nosymlink=TRUE)
+          WHERE NOT IsDir
+            AND Size > 0 AND Size < SizeMaxBytes
+            AND Mtime > now() - IntervalMinutes * 60 - 60
+        })
+
+      SELECT * FROM foreach(row=pass,
+        query={
+          SELECT OSPath, Size, Mtime,
+                 Rule, Meta.description AS Description,
+                 Meta.level || "high" AS Level,
+                 alert(name="YARA: " + Rule,
+                       dedup=DedupSeconds,
+                       source="yara",
+                       rule=Rule,
+                       level=Meta.level || "high",
+                       description=Meta.description,
+                       path=OSPath,
+                       size=Size,
+                       mtime=Mtime) AS _Alert
+          FROM yara(rules=YaraRules, files=OSPath, number=1)
+        })

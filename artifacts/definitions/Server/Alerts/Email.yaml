@@ -1,0 +1,102 @@
+name: Server.Alerts.Email
+description: |
+  Emails alerts from `Server.Internal.Alerts`. The SMTP server and
+  credentials live in an `SMTP Creds` secret.
+
+  `PeriodSeconds` limits how often mail is sent for the same alert
+  name, so a noisy rule cannot flood the inbox. Alerts with other names
+  are always mailed.
+
+type: SERVER_EVENT
+
+parameters:
+  - name: Secret
+    description: Name of an SMTP Creds secret.
+  - name: To
+    description: Comma separated recipients.
+  - name: MinLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low, info]
+  - name: PeriodSeconds
+    type: int
+    default: 600
+  - name: MaxPerHour
+    type: int
+    default: 30
+    description: At most this many non-critical alert emails per hour. Capped ones are listed as Skipped rows in this artifact's results.
+  - name: MaxCriticalPerHour
+    type: int
+    default: 60
+    description: Critical alert emails per host per hour. Server-originated critical alerts are always sent.
+  - name: MaxCriticalTotalPerHour
+    type: int
+    default: 200
+    description: Critical alert emails per hour across all hosts.
+
+sources:
+  - query: |
+      // linter: symbol_mask_warn:timestamp
+
+      LET rank <= dict(critical=0, high=1, medium=2, low=3, info=4, informational=4)
+      LET min_rank <= get(item=rank, field=MinLevel, default=1)
+      LET level_of(e) = lowcase(string=e.level || "medium")
+      LET recipients <= filter(list=split(string=To, sep=" *, *"), regex=".")
+
+      // Per alert name: the first alert of each name is mailed, repeats of
+      // the same name within PeriodSeconds are skipped (and reported as
+      // Skipped rows), and other names are never held back.
+      LET last_sent <= dict()
+      LET due(key) = now() - get(item=last_sent, field=key, default=0) > PeriodSeconds
+
+      LET alerts = SELECT * FROM watch_monitoring(artifact="Server.Internal.Alerts")
+        WHERE get(item=rank, field=level_of(e=event_data), default=2) <= min_rank
+
+      // A global hourly cap on top of the per-name dedup, so a burst of
+      // many different alert names cannot flood the mailbox either.
+      LET budget <= dict(window=0, count=0)
+      LET hour_now() = int(int=now() / 3600)
+      LET reset_if_new() = if(condition=budget.window != hour_now(),
+          then=set(item=budget, field="window", value=hour_now()) AND set(item=budget, field="count", value=0),
+          else=TRUE)
+      LET under_cap() = reset_if_new() AND budget.count < MaxPerHour
+          AND set(item=budget, field="count", value=budget.count + 1)
+
+      // Severity is reported by the client, so critical alerts get a budget
+      // per host and hour: one noisy or compromised host cannot use up the
+      // budget of the others. Server-originated alerts (no client) are
+      // always mailed.
+      // Each host entry holds its own hour window, so entries reset each
+      // hour instead of piling up; a global critical cap sits on top.
+      LET crit_counts <= dict()
+      LET crit_total <= dict(window=0, count=0)
+      LET host_count(client) = if(
+          condition=get(item=crit_counts, field=client).window = hour_now(),
+          then=get(item=crit_counts, field=client).count, else=0)
+      LET total_ok() = if(condition=crit_total.window != hour_now(),
+          then=set(item=crit_total, field="window", value=hour_now()) AND set(item=crit_total, field="count", value=0),
+          else=TRUE) AND crit_total.count < MaxCriticalTotalPerHour
+      LET under_crit_cap(client) = NOT client OR (
+          host_count(client=client) < MaxCriticalPerHour AND total_ok()
+          AND set(item=crit_counts, field=client, value=dict(window=hour_now(), count=host_count(client=client) + 1))
+          AND set(item=crit_total, field="count", value=crit_total.count + 1))
+
+      // Critical alerts use their own budget. VQL evaluates columns
+      // lazily, so each alert is decided in one expression, in order:
+      // per-name dedup, then the cap, then record the send and mail.
+      LET allowed(level, client) = if(condition=level = "critical",
+          then=under_crit_cap(client=client), else=under_cap())
+
+      LET send(name, client_id, level, e, ts, artifact) = set(item=last_sent, field=name, value=now())
+        AND mail(secret=Secret, to=recipients, period=1,
+                 subject=format(format="[%v] %v on %v", args=[upcase(string=level), name, client_id || "server"]),
+                 body=format(format="Alert: %v\nClient: %v\nLevel: %v\nTime: %v\nArtifact: %v\n\nDetails:\n%v\n",
+                   args=[name, client_id || "server", level, ts, artifact, serialize(item=e, format="json")]))
+
+      SELECT name AS Alert, client_id AS ClientId,
+             if(condition=NOT due(key=name), then="Skipped: same alert mailed recently",
+             else=if(condition=NOT allowed(level=level_of(e=event_data), client=client_id),
+                then="Skipped: hourly mail cap reached",
+                else=send(name=name, client_id=client_id, level=level_of(e=event_data),
+                          e=event_data, ts=timestamp, artifact=artifact))) AS Sent
+      FROM alerts

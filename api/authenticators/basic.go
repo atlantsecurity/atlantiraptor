@@ -142,6 +142,12 @@ func (self *BasicAuthenticator) AuthenticateUserHandler(
 				return
 			}
 
+			// Users who enrolled a second factor also need a valid
+			// two-factor session. Users without one log in as before.
+			if !mfaGate(w, r, self.config_obj, user_record.Name) {
+				return
+			}
+
 			// Must use quote encoding because grpc can not handle
 			// binary data in metadata.
 			ctx := context.WithValue(

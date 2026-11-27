@@ -25,6 +25,16 @@ func (self *HuntDispatcher) MutateHunt(
 
 	self.Debug("MutateHunt: %v", mutation)
 
+	// Two-person approval rules (approval_guard.go).
+	if mutation.State == api_proto.Hunt_RUNNING || len(mutation.Tags) > 0 {
+		hunt_obj, pres := self.GetHunt(ctx, services.GetHuntOptions{Request: true}, mutation.HuntId)
+		if pres {
+			if err := checkApprovalMutation(ctx, config_obj, hunt_obj, mutation); err != nil {
+				return err
+			}
+		}
+	}
+
 	// Short circuit deletions on the master to directly remove the
 	// hunt.
 	if self.I_am_master {

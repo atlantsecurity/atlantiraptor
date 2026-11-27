@@ -187,7 +187,8 @@ func GetDefaultConfig() *config_proto.Config {
 		},
 		ApiConfig: &config_proto.ApiClientConfig{},
 		Defaults: &config_proto.Defaults{
-			HuntExpiryHours:        24 * 7,
+			// Hunts stop after an hour unless started with "Run until stopped".
+			HuntExpiryHours:        1,
 			NotebookCellTimeoutMin: 10,
 		},
 		Security: &config_proto.Security{},

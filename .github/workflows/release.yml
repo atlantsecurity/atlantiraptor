@@ -1,0 +1,174 @@
+# Publishes a signed Atlantiraptor release for every merge to master,
+# which deployed servers then install by themselves (see
+# services/selfupdate).
+#
+# 1. build-sign (Linux): build the Windows server binary with the GUI,
+#    then Authenticode-sign it with Azure Artifact Signing.
+# 2. verify-publish (Windows): check the signature with the exact code
+#    the servers' updater uses, then create the GitHub release with the
+#    binary and SHA256SUMS.
+#
+# Signing needs a one-time Azure setup (an app registration with a
+# federated credential for this repository's master branch and the
+# "Artifact Signing Certificate Profile Signer" role on the
+# atlant-public-trust profile), stored as repository variables
+# AZURE_CLIENT_ID, AZURE_TENANT_ID and AZURE_SUBSCRIPTION_ID. Until then
+# this workflow only prints how to set it up; releases can still be
+# published from a developer PC with scripts/publish-release.ps1.
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (x.y.z). Empty: the next patch version."
+        required: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  not-configured:
+    if: vars.AZURE_CLIENT_ID == ''
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice title=Release skipped::Azure Artifact Signing is not configured for GitHub Actions (repository variables AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID). Publish from a developer PC with scripts/publish-release.ps1, or see the header of .github/workflows/release.yml."
+
+  build-sign:
+    if: vars.AZURE_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Pick the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${INPUT_VERSION:-}" ]]; then
+            v="${INPUT_VERSION#v}"
+          else
+            # Highest of the published releases and the vX.Y.Z tags.
+            latest="$( (gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq '.[].tag_name' 2>/dev/null; git tag -l 'v*') \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+            latest="${latest:-v1.0.0}"
+            IFS=. read -r major minor patch <<< "${latest#v}"
+            v="${major}.${minor}.$((patch + 1))"
+          fi
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "bad version: $v"; exit 1; }
+          if gh release view "v$v" >/dev/null 2>&1; then echo "release v$v already exists"; exit 1; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Publishing $v"
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        with:
+          go-version: "^1.27.2"
+          cache: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+
+      - name: Build the GUI
+        run: |
+          cd gui/velociraptor
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Build the Windows server binary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mingw-w64
+          go run make.go -v BasicAssets
+          go install github.com/tc-hib/go-winres@v0.3.3
+          ~/go/bin/go-winres make --in docs/winres/winres.json --out bin/rsrc \
+            --file-version "${VERSION}.0" --product-version "${VERSION}.0"
+          mkdir -p dist/release
+          CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc \
+            go build -o dist/release/Atlantiraptor-windows-amd64.exe \
+            -tags "velomain server_vql extras disable_grpc_modules goexperiment.nojsonv2 release yara" \
+            -ldflags "-w -s \
+              -X www.velocidex.com/golang/velociraptor/config.release_version=${VERSION} \
+              -X www.velocidex.com/golang/velociraptor/config.build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              -X www.velocidex.com/golang/velociraptor/config.commit_hash=$(git rev-parse --short HEAD) \
+              -X www.velocidex.com/golang/velociraptor/config.ci_run_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            ./bin/
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sign
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/jsign.jar https://github.com/ebourg/jsign/releases/download/7.1/jsign-7.1.jar
+          printf '#!/bin/sh\nexec java -jar /tmp/jsign.jar "$@"\n' | sudo tee /usr/local/bin/jsign >/dev/null
+          sudo chmod +x /usr/local/bin/jsign
+          scripts/sign-agents.sh -n "Atlantiraptor" dist/release/Atlantiraptor-windows-amd64.exe
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release
+          path: dist/release/Atlantiraptor-windows-amd64.exe
+          retention-days: 7
+
+  verify-publish:
+    needs: build-sign
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: dist
+
+      - name: Verify the signature the way servers do
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.build-sign.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = 'dist\Atlantiraptor-windows-amd64.exe'
+          $sig = Get-AuthenticodeSignature $exe
+          $sig | Format-List Status, StatusMessage, SignerCertificate, TimeStamperCertificate
+          if ($sig.Status -ne 'Valid') { throw "signature status: $($sig.Status)" }
+          if (-not $sig.TimeStamperCertificate) { throw 'no timestamp' }
+          & $exe selfupdate verify $exe
+          if ($LASTEXITCODE -ne 0) { throw 'selfupdate verify failed' }
+          $reported = (& $exe selfupdate version).Trim()
+          if ($reported -ne $env:VERSION) { throw "binary reports '$reported', expected $env:VERSION" }
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build-sign.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum Atlantiraptor-windows-amd64.exe > SHA256SUMS
+          cat SHA256SUMS
+          gh release create "v${VERSION}" Atlantiraptor-windows-amd64.exe SHA256SUMS \
+            --repo "${GITHUB_REPOSITORY}" --target "${GITHUB_SHA}" \
+            --title "Atlantiraptor ${VERSION}" --generate-notes

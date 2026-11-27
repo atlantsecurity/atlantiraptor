@@ -26,6 +26,27 @@ type OrgACLManager interface {
 	SwitchDefaultOrg(config_obj *config_proto.Config)
 }
 
+// RestrictingACLManager is implemented by ACL managers that narrow
+// permissions (for example a read-only query). Code that builds a new
+// ACL manager for a sub-scope must pass it through RestrictACLManager so
+// the restriction carries over.
+type RestrictingACLManager interface {
+	Restrict(inner ACLManager) ACLManager
+}
+
+// RestrictACLManager applies the scope's restriction (if any) to an ACL
+// manager about to be installed in a sub-scope.
+func RestrictACLManager(scope vfilter.Scope, next ACLManager) ACLManager {
+	current, pres := scope.Resolve(ACL_MANAGER_VAR)
+	if !pres {
+		return next
+	}
+	if r, ok := current.(RestrictingACLManager); ok {
+		return r.Restrict(next)
+	}
+	return next
+}
+
 type PrincipalACLManager interface {
 	GetPrincipal() string
 }

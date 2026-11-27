@@ -1,0 +1,199 @@
+name: Windows.Detection.SigmaMonitor
+description: |
+  Continuously evaluates Windows event logs against Sigma rules and
+  raises a server alert for every match.
+
+  Enable it as a client event artifact. New events in the Security,
+  System, PowerShell, Windows Defender and Sysmon logs are matched as
+  they are written. Each match is forwarded as a row of this artifact
+  and as an alert (`Server.Internal.Alerts`), which the dashboard
+  shows with drill-down actions.
+
+  The default rule pack covers a small set of high-signal events. Add
+  your own rules to `SigmaRules`, separated by `---` lines.
+
+  NOTE: reading the Security log needs the agent to run as SYSTEM or
+  an administrator.
+
+type: CLIENT_EVENT
+
+imports:
+  - Windows.Sigma.EventLogs
+
+required_permissions:
+  - EXECVE
+  - FILESYSTEM_WRITE
+  - SERVER_ADMIN
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: EventLogDirectory
+    default: C:/Windows/System32/WinEvt/Logs/
+  - name: DedupSeconds
+    type: int
+    default: 300
+    description: Suppress repeat alerts for the same rule within this many seconds.
+  - name: SigmaRules
+    description: Sigma rules separated by --- lines.
+    default: |
+      title: Security event log cleared
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000001
+      level: high
+      description: The Security log was cleared, a common anti-forensics step.
+      tags: [attack.defense_evasion, attack.t1070.001]
+      logsource: {product: windows, service: security}
+      detection:
+        selection: {EventID: 1102}
+        condition: selection
+      ---
+      title: System event log cleared
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000002
+      level: high
+      description: The System log was cleared.
+      tags: [attack.defense_evasion, attack.t1070.001]
+      logsource: {product: windows, service: system}
+      detection:
+        selection: {EventID: 104}
+        condition: selection
+      ---
+      title: Service installed from a user-writable path
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000003
+      level: high
+      description: A new service runs from Temp, AppData, ProgramData or Public, or via a shell.
+      tags: [attack.persistence, attack.t1543.003]
+      logsource: {product: windows, service: system}
+      detection:
+        selection:
+          EventID: 7045
+        paths:
+          ImagePath|contains: ['\Temp\', '\AppData\', '\ProgramData\', '\Users\Public\', 'powershell', 'cmd.exe /c', 'cmd /c']
+        condition: selection and paths
+      ---
+      title: New service installed
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000004
+      level: medium
+      description: A new service was installed.
+      tags: [attack.persistence, attack.t1543.003]
+      logsource: {product: windows, service: system}
+      detection:
+        selection: {EventID: 7045}
+        condition: selection
+      ---
+      title: User added to a privileged local group
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000005
+      level: high
+      description: A member was added to Administrators or Remote Desktop Users.
+      tags: [attack.persistence, attack.t1098]
+      logsource: {product: windows, service: security}
+      detection:
+        selection:
+          EventID: 4732
+          TargetUserName: ['Administrators', 'Remote Desktop Users']
+        condition: selection
+      ---
+      title: Local user account created
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000006
+      level: medium
+      description: A local user account was created.
+      tags: [attack.persistence, attack.t1136.001]
+      logsource: {product: windows, service: security}
+      detection:
+        selection: {EventID: 4720}
+        condition: selection
+      ---
+      title: Scheduled task created
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000007
+      level: medium
+      description: A scheduled task was registered.
+      tags: [attack.persistence, attack.t1053.005]
+      logsource: {product: windows, service: security}
+      detection:
+        selection: {EventID: 4698}
+        condition: selection
+      ---
+      title: Suspicious PowerShell script block
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000008
+      level: high
+      description: A script block runs known attack tooling, or downloads code and executes it in memory.
+      tags: [attack.execution, attack.t1059.001]
+      logsource: {product: windows, service: powershell}
+      detection:
+        selection:
+          EventID: 4104
+        tools:
+          ScriptBlockText|contains: ['Invoke-Mimikatz', 'Invoke-Shellcode', 'Invoke-ReflectivePEInjection', 'sekurlsa::']
+        cradle_download:
+          ScriptBlockText|contains: ['DownloadString(', 'DownloadData(']
+        cradle_execute:
+          ScriptBlockText|contains: ['IEX', 'Invoke-Expression']
+        condition: selection and (tools or (cradle_download and cradle_execute))
+      ---
+      title: Defender real-time protection disabled
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000009
+      level: high
+      description: Microsoft Defender real-time protection was turned off.
+      tags: [attack.defense_evasion, attack.t1562.001]
+      logsource: {product: windows, service: windefend}
+      detection:
+        selection: {EventID: 5001}
+        condition: selection
+      ---
+      title: Defender detected malware
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000010
+      level: critical
+      description: Microsoft Defender detected malware or unwanted software.
+      tags: [attack.execution]
+      logsource: {product: windows, service: windefend}
+      detection:
+        selection:
+          EventID: [1006, 1116]
+        condition: selection
+      ---
+      title: Remote interactive logon (RDP)
+      id: 7f6c1e4a-0b1e-4f0a-9a51-000000000011
+      level: low
+      description: A user logged on over Remote Desktop.
+      tags: [attack.lateral_movement, attack.t1021.001]
+      logsource: {product: windows, service: security}
+      detection:
+        selection:
+          EventID: 4624
+          LogonType: 10
+        condition: selection
+
+sources:
+  - query: |
+      LET watch(name) = SELECT * FROM watch_evtx(filename=EventLogDirectory + name)
+
+      LET MonitorLogSources <= sigma_log_sources(
+        `*/windows/security`={ SELECT * FROM watch(name="Security.evtx") },
+        `*/windows/system`={ SELECT * FROM watch(name="System.evtx") },
+        `*/windows/powershell`={
+           SELECT * FROM watch(name="Microsoft-Windows-PowerShell%4Operational.evtx") },
+        `*/windows/windefend`={
+           SELECT * FROM watch(name="Microsoft-Windows-Windows Defender%4Operational.evtx") },
+        `*/windows/sysmon`={
+           SELECT * FROM watch(name="Microsoft-Windows-Sysmon%4Operational.evtx") })
+
+      SELECT System.TimeCreated.SystemTime AS EventTime,
+             _Rule.Title AS Rule,
+             _Rule.Level AS Level,
+             System.EventID.Value AS EventID,
+             System.Channel AS Channel,
+             System.Computer AS Computer,
+             EventData AS EventData,
+             alert(name="Sigma: " + _Rule.Title,
+                   dedup=DedupSeconds,
+                   source="sigma",
+                   rule=_Rule.Title,
+                   level=_Rule.Level,
+                   description=_Rule.Description,
+                   event_id=System.EventID.Value,
+                   channel=System.Channel,
+                   event_time=System.TimeCreated.SystemTime,
+                   details=EventData) AS _Alert
+      FROM sigma(
+         rules=split(string=SigmaRules, sep_string="\n---\n"),
+         log_sources=MonitorLogSources,
+         field_mapping=StandardSigmaFieldMapping)
