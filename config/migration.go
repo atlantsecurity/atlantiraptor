@@ -127,8 +127,11 @@ func migrate_0_6_1(config_obj *config_proto.Config) {
 		config_obj.Defaults = &config_proto.Defaults{}
 	}
 
-	if config_obj.Defaults.HuntExpiryHours == 0 {
-		config_obj.Defaults.HuntExpiryHours = 24 * 7
+	// Hunts stop after an hour unless started with "Run until stopped".
+	// 168 (7 days) was the old default written into every generated
+	// config, so it is treated as "not customised" too.
+	if config_obj.Defaults.HuntExpiryHours == 0 || config_obj.Defaults.HuntExpiryHours == 24*7 {
+		config_obj.Defaults.HuntExpiryHours = 1
 	}
 
 	if config_obj.Defaults.NotebookCellTimeoutMin == 0 {

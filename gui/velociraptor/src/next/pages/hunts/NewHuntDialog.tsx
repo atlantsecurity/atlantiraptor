@@ -13,12 +13,12 @@ import {
   useCollectArtifact, type CreateHuntRequest,
 } from '../../lib/queries';
 import type { ArtifactCollectorArgs, ArtifactDescriptor, ArtifactParameterDef, Hunt, HuntCondition } from '../../lib/types';
-import { fmtNum, toNum } from '../../lib/format';
+import { fmtNum, toDate, toNum } from '../../lib/format';
 import {
   Badge, Button, cn, Field, Input, Kbd, Segmented, Select, Spinner, Switch, Textarea, Tooltip,
 } from '../../ui/primitives';
 import { TagInput } from './TagInput';
-import { fromLocalInput, toLocalInput } from './time';
+import { DEFAULT_HUNT_HOURS, fromLocalInput, hoursLabel, runsUntilStopped, toLocalInput, untilStoppedExpiry } from './time';
 
 type Params = Record<string, Record<string, string>>;
 type TargetMode = 'all' | 'labels' | 'os';
@@ -45,7 +45,7 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   const isCollection = !!target;
   const isServer = target?.clientId === 'server';
   const { traits } = useTraits();
-  const expiryHours = toNum(traits?.customizations?.hunt_expiry_hours) || 24 * 7;
+  const expiryHours = toNum(traits?.customizations?.hunt_expiry_hours) || DEFAULT_HUNT_HOURS;
 
   // -------------------------------------------------------- State
   const base = baseHunt?.start_request ?? baseRequest;
@@ -61,6 +61,7 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   const [description, setDescription] = useState(baseHunt?.hunt_description ? `${baseHunt.hunt_description}` : '');
   const [tags, setTags] = useState<string[]>(baseHunt?.tags ?? []);
   const [expires, setExpires] = useState(() => toLocalInput(new Date(Date.now() + expiryHours * 3600 * 1000)));
+  const [untilStopped, setUntilStopped] = useState(() => runsUntilStopped(toDate(baseHunt?.expires)?.getTime()));
   const cond = baseHunt?.condition;
   const [mode, setMode] = useState<TargetMode>(
     cond?.labels?.label?.length ? 'labels' : cond?.os?.os ? 'os' : 'all');
@@ -141,7 +142,8 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
       condition,
     };
     const exp = fromLocalInput(expires);
-    if (exp) req.expires = exp.getTime() * 1000;
+    if (untilStopped) req.expires = untilStoppedExpiry();
+    else if (exp) req.expires = exp.getTime() * 1000;
     if (toNum(timeout)) req.start_request.timeout = toNum(timeout);
     if (toNum(maxRows)) req.start_request.max_rows = toNum(maxRows);
     if (toNum(maxMb)) req.start_request.max_upload_bytes = toNum(maxMb) * 1024 * 1024;
@@ -153,7 +155,7 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
   };
 
   const expDate = fromLocalInput(expires);
-  const expInPast = !!expDate && expDate.getTime() < Date.now();
+  const expInPast = !untilStopped && !!expDate && expDate.getTime() < Date.now();
   const missingLabels = mode === 'labels' && includeLabels.length === 0;
   const canSubmit = isCollection ? selected.length > 0 : selected.length > 0 && !expInPast && !missingLabels;
 
@@ -343,8 +345,13 @@ export default function NewHuntDialog({ open, onOpenChange, onCreated, baseHunt,
                     <Field label="Tags">
                       <TagInput value={tags} onChange={setTags} suggestions={allTags} placeholder="Optional" />
                     </Field>
-                    <Field label="Expires" hint={expInPast ? <span className="tw:text-bad">Expiry is in the past</span> : `Default is ${expiryHours / 24} days`}>
-                      <Input type="datetime-local" value={expires} onChange={e => setExpires(e.target.value)} />
+                    <Field label="Stops" hint={untilStopped
+                      ? 'Keeps collecting from machines as they come online until someone stops it.'
+                      : expInPast ? <span className="tw:text-bad">Expiry is in the past</span> : `Hunts stop after ${hoursLabel(expiryHours)} by default.`}>
+                      <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+                        {!untilStopped && <Input type="datetime-local" value={expires} onChange={e => setExpires(e.target.value)} className="tw:w-auto" />}
+                        <Switch checked={untilStopped} onChange={setUntilStopped} label="Run until stopped" />
+                      </div>
                     </Field>
                   </div>}
 

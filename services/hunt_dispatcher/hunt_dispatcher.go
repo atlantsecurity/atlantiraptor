@@ -312,9 +312,11 @@ func (self *HuntDispatcher) CreateHunt(
 		hunt.CreateTime = uint64(utils.GetTime().Now().UTC().UnixNano() / 1000)
 	}
 	if hunt.Expires == 0 {
+		// One hour unless configured: a hunt that should keep going is
+		// started with "Run until stopped" (a far-off expiry).
 		default_expiry := config_obj.Defaults.HuntExpiryHours
 		if default_expiry == 0 {
-			default_expiry = 7 * 24
+			default_expiry = 1
 		}
 		hunt.Expires = uint64(utils.GetTime().Now().Add(
 			time.Duration(default_expiry)*time.Hour).

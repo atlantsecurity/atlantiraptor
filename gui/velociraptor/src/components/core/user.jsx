@@ -47,9 +47,15 @@ class _UserSettings extends React.Component {
 
                         // If the URL does not specify an org, then we need to
                         // set it to the default org from the traits.
+                        // Keep the page the link pointed at (a link from an
+                        // alert mail or a colleague often has no org).
                         if (_.isEmpty(params.org_id)) {
-                            window.history.pushState({}, "", api.href("/app/index.html", {}));
-                            this.props.history.replace("/welcome");
+                            let hash = window.location.hash || "";
+                            window.history.replaceState(
+                                {}, "", api.href("/app/index.html", {}) + hash);
+                            if (!hash || hash === "#/" || hash === "#") {
+                                this.props.history.replace("/welcome");
+                            }
                         }
                     }
 

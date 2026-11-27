@@ -62,16 +62,17 @@ export function usePermission(name: string): boolean {
 
 // --------------------------------------------------------------- Hunts
 
-export function useHunts(includeArchived: boolean) {
+export function useHunts(includeArchived: boolean, enabled = true) {
   return useQuery({
     queryKey: ['hunts', { includeArchived }],
+    enabled,
     queryFn: ({ signal }) => api.get<ListHuntsResponse>('v1/ListHunts', {
       count: 2000,
       offset: 0,
       include_archived: includeArchived,
     }, signal),
     select: d => d.items ?? [],
-    refetchInterval: POLL.fast,
+    refetchInterval: POLL.normal,
     placeholderData: keepPreviousData,
   });
 }
@@ -145,20 +146,36 @@ const RESULTS_PAGE = 2000;
 
 // Hunt results are streamed in pages. The table renders whatever has
 // arrived so far and offers to load more.
-export function useHuntResults(huntId: string | undefined, artifact: string | undefined) {
+// filter and sort run on the server over every row of the hunt.
+export interface HuntResultsQuery {
+  filter?: string;
+  sort?: { column: string; desc: boolean } | null;
+  // Refresh while the hunt runs (only while a few pages are loaded, so
+  // a scrolled-through large result set is not re-downloaded).
+  live?: boolean;
+}
+
+export function useHuntResults(huntId: string | undefined, artifact: string | undefined,
+  opts: HuntResultsQuery = {}) {
+  const filter = opts.filter?.trim() ?? '';
+  const sort = opts.sort ?? null;
   return useInfiniteQuery({
-    queryKey: ['hunt-results', huntId, artifact],
+    queryKey: ['hunt-results', huntId, artifact, filter, sort?.column ?? '', !!sort?.desc],
     enabled: !!huntId && !!artifact,
     initialPageParam: 0,
+    placeholderData: keepPreviousData,
     queryFn: async ({ pageParam, signal }) => {
       const resp = await emptyIfNotFound(api.get<TableResponse>('v1/GetHuntResults', {
         hunt_id: huntId,
         artifact,
         offset: pageParam,
         count: RESULTS_PAGE,
+        ...(filter ? { filter } : {}),
+        ...(sort ? { sort_column: sort.column, sort_desc: sort.desc } : {}),
       }, signal));
       return { ...parseTable(resp), offset: pageParam as number };
     },
+    refetchInterval: q => (opts.live && (q.state.data?.pages.length ?? 0) <= 3 ? POLL.normal : false),
     getNextPageParam: (last: ParsedTable & { offset: number }) => {
       if (last.rows.length < RESULTS_PAGE) return undefined;
       return last.offset + last.rows.length;
@@ -348,7 +365,8 @@ export function useClientSearch(query: string, opts: { limit?: number; onlineOnl
       sort,
       filter: onlineOnly ? 'ONLINE' : 'UNFILTERED',
     }, signal),
-    refetchInterval: POLL.normal,
+    // Big lists (the Clients page asks for 2,000) refresh less often.
+    refetchInterval: limit > 200 ? POLL.slow : POLL.normal,
     placeholderData: keepPreviousData,
   });
 }
@@ -400,8 +418,10 @@ export function useClientCounts() {
 export function useRecentClients(limit = 8) {
   return useQuery({
     queryKey: ['recent-clients', limit],
+    // Online clients were all seen in the last few minutes; a sample of
+    // them is enough to show the latest few.
     queryFn: ({ signal }) => api.get<SearchClientsResponse>('v1/SearchClients', {
-      query: 'all', limit: 500, filter: 'ONLINE',
+      query: 'all', limit: Math.max(limit * 8, 64), filter: 'ONLINE',
     }, signal),
     select: d => [...(d.items ?? [])]
       .sort((a, b) => toNum(b.last_seen_at) - toNum(a.last_seen_at))
@@ -934,7 +954,7 @@ const EVENT_PAGE = 2000;
 // Event tables are indexed by time, not row number: page forward from the
 // last row's timestamp and drop the rows of that second already shown.
 export function useEventTable(clientId: string | undefined, artifact: string | undefined,
-  range: { start: number; end: number }, logs: boolean, live: boolean) {
+  range: { start: number; end: number }, logs: boolean, live: boolean, interval: number = POLL.normal) {
   const server = clientId === 'server';
   const type = logs ? (server ? 'SERVER_EVENT_LOGS' : 'CLIENT_EVENT_LOGS') : (server ? 'SERVER_EVENT' : 'CLIENT_EVENT');
   return useInfiniteQuery({
@@ -959,7 +979,7 @@ export function useEventTable(clientId: string | undefined, artifact: string | u
       return { ...t, rows, next };
     },
     getNextPageParam: last => last.next,
-    refetchInterval: live ? POLL.normal : false,
+    refetchInterval: live ? interval : false,
   });
 }
 
@@ -1041,9 +1061,10 @@ export interface NotebookCell {
   more_messages?: boolean;
 }
 
-export function useNotebookList() {
+export function useNotebookList(enabled = true) {
   return useQuery({
     queryKey: ['notebook-list'],
+    enabled,
     queryFn: ({ signal }) => emptyIfNotFound(api.get<TableResponse>('v1/GetTable', { type: 'NOTEBOOKS', start_row: 0, rows: 2000 }, signal)),
     select: d => parseTable(d).rows,
     refetchInterval: POLL.slow,

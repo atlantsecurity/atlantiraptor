@@ -1,8 +1,9 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounced } from '../../lib/hooks';
 import { Link, useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Play, Square, Copy, Pencil, MoreHorizontal, Download, RefreshCw, Archive, Trash2, ExternalLink,
+  Play, Square, Copy, Pencil, MoreHorizontal, Download, RefreshCw, Archive, Trash2,
   Users, CircleCheck, CircleX, Loader, Rows3, HardDrive, BookOpen, Table2, LayoutList, TriangleAlert,
   FileDown, FolderArchive,
 } from 'lucide-react';
@@ -12,7 +13,8 @@ import {
   HUNT_UPLOADS_MAX_FLOWS,
 } from '../../lib/queries';
 import type { Hunt, AvailableDownloadFile } from '../../lib/types';
-import { fmtBytes, fmtNum, fmtTime, timeAgo, toNum, fmtDuration } from '../../lib/format';
+import { fmtBytes, fmtNum, fmtTime, timeAgo, toDate, toNum, fmtDuration } from '../../lib/format';
+import { runsUntilStopped } from './time';
 import {
   Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, EmptyState, IconButton, Menu, MenuContent,
   MenuItem, MenuSeparator, MenuTrigger, Mono, Select, Skeleton, Spinner, Tabs, Tooltip,
@@ -21,6 +23,7 @@ import { DataTable } from '../../ui/DataTable';
 import type { Row } from '../../lib/table';
 import { effectiveState, HuntStateBadge, huntCounts, huntTitle } from './HuntBits';
 import EditHuntDialog from './EditHuntDialog';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
 import { ClientLink, FlowLink } from '../evidence/links';
 import ExportHuntDialog from '../evidence/ExportHuntDialog';
 import { ArchiveList, useArchiveReadyToast } from '../evidence/ArchiveList';
@@ -115,7 +118,8 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
                 <>
                   <span>·</span>
                   <Tooltip content={fmtTime(hunt.expires)}>
-                    <span>{state === 'expired' ? 'Expired' : 'Expires'} {timeAgo(hunt.expires)}</span>
+                    <span>{runsUntilStopped(toDate(hunt.expires)?.getTime()) ? 'Runs until stopped'
+                      : `${state === 'expired' ? 'Stopped' : 'Stops'} ${timeAgo(hunt.expires)}`}</span>
                   </Tooltip>
                 </>
               )}
@@ -138,6 +142,8 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
               onClick={() => setExportOpen(true)}>Export</Button>
             <Button variant="secondary" icon={<Copy className="tw:size-3.5" />} disabled={!canHunt}
               onClick={() => onCopy(hunt)}>Copy</Button>
+            <AddToCaseButton suggestedTitle={huntTitle(hunt)}
+              item={{ kind: 'hunt', ref: hunt.hunt_id, label: `${huntTitle(hunt)} (${hunt.hunt_id})` }} />
             <IconButton label="Edit" variant="secondary" icon={<Pencil className="tw:size-3.5" />}
               onClick={() => setEditOpen(true)} />
             <Menu>
@@ -148,9 +154,6 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
                 <MenuItem icon={<RefreshCw />} onSelect={() => run(
                   () => modify.mutateAsync({ hunt_id: hunt.hunt_id, recalculate: true }), 'Statistics recalculated')}>
                   Recalculate statistics
-                </MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/hunts/${hunt.hunt_id}/overview`)}>
-                  Open in classic view
                 </MenuItem>
                 <MenuSeparator />
                 <MenuItem icon={<Archive />} disabled={state === 'archived'} onSelect={() => setConfirm('archive')}>Archive</MenuItem>
@@ -186,7 +189,7 @@ export default function HuntDetail({ huntId, summary, tab, onCopy }: {
 
       <div className="tw:flex-1 tw:min-h-0 tw:flex tw:flex-col tw:bg-panel">
         {active === 'overview' && <OverviewTab hunt={hunt} onExport={() => setExportOpen(true)} onTab={setTab} />}
-        {active === 'results' && <ResultsTab hunt={hunt} />}
+        {active === 'results' && <ResultsTab hunt={hunt} onExport={() => setExportOpen(true)} />}
         {active === 'clients' && <ClientsTab huntId={huntId} rows={flows?.rows} columns={flows?.columns} loading={!flows} />}
         {active === 'files' && <FilesTab huntId={huntId} flows={flows?.rows} onExport={() => setExportOpen(true)} />}
         {active === 'exports' && <ExportsTab files={archives} onExport={() => setExportOpen(true)} />}
@@ -323,7 +326,7 @@ function OverviewTab({ hunt, onExport, onTab }: { hunt: Hunt; onExport: () => vo
             <dl className="tw:p-4 tw:space-y-3 tw:text-xs">
               <Def label="Created">{fmtTime(hunt.create_time)}</Def>
               {toNum(hunt.start_time) > 0 && <Def label="Started">{fmtTime(hunt.start_time)}</Def>}
-              <Def label="Expires">{fmtTime(hunt.expires)}</Def>
+              <Def label="Stops">{runsUntilStopped(toDate(hunt.expires)?.getTime()) ? 'When someone stops it' : fmtTime(hunt.expires)}</Def>
               <Def label="Timeout">{toNum(req.timeout) ? fmtDuration(toNum(req.timeout)) : 'Default'}</Def>
               <Def label="Max rows">{toNum(req.max_rows) ? fmtNum(req.max_rows) : 'Default'}</Def>
               <Def label="Max upload">{toNum(req.max_upload_bytes) ? fmtBytes(req.max_upload_bytes) : 'Default'}</Def>
@@ -425,14 +428,22 @@ function ExportsTab({ files, onExport }: { files: AvailableDownloadFile[]; onExp
 
 // ------------------------------------------------------------- Results
 
-function ResultsTab({ hunt }: { hunt: Hunt }) {
+function ResultsTab({ hunt, onExport }: { hunt: Hunt; onExport: () => void }) {
   const sources = hunt.artifact_sources?.length ? hunt.artifact_sources : (hunt.artifacts ?? []);
   const [source, setSource] = useState(sources[0]);
   useEffect(() => {
     if (!source || !sources.includes(source)) setSource(sources[0]);
   }, [sources, source]);
 
-  const q = useHuntResults(hunt.hunt_id, source);
+  // Search and sort run on the server, so they cover every row of the
+  // hunt and not only the pages loaded so far.
+  const [filter, setFilter] = useState('');
+  const [sort, setSort] = useState<{ column: string; desc: boolean } | null>(null);
+  const serverFilter = useDebounced(filter, 400);
+  useEffect(() => { setFilter(''); setSort(null); }, [source]);
+
+  const live = effectiveState(hunt) === 'running';
+  const q = useHuntResults(hunt.hunt_id, source, { filter: serverFilter, sort, live });
   const rows = useMemo(() => q.data?.pages.flatMap(p => p.rows) ?? [], [q.data]);
   const columns = q.data?.pages[0]?.columns;
   const uploadRenderers = useMemo(() => withUploadCells(columns, rows, {}), [columns, rows]);
@@ -451,7 +462,15 @@ function ResultsTab({ hunt }: { hunt: Hunt }) {
       hasMore={q.hasNextPage}
       loadingMore={q.isFetchingNextPage}
       onLoadMore={() => q.fetchNextPage()}
+      serverSide
+      filter={filter}
+      onFilterChange={setFilter}
+      sort={sort}
+      onSortChange={setSort}
+      total={q.data?.pages[0]?.total || undefined}
+      exportExtra={[{ label: 'Every row of the hunt (zip)…', icon: <FolderArchive />, onSelect: onExport }]}
       storageKey={`hunt-results:${source}`}
+      rowSource={{ ref: hunt.hunt_id, label: `Hunt ${hunt.hunt_id} · ${source}` }}
       exportName={`${hunt.hunt_id}-${source?.replace(/[^\w.-]+/g, '_')}`}
       renderers={{
         ...uploadRenderers,
@@ -467,11 +486,14 @@ function ResultsTab({ hunt }: { hunt: Hunt }) {
           ) : <Mono className="tw:text-muted">{source}</Mono>}
           <IconButton size="sm" label="Refresh" icon={<RefreshCw className={`tw:size-3.5 ${q.isFetching ? 'tw:animate-spin' : ''}`} />}
             onClick={() => q.refetch()} />
+          {live && <span className="tw:text-2xs tw:text-muted">Updating live while the hunt runs</span>}
         </div>
       }
-      empty={<EmptyState icon={<Rows3 />} title="No results yet">
-        Results appear here as clients finish collecting {source}.
-      </EmptyState>}
+      empty={serverFilter
+        ? <EmptyState icon={<Rows3 />} title="No rows match">Nothing in any row of this hunt matches “{serverFilter}”.</EmptyState>
+        : <EmptyState icon={<Rows3 />} title="No results yet">
+          Results appear here as clients finish collecting {source}.
+        </EmptyState>}
     />
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Monitor, Tag, TagsIcon, X, ExternalLink, CircleHelp, Zap, FolderTree, History } from 'lucide-react';
+import { Monitor, Tag, TagsIcon, X, CircleHelp, Zap, FolderTree, History } from 'lucide-react';
 import { useClientSearch, useLabelClients, usePermission } from '../../lib/queries';
 import type { ApiClient } from '../../lib/types';
 import { clientStatus, fmtNum, fmtTime, timeAgo, toNum } from '../../lib/format';
@@ -94,10 +94,6 @@ export default function ClientsPage() {
           <span className="tw:text-xs tw:text-muted rx-num">
             {isLoading ? 'Loading…' : `${fmtNum(total)} match${total === 1 ? '' : 'es'} · ${fmtNum(counts.on)} online`}
           </span>
-          <div className="tw:ml-auto">
-            <Button size="sm" variant="ghost" icon={<ExternalLink className="tw:size-3.5" />}
-              onClick={() => history.push(`/classic/search/${encodeURIComponent(query)}`)}>Classic view</Button>
-          </div>
         </div>
         <form className="tw:flex tw:items-center tw:gap-2" onSubmit={e => {
           e.preventDefault();

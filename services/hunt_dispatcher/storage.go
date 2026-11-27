@@ -195,16 +195,23 @@ func (self *HuntStorageManagerImpl) GetLastTimestamp() uint64 {
 }
 
 func (self *HuntStorageManagerImpl) Close(ctx context.Context) {
+	// Force the index to be dumped to disk on close, so we do not
+	// lose state. This must happen before the store is marked closed
+	// (a closed store skips flushing) and must not be debounced:
+	// otherwise hunts created since the last periodic flush (up to 10
+	// minutes) are missing from the hunt list after a restart.
+	if self.I_am_master {
+		self.mu.Lock()
+		_, err := self._FlushIndex(ctx)
+		self.mu.Unlock()
+		if err != nil {
+			logger := logging.GetLogger(self.config_obj, &logging.FrontendComponent)
+			logger.Error("HuntStorageManager FlushIndex %v", err)
+		}
+	}
+
 	atomic.SwapUint64(&self.last_timestamp, 0)
 	atomic.SwapInt64(&self.closed, 1)
-
-	// Force the index to be dumped to disk on close, so we do not
-	// lose state.
-	_, err := self.FlushIndex(ctx)
-	if err != nil {
-		logger := logging.GetLogger(self.config_obj, &logging.FrontendComponent)
-		logger.Error("HuntStorageManager FlushIndex %v", err)
-	}
 	self.refresh_throttler.Close()
 }
 

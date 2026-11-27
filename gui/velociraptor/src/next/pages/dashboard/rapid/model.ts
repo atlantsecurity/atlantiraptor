@@ -79,3 +79,88 @@ export function indicatorProblem(raw: string): string | null {
   const host = v.split(/[/:]/)[0];
   return DOMAIN.test(host) ? null : 'Enter a domain (example.com), URL or IP address.';
 }
+
+// ------------------------------------------------- Kinds of indicator
+
+export type RapidKind = 'web' | 'hash' | 'file' | 'process' | 'user';
+export const RAPID_KINDS: RapidKind[] = ['web', 'hash', 'file', 'process', 'user'];
+export const RAPID_KIND_LABEL: Record<RapidKind, string> = {
+  web: 'Website or IP', hash: 'File hash', file: 'File name or path', process: 'Program', user: 'User',
+};
+export const RAPID_KIND_QUESTION: Record<RapidKind, string> = {
+  web: 'visited', hash: 'has the file', file: 'has the file', process: 'ran', user: 'had activity by',
+};
+
+const HASH = /^([a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i;
+const WIN_PATH = /^[a-z]:[\\/]|^\\\\|^\//i;
+const FILE_EXT = /\.(exe|dll|ps1|bat|cmd|vbs|js|jse|jar|scr|zip|rar|7z|docm?|xlsm?|pdf|lnk|hta|msi|iso|img|bin|sh|py|elf|so|dylib|app|pkg|dmg|sys)$/i;
+
+/** Best guess of what kind of indicator this is. */
+export function detectKind(raw: string): RapidKind {
+  const v = raw.trim().replace(/^hxxp/i, 'http').replace(/\[\.\]|\(\.\)/g, '.');
+  if (HASH.test(v)) return 'hash';
+  if (WIN_PATH.test(v)) return 'file';
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) return 'web';
+  if (/^[^\\@\s]+\\[^\\@\s]+$/.test(v)) return 'user'; // DOMAIN\user
+  if (FILE_EXT.test(v)) return /\.(exe|scr|com)$/i.test(v) ? 'process' : 'file';
+  if (/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v)) return 'user'; // user@domain.tld (UPN)
+  if (v.includes('.') || v.includes(':')) return 'web';
+  return 'process';
+}
+
+/** Refanged value to hunt for. */
+export function cleanIndicator(raw: string): string {
+  return raw.trim().replace(/^hxxp/i, 'http').replace(/\[\.\]|\(\.\)/g, '.');
+}
+
+/** A user-facing problem with the indicator for this kind, or null. */
+export function kindProblem(raw: string, kind: RapidKind): string | null {
+  const v = cleanIndicator(raw);
+  if (!v) return null;
+  if (v.length > 2048) return 'That is too long.';
+  switch (kind) {
+    case 'web': return indicatorProblem(v);
+    case 'hash': return HASH.test(v) ? null : 'Enter an MD5, SHA1 or SHA256 hash.';
+    case 'file': return /[\r\n]/.test(v) ? 'Enter one file name or path.' : null;
+    case 'process': return /[\\/\r\n]/.test(v) ? 'Enter a program name such as rclone.exe (use File for a full path).' : null;
+    case 'user': return /\s/.test(v) ? 'Enter one user name, e.g. alice or CORP\\alice.' : null;
+  }
+}
+
+// --------------------------------------------- Shared Rapid hunt history
+
+export const RAPID_TAG = 'rapid-hunt';
+
+export interface RapidEntry { huntId: string; indicator: string; kind: RapidKind; started: number; creator: string }
+
+/** Description of a Rapid hunt, read back by parseRapidDescription. */
+export function rapidDescription(indicator: string, kind: RapidKind): string {
+  return kind === 'web' ? `Rapid hunt: ${indicator}` : `Rapid hunt (${kind}): ${indicator}`;
+}
+
+export function parseRapidDescription(d: string): { indicator: string; kind: RapidKind } | null {
+  const m = /^Rapid hunt(?: \((web|hash|file|process|user)\))?: (.+)$/s.exec(d ?? '');
+  return m ? { kind: (m[1] as RapidKind) ?? 'web', indicator: m[2] } : null;
+}
+
+// ------------------------------------------------ Pivots from tables
+
+const USER_COL = /^(user|username|user_name|targetusername|subjectusername|owner|account|accountname|logonuser)$/i;
+const PROC_COL = /^(name|process|processname|image|exe|binary|program|parentimage|parent)$/i;
+const HASH_COL = /(md5|sha1|sha256|hash)/i;
+
+/** The kind of indicator a cell holds, from its column name and value. */
+export function pivotKind(column: string, value: string): RapidKind | null {
+  const v = cleanIndicator(value);
+  if (!v || v.length > 512 || /[\r\n]/.test(v)) return null;
+  let k: RapidKind = detectKind(v);
+  if (USER_COL.test(column) && !/[\\/]/.test(v.replace(/^[^\\]+\\/, ''))) k = 'user';
+  else if (PROC_COL.test(column)) k = /[\\/]/.test(v) ? 'file' : 'process';
+  else if (HASH_COL.test(column)) k = 'hash';
+  if (k === 'process' && !USER_COL.test(column) && !PROC_COL.test(column) && !/\.(exe|scr|com)$/i.test(v)) {
+    // A bare word in an unrelated column is not worth offering.
+    return null;
+  }
+  return kindProblem(v, k) ? null : k;
+}
+

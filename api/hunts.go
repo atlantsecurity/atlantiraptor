@@ -541,6 +541,13 @@ func (self *ApiServer) GetHuntResults(
 	if count > 5000 {
 		count = 5000
 	}
+	if in.Filter != "" || in.SortColumn != "" {
+		result, err := filteredHuntResults(ctx, org_config_obj, principal, in, count)
+		if err != nil {
+			return nil, Status(self.verbose, err)
+		}
+		return result, nil
+	}
 	env := ordereddict.NewDict().
 		Set("HuntID", in.HuntId).
 		Set("ArtifactName", in.Artifact).

@@ -2,14 +2,21 @@
 // triage, and response steps scoped to that single host.
 import { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { Briefcase, ChevronDown, ChevronRight, FileSearch, FileX2, Laptop, ShieldAlert, Skull, Zap } from 'lucide-react';
+import {
+  Briefcase, Check, ChevronDown, ChevronRight, EyeOff, FileSearch, FileX2, Laptop, RotateCcw, ShieldAlert, Skull, UserCheck, X, Zap,
+} from 'lucide-react';
 import { AddToCaseDialog } from '../../cases/AddToCaseDialog';
 import { AiTriageButton } from '../../ai/AiTriage';
 import { jsonContext } from '../../ai/context';
-import { useClient } from '../../../lib/queries';
+import { useClient, usePermission } from '../../../lib/queries';
+import { startFullTriage } from '../../../lib/triage';
+import { toast } from 'sonner';
 import { fmtTime, timeAgo } from '../../../lib/format';
 import { Badge, Button, Mono, Tooltip, cn } from '../../../ui/primitives';
 import { detailEntries, sourceLink, SEVERITY_TONE, type Alert } from './model';
+import {
+  addSuppression, ALERT_STATUS_LABEL, ALERT_STATUS_TONE, setState, type AlertState, type AlertStatus, type TriageRecord,
+} from './triage';
 
 function respondUrl(action: string, clientId: string, prefill: Record<string, string> = {}): string {
   const q = new URLSearchParams({ client: clientId, ...prefill });
@@ -22,7 +29,13 @@ function fmtValue(v: unknown): string {
   return String(v);
 }
 
-export function AlertRow({ alert }: { alert: Alert }) {
+export function AlertRow({ alert, state, suppressed, me, update }: {
+  alert: Alert;
+  state: AlertState;
+  suppressed: boolean;
+  me: string;
+  update: (change: (r: TriageRecord) => TriageRecord) => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
   const [caseOpen, setCaseOpen] = useState(false);
   const history = useHistory();
@@ -30,6 +43,25 @@ export function AlertRow({ alert }: { alert: Alert }) {
   const host = client?.os_info?.hostname || alert.clientId || 'server';
   const source = sourceLink(alert);
   const path = typeof alert.data.path === 'string' ? alert.data.path : '';
+  const canCollect = usePermission('collect_client');
+  const [triaging, setTriaging] = useState(false);
+  const change = (fn: (r: TriageRecord) => TriageRecord, done: string) =>
+    update(fn).then(() => toast.success(done)).catch(e => toast.error((e as Error).message));
+  const mark = (status: AlertStatus) =>
+    change(r => setState(r, [alert.id], { status }, me), `Marked ${ALERT_STATUS_LABEL[status].toLowerCase()}`);
+
+  const triage = async () => {
+    setTriaging(true);
+    try {
+      const flowId = await startFullTriage(alert.clientId, client);
+      toast.success(`Full triage started on ${host}`);
+      history.push(`/collected/${alert.clientId}/${flowId}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTriaging(false);
+    }
+  };
 
   return (
     <div className={cn(open && 'tw:bg-hover/40')}>
@@ -43,6 +75,10 @@ export function AlertRow({ alert }: { alert: Alert }) {
             {host}{alert.source ? ` · ${alert.source}` : ''}{alert.artifact ? ` · ${alert.artifact}` : ''}
           </div>
         </div>
+        {suppressed
+          ? <Badge tone="neutral" className="tw:shrink-0"><EyeOff className="tw:size-3" /> Suppressed</Badge>
+          : state.status !== 'new' && <Badge tone={ALERT_STATUS_TONE[state.status]} className="tw:shrink-0">{ALERT_STATUS_LABEL[state.status]}</Badge>}
+        {state.assignee && <span className="tw:text-2xs tw:text-muted tw:shrink-0">@{state.assignee}</span>}
         <Tooltip content={fmtTime(alert.time)}>
           <span className="tw:text-2xs tw:text-faint tw:shrink-0 tw:w-20 tw:text-right">{timeAgo(alert.time)}</span>
         </Tooltip>
@@ -51,6 +87,31 @@ export function AlertRow({ alert }: { alert: Alert }) {
       {open && (
         <div className="tw:px-4 tw:pb-4 tw:pl-11 tw:space-y-3">
           {alert.description && <p className="tw:text-xs tw:text-muted">{alert.description}</p>}
+
+          <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
+            <span className="tw:text-2xs tw:text-muted tw:mr-1">
+              {state.by ? `${ALERT_STATUS_LABEL[state.status]} by ${state.by} ${timeAgo(state.at)}` : 'Not handled yet'}
+            </span>
+            {state.status === 'new' && <Button size="sm" variant="secondary" icon={<Check className="tw:size-3.5" />}
+              onClick={() => mark('acknowledged')}>Acknowledge</Button>}
+            {state.status !== 'closed' && <Button size="sm" variant="secondary" icon={<X className="tw:size-3.5" />}
+              onClick={() => mark('closed')}>Close</Button>}
+            {state.status !== 'false_positive' && <Button size="sm" variant="ghost"
+              onClick={() => mark('false_positive')}>False positive</Button>}
+            {(state.status === 'closed' || state.status === 'false_positive') && <Button size="sm" variant="ghost"
+              icon={<RotateCcw className="tw:size-3.5" />} onClick={() => mark('new')}>Reopen</Button>}
+            {state.assignee !== me && <Button size="sm" variant="ghost" icon={<UserCheck className="tw:size-3.5" />}
+              onClick={() => change(r => setState(r, [alert.id], { assignee: me, status: state.status === 'new' ? 'acknowledged' : state.status }, me), 'Assigned to you')}>
+              Assign to me</Button>}
+            {!suppressed && <>
+              {alert.clientId && <Button size="sm" variant="ghost" icon={<EyeOff className="tw:size-3.5" />}
+                onClick={() => change(r => addSuppression(r, { rule: alert.rule, clientId: alert.clientId, by: me }),
+                  `“${alert.rule}” suppressed on ${host}`)}>Suppress on this host</Button>}
+              <Button size="sm" variant="ghost" icon={<EyeOff className="tw:size-3.5" />}
+                onClick={() => change(r => addSuppression(r, { rule: alert.rule, by: me }), `“${alert.rule}” suppressed everywhere`)}>
+                Suppress everywhere</Button>
+            </>}
+          </div>
 
           <div className="tw:flex tw:flex-wrap tw:gap-1.5">
             {alert.clientId && (
@@ -62,8 +123,10 @@ export function AlertRow({ alert }: { alert: Alert }) {
                 onClick={() => history.push(source)}>View source event</Button>
             )}
             {alert.clientId && (
-              <Button size="sm" variant="secondary" icon={<Zap className="tw:size-3.5" />}
-                onClick={() => history.push(`/host/${alert.clientId}`)}>Triage host</Button>
+              <Tooltip content="Collects processes, network connections, autoruns, services, scheduled tasks, users and recently run programs in one go">
+                <Button size="sm" variant="secondary" icon={<Zap className="tw:size-3.5" />} loading={triaging}
+                  disabled={!canCollect} onClick={triage}>Triage host</Button>
+              </Tooltip>
             )}
             {alert.clientId && (
               <Button size="sm" variant="secondary" icon={<ShieldAlert className="tw:size-3.5" />}

@@ -194,6 +194,15 @@ message GetHuntResultsRequest {
     uint64 count = 2;
     string hunt_id = 3;
     string artifact = 4;
+
+    // Optional: keep only rows where any cell matches this
+    // case-insensitive regular expression. Applied on the server so it
+    // covers every row of the hunt, not only the loaded page.
+    string filter = 5;
+
+    // Optional: sort every matching row by this column before paging.
+    string sort_column = 6;
+    bool sort_desc = 7;
 }
 
 message FlowAssignment {
