@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
 
 export interface MfaStatus { enrolled: boolean; required?: boolean; recovery_codes_left: number }
-export interface MfaPolicy { mode: 'all' | 'selected' | 'off'; roles?: string[]; groups?: string[] }
+// remember_ip_days: 0 or missing = server default (30), negative = never remember.
+export interface MfaPolicy { mode: 'all' | 'selected' | 'off'; roles?: string[]; groups?: string[]; remember_ip_days?: number }
 
 export function useMfaPolicy() {
   return useQuery({

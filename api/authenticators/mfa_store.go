@@ -39,6 +39,9 @@ type MFARecord struct {
 	// 2FA session cookie carries it, so a bump revokes all sessions.
 	Generation int64 `json:"generation"`
 	Updated    int64 `json:"updated"`
+	// Addresses this user recently passed the second factor from, so
+	// sign ins from them skip the code (see mfa_trusted_ip.go).
+	TrustedIPs map[string]TrustedIP `json:"trusted_ips,omitempty"`
 }
 
 func (self *MFARecord) Enrolled() bool {

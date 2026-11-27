@@ -139,6 +139,10 @@ func mfaGate(w http.ResponseWriter, r *http.Request, config_obj *config_proto.Co
 		if mfaCookieValid(r, root, username, record) {
 			return true
 		}
+		// Passed from this address recently: don't ask again.
+		if mfaIPTrusted(r, root, record) {
+			return true
+		}
 		reason = "mfa_required"
 	} else {
 		// Not enrolled: allowed only when the policy does not require
@@ -196,7 +200,8 @@ func mfaPublicAPI(config_obj *config_proto.Config) http.HandlerFunc {
 				"user":     user,
 				"enrolled": record.Enrolled(),
 				"required": mfaDisabled() == false && mfaRequiredFor(root, user),
-				"verified": record.Enrolled() && mfaCookieValid(r, root, user, record),
+				"verified": record.Enrolled() && (mfaCookieValid(r, root, user, record) ||
+					mfaIPTrusted(r, root, record)),
 			})
 
 		case "verify":
@@ -260,6 +265,7 @@ func verifyCode(w http.ResponseWriter, r *http.Request, root *config_proto.Confi
 		jsonError(w, http.StatusForbidden, errInvalidCode)
 		return
 	}
+	apply, remembered := withRememberedIP(r, root, apply)
 	updated, err := UpdateMFA(root, user, apply)
 	if err != nil {
 		recordFailure(user, now)
@@ -268,7 +274,8 @@ func verifyCode(w http.ResponseWriter, r *http.Request, root *config_proto.Confi
 	}
 	clearFailures(user)
 	setMFACookie(w, r, root, user, updated.Generation)
-	audit(r.Context(), root, user, "mfa_verified", ordereddict.NewDict().Set("remote", r.RemoteAddr))
+	audit(r.Context(), root, user, "mfa_verified", ordereddict.NewDict().
+		Set("remote", r.RemoteAddr).Set("remembered_ip", remembered))
 	writeJSON(w, http.StatusOK, map[string]interface{}{"ok": true, "recovery_codes_left": len(updated.RecoveryHashes)})
 }
 
@@ -359,7 +366,8 @@ func policyAction(w http.ResponseWriter, r *http.Request, root *config_proto.Con
 		return
 	}
 	audit(r.Context(), root, user, "mfa_policy_update", ordereddict.NewDict().
-		Set("mode", saved.Mode).Set("roles", saved.Roles).Set("groups", saved.Groups))
+		Set("mode", saved.Mode).Set("roles", saved.Roles).Set("groups", saved.Groups).
+		Set("remember_ip_days", saved.RememberIPDays))
 	writeJSON(w, http.StatusOK, map[string]interface{}{"policy": saved})
 }
 func recoveryLeft(r *MFARecord) int {
@@ -422,7 +430,7 @@ func confirmTOTP(w http.ResponseWriter, r *http.Request, root *config_proto.Conf
 		jsonError(w, http.StatusInternalServerError, "Could not create recovery codes.")
 		return
 	}
-	updated, err := UpdateMFA(root, user, func(rec *MFARecord) error {
+	enrol, _ := withRememberedIP(r, root, func(rec *MFARecord) error {
 		if rec.TOTPSecret != "" {
 			return fmt.Errorf("already enrolled")
 		}
@@ -440,6 +448,7 @@ func confirmTOTP(w http.ResponseWriter, r *http.Request, root *config_proto.Conf
 		rec.Generation++
 		return nil
 	})
+	updated, err := UpdateMFA(root, user, enrol)
 	if err != nil {
 		recordFailure(user, now)
 		jsonError(w, http.StatusBadRequest, "That code did not match. Check the time on your phone and try again.")

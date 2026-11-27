@@ -8,6 +8,17 @@ import { useGroups, useMfaPolicy, useSaveMfaPolicy, type MfaPolicy } from '../..
 import { Badge, Button, Card, CardHeader, Skeleton, cn } from '../../ui/primitives';
 import { ROLE_INFO, sortRoles } from '../users/UsersPage';
 
+const REMEMBER_OPTIONS: { days: number; label: string }[] = [
+  { days: -1, label: 'Never' },
+  { days: 1, label: '1 day' },
+  { days: 7, label: '7 days' },
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+];
+
+// 0 or missing means the server default of 30 days.
+const rememberDays = (p: MfaPolicy) => (!p.remember_ip_days ? 30 : p.remember_ip_days < 0 ? -1 : p.remember_ip_days);
+
 const ROLES = sortRoles(['administrator', 'org_admin', 'responder', 'hunter', 'investigator', 'artifact_writer', 'analyst', 'reader']);
 
 export function MfaPolicyCard() {
@@ -74,6 +85,21 @@ function Editor({ initial, breakGlass }: { initial: MfaPolicy; breakGlass: boole
             </div>
           </div>
         )}
+        <div className="tw:space-y-1.5">
+          <div className="tw:text-xs tw:font-medium">Don't ask again from the same IP address for</div>
+          <div className="tw:flex tw:flex-wrap tw:gap-1.5">
+            {[...REMEMBER_OPTIONS, ...(REMEMBER_OPTIONS.some(o => o.days === rememberDays(policy)) ? [] : [{ days: rememberDays(policy), label: `${rememberDays(policy)} days` }])].map(o => (
+              <button key={o.days} type="button" onClick={() => setPolicy(p => ({ ...p, remember_ip_days: o.days }))}
+                className={cn('tw:rounded-md tw:border tw:px-2 tw:py-0.5 tw:text-xs',
+                  rememberDays(policy) === o.days ? 'tw:border-accent tw:bg-accent-soft tw:text-accent' : 'tw:border-line tw:hover:bg-hover')}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="tw:text-2xs tw:text-muted">
+            After a user enters a code, sign ins by that user from the same IP address skip the code for this long. The password is still needed every time, and changing the password or resetting two-factor forgets every address.
+          </div>
+        </div>
         <p className="tw:text-2xs tw:text-faint">
           Way back in if every admin loses their factor: start the server with ATLANTIRAPTOR_DISABLE_MFA=1. API clients that sign in with a password also need a second factor once it is required for them.
         </p>
