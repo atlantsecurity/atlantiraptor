@@ -1,0 +1,26 @@
+[
+ {
+  "id": "00T1",
+  "name": "Backup tool",
+  "userId": "00uadmin",
+  "clientName": "Okta API",
+  "created": "NOW-12hZ",
+  "lastUpdated": "NOW-12hZ",
+  "expiresAt": "2099-01-01T00:00:00.000Z",
+  "network": {
+   "connection": "ANYWHERE"
+  }
+ },
+ {
+  "id": "00T0",
+  "name": "SIEM",
+  "userId": "00uadmin",
+  "clientName": "Okta API",
+  "created": "NOW-3000hZ",
+  "lastUpdated": "NOW-3000hZ",
+  "expiresAt": "2099-01-01T00:00:00.000Z",
+  "network": {
+   "connection": "ANYWHERE"
+  }
+ }
+]

@@ -1,0 +1,29 @@
+name: Cloud.Okta.CompromiseAssessment
+description: |
+  Runs every Okta breach hunt against one organisation in a single
+  collection. All rows share the columns `Time, Severity, Detection,
+  User, IPAddress, Location, Device, Details`.
+
+  See `docs/cloud/okta.md` for the API token this needs.
+
+type: SERVER
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+
+sources:
+  - name: SignIns
+    query: SELECT * FROM Artifact.Cloud.Okta.SignIns(OktaSecret=OktaSecret)
+  - name: PasswordSpray
+    query: SELECT * FROM Artifact.Cloud.Okta.PasswordSpray(OktaSecret=OktaSecret)
+  - name: MFAFatigue
+    query: SELECT * FROM Artifact.Cloud.Okta.MFAFatigue(OktaSecret=OktaSecret)
+  - name: SessionHijack
+    query: SELECT * FROM Artifact.Cloud.Okta.SessionHijack(OktaSecret=OktaSecret)
+  - name: FactorChanges
+    query: SELECT * FROM Artifact.Cloud.Okta.FactorChanges(OktaSecret=OktaSecret)
+  - name: AdminChanges
+    query: SELECT * FROM Artifact.Cloud.Okta.AdminChanges(OktaSecret=OktaSecret)
+  - name: Persistence
+    query: SELECT * FROM Artifact.Cloud.Okta.Persistence(OktaSecret=OktaSecret)

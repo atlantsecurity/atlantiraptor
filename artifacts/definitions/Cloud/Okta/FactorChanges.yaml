@@ -1,0 +1,92 @@
+name: Cloud.Okta.FactorChanges
+description: |
+  Hunts Okta MFA and password changes, and the help-desk social
+  engineering pattern behind several large breaches: an attacker calls
+  the service desk as the victim, gets the MFA factors or password
+  reset, then enrols their own factor.
+
+  - **critical**: someone else reset a user's MFA or password, and a
+    new factor was enrolled for that user within `FollowHours`.
+  - **high**: all of a user's factors reset; attempts to bypass MFA.
+  - **medium**: a factor removed, or a password reset by an
+    administrator.
+  - **low** (only with `MinSeverity=low`): factors enrolled, passwords
+    changed by their owner.
+
+  Needs an API token of a Read-only Administrator.
+
+type: SERVER
+
+imports:
+  - Cloud.Okta.Rules
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: FollowHours
+    type: int
+    default: 24
+    description: How soon after a reset a new factor counts as suspicious.
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      LET Events <= SELECT timestamp(string=Time) AS Time,
+             timestamp(string=Time).Unix AS Epoch,
+             EventType, Result, Reason, Actor, ActorType, Target, Targets,
+             IPAddress, Location, Device, UserAgent, DebugData
+      FROM okta_logs(secret=OktaSecret, start=now() - LookbackHours * 3600,
+          filter='''eventType sw "user.mfa." or eventType eq "user.account.reset_password" or eventType eq "user.account.update_password"''')
+      WHERE Result =~ "^(SUCCESS|ALLOW|)$"
+
+      // The user an event is about: the target user, else the actor.
+      LET WithSubject <= SELECT *,
+             filter(list=Targets, condition="x=>x.Type = 'User'")[0].AlternateId || Actor AS Subject
+          FROM Events
+
+      LET Matched = SELECT * FROM foreach(row=WithSubject, query={
+          SELECT Time, Epoch, EventType, Severity, Detection, Actor, Subject,
+                 IPAddress, Location, Device, UserAgent, DebugData
+          FROM foreach(row=OktaMatches(EvType=EventType,
+               EvText=OktaText(Result=Result, Reason=Reason, Target=Target, DebugData=DebugData)))
+          WHERE Category = "account"
+      })
+
+      LET Single = SELECT Time, Severity,
+             Detection + if(condition=Actor != Subject AND EventType =~ "deactivate|reset",
+                            then=" by " + Actor, else="") AS Detection,
+             Subject AS User, IPAddress, Location, Device,
+             dict(Event=EventType, Actor=Actor, UserAgent=UserAgent, DebugData=DebugData) AS Details
+      FROM Matched
+      WHERE OktaMinRank(Level=Severity) <= OktaMinRank(Level=MinSeverity)
+
+      // Resets done to a user by someone else...
+      LET Resets <= SELECT Subject AS RUser, Actor AS ResetBy, Epoch AS REpoch, Time AS RTime,
+             EventType AS ResetEvent
+          FROM WithSubject
+          WHERE EventType =~ "^(user\\.mfa\\.factor\\.(reset_all|deactivate)|user\\.account\\.reset_password)$"
+            AND Actor != Subject
+
+      // ...followed by a factor enrolled for that user.
+      LET Enrolments = SELECT * FROM WithSubject
+          WHERE EventType = "user.mfa.factor.activate"
+
+      LET ResetThenEnrol = SELECT * FROM foreach(row=Resets, query={
+          SELECT Time, "critical" AS Severity,
+                 "MFA or password reset by someone else, then a new factor enrolled" AS Detection,
+                 Subject AS User, IPAddress, Location, Device,
+                 dict(ResetBy=ResetBy, ResetEvent=ResetEvent, ResetAt=RTime,
+                      EnrolledBy=Actor, Factor=DebugData.factor || Target,
+                      UserAgent=UserAgent) AS Details
+          FROM Enrolments
+          WHERE Subject = RUser AND Epoch >= REpoch AND Epoch <= REpoch + FollowHours * 3600
+          LIMIT 1
+      })
+
+      SELECT * FROM chain(a=ResetThenEnrol, b=Single)

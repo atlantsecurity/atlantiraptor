@@ -7444,6 +7444,82 @@
   - linux_amd64_cgo
   - windows_386_cgo
   - windows_amd64_cgo
+- name: okta_api
+  description: Read from the management API of an Okta organisation (GET only), following
+    Link paging. Rows are the items of a list answer.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of an 'Okta Creds' secret.
+  - name: org_url
+    type: string
+    description: Organisation URL (https://<name>.okta.com) when no secret is used.
+  - name: api_token
+    type: string
+    description: API token when no secret is used.
+  - name: path
+    type: string
+    description: API path under /api/v1/, e.g. /api/v1/users or /api/v1/idps.
+    required: true
+  - name: params
+    type: ordereddict.Dict
+    description: Query parameters.
+  - name: max_rows
+    type: int64
+    description: Stop after this many rows.
+  - name: ignore_not_found
+    type: bool
+    description: Return no rows instead of logging an error for 404 answers.
+  metadata:
+    permissions: NETWORK
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: okta_logs
+  description: Read the System Log of an Okta organisation. One row per event, with the
+    client, location, network and session flattened into columns.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of an 'Okta Creds' secret.
+  - name: org_url
+    type: string
+    description: Organisation URL (https://<name>.okta.com) when no secret is used.
+  - name: api_token
+    type: string
+    description: API token when no secret is used.
+  - name: filter
+    type: string
+    description: System Log filter expression, e.g. eventType eq "user.session.start".
+  - name: q
+    type: string
+    description: Keyword search across events.
+  - name: start
+    type: Any
+    description: Only events at or after this time (default 24 hours ago).
+  - name: end
+    type: Any
+    description: Only events before this time.
+  - name: max_rows
+    type: int64
+    description: Stop after this many rows.
+  - name: follow
+    type: bool
+    description: Keep polling for new events. Use in event artifacts.
+  - name: poll
+    type: int64
+    description: Seconds between polls in follow mode (default 60).
+  - name: overlap
+    type: int64
+    description: Seconds each poll re-reads before the last one (default 300).
+  metadata:
+    permissions: NETWORK
+  platforms: *id001
 - name: olevba
   description: |
     Extracts VBA Macros from Office documents.

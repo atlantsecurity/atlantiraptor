@@ -178,6 +178,16 @@ var (
 			"admin_email",
 		},
 	}, {
+		TypeName: constants.OKTA_CREDS,
+		Description: "Read-only access to an Okta organisation for cloud breach " +
+			"hunting (okta_logs() and okta_api()): the org URL and an API token " +
+			"of a read-only administrator.",
+		Verifier: "x=>x.org_url AND x.api_token",
+		Fields: []string{
+			"org_url",
+			"api_token",
+		},
+	}, {
 		TypeName:    constants.SMTP_CREDS,
 		Verifier:    "x=>x.server && x.server_port",
 		Description: "Credentials to be used in mail() plugin.",

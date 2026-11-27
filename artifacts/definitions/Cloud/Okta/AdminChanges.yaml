@@ -1,0 +1,47 @@
+name: Cloud.Okta.AdminChanges
+description: |
+  Hunts the Okta System Log for changes attackers make once they hold
+  an admin account, or make to keep their access:
+
+  - **critical**: identity provider added (an attacker-controlled IdP
+    can sign in as any user), super administrator granted.
+  - **high**: admin roles granted, API tokens created, sign-on or MFA
+    policies and rules disabled or deleted, authenticators turned off,
+    Okta support access granted, log streams turned off.
+  - **medium**: policies and network zones changed, apps and trusted
+    origins added.
+
+  Needs an API token of a Read-only Administrator.
+
+type: SERVER
+
+imports:
+  - Cloud.Okta.Rules
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      SELECT * FROM foreach(row={
+          SELECT * FROM okta_logs(secret=OktaSecret, start=now() - LookbackHours * 3600,
+              filter='''eventType sw "user.account.privilege." or eventType sw "group.privilege." or eventType sw "iam." or eventType sw "system." or eventType sw "policy.lifecycle." or eventType sw "policy.rule." or eventType sw "security.authenticator." or eventType sw "zone." or eventType sw "user.session.impersonation." or eventType sw "security.trusted_origin." or eventType sw "application.lifecycle."''')
+      }, query={
+          SELECT timestamp(string=Time) AS Time, Severity, Detection,
+                 Actor AS User, IPAddress, Location, Device,
+                 dict(Event=EventType, Message=DisplayMessage, Target=Target,
+                      Result=Result, ActorType=ActorType, UserAgent=UserAgent,
+                      DebugData=DebugData) AS Details
+          FROM foreach(row=OktaMatches(EvType=EventType,
+               EvText=OktaText(Result=Result, Reason=Reason, Target=Target, DebugData=DebugData)))
+          WHERE Category = "admin" AND Result != "FAILURE"
+            AND OktaMinRank(Level=Severity) <= OktaMinRank(Level=MinSeverity)
+      })

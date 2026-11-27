@@ -1,0 +1,78 @@
+name: Cloud.Okta.MFAFatigue
+description: |
+  Hunts for MFA push bombing: an attacker who has the password sends
+  push after push until the user taps Approve to make it stop.
+
+  - **critical**: an MFA challenge succeeded after the user had denied
+    pushes, or after a burst of pushes, within the hour before.
+  - **medium**: a burst of pushes to one user within an hour, even if
+    none was approved.
+
+  Needs an API token of a Read-only Administrator.
+
+type: SERVER
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: MinPushes
+    type: int
+    default: 5
+    description: Pushes within an hour that count as a burst.
+  - name: MinDenies
+    type: int
+    default: 2
+    description: Denied pushes before an approval that count as fatigue.
+
+sources:
+  - query: |
+      LET Events <= SELECT timestamp(string=Time) AS Time,
+             timestamp(string=Time).Unix AS Epoch,
+             EventType, Result, Reason, Actor AS User, IPAddress, Location, Device,
+             UserAgent, CredentialType, DebugData
+      FROM okta_logs(secret=OktaSecret, start=now() - LookbackHours * 3600,
+          filter='''eventType eq "system.push.send_factor_verify_push" or eventType eq "user.mfa.okta_verify.deny_push" or eventType eq "user.authentication.auth_via_mfa"''')
+
+      LET Pushes <= SELECT User, Epoch FROM Events
+          WHERE EventType = "system.push.send_factor_verify_push"
+      LET Denies <= SELECT User, Epoch FROM Events
+          WHERE EventType = "user.mfa.okta_verify.deny_push"
+             OR (EventType = "user.authentication.auth_via_mfa" AND Result = "FAILURE"
+                 AND Reason =~ "(?i)reject|denied")
+      LET Approvals <= SELECT *, User AS AUser, Epoch AS AEpoch FROM Events
+          WHERE EventType = "user.authentication.auth_via_mfa" AND Result =~ "^(SUCCESS|ALLOW)$"
+
+      // For each approval, what came in the hour before it.
+      LET Preceding = SELECT * FROM foreach(row=Approvals, query={
+          SELECT Time, User, IPAddress, Location, Device, UserAgent, CredentialType, DebugData,
+                 { SELECT * FROM Pushes WHERE User = AUser
+                     AND Epoch >= AEpoch - 3600 AND Epoch <= AEpoch } AS P,
+                 { SELECT * FROM Denies WHERE User = AUser
+                     AND Epoch >= AEpoch - 3600 AND Epoch <= AEpoch } AS D
+          FROM scope()
+      })
+
+      LET Fatigue = SELECT Time, "critical" AS Severity,
+             "MFA approved after repeated push prompts" AS Detection,
+             User, IPAddress, Location, Device,
+             dict(PushesInHourBefore=len(list=P.Epoch), DeniedInHourBefore=len(list=D.Epoch),
+                  CredentialType=CredentialType, UserAgent=UserAgent,
+                  Factor=DebugData.factor) AS Details
+      FROM Preceding
+      WHERE len(list=D.Epoch) >= MinDenies OR len(list=P.Epoch) >= MinPushes
+      GROUP BY User
+
+      // Bursts: pushes per user per clock hour.
+      LET Hourly = SELECT User, int(int=Epoch / 3600) AS Hour, count() AS N,
+             min(item=Epoch) AS First
+          FROM Pushes GROUP BY User, Hour
+      LET Burst = SELECT timestamp(epoch=First) AS Time, "medium" AS Severity,
+             "Burst of MFA push prompts" AS Detection,
+             User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Pushes=N) AS Details
+      FROM Hourly WHERE N >= MinPushes
+
+      SELECT * FROM chain(a=Fatigue, b=Burst)

@@ -1,0 +1,127 @@
+name: Cloud.Okta.SignIns
+description: |
+  Hunts Okta sign-ins for account takeover:
+
+  - **New country**: a successful sign-in from a country the user did
+    not sign in from during the baseline.
+  - **Impossible travel**: two successful sign-ins further apart than
+    anyone could travel in the time between them.
+  - **Anonymising proxy**: a successful sign-in that Okta saw coming
+    through a proxy or Tor.
+  - What Okta itself flagged: ThreatInsight, high-risk sign-ins that
+    still succeeded, users reporting suspicious activity, Identity
+    Threat Protection risk and session changes, and Okta support
+    impersonation (`Cloud.Okta.Rules`).
+
+  Needs an API token of a Read-only Administrator. Okta keeps the
+  System Log for 90 days.
+
+type: SERVER
+
+imports:
+  - Cloud.Okta.Rules
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: BaselineDays
+    type: int
+    default: 30
+    description: Days before the lookback that set each user's usual countries.
+  - name: MinBaselineSignIns
+    type: int
+    default: 5
+  - name: MinTravelKm
+    type: int
+    default: 500
+  - name: MaxSpeedKmh
+    type: int
+    default: 900
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Events <= SELECT timestamp(string=Time) AS Time,
+             timestamp(string=Time).Unix AS Epoch,
+             EventType, Result, Reason, Actor AS User, Target, IPAddress,
+             Country, Location, Lat, Lon, Device, Browser, OS, UserAgent,
+             IsProxy, ASOrg, SessionId, DebugData
+      FROM okta_logs(secret=OktaSecret,
+          start=now() - (LookbackHours + BaselineDays * 24) * 3600,
+          filter='''eventType eq "user.session.start" or eventType eq "security.threat.detected" or eventType eq "user.account.report_suspicious_activity_by_enduser" or eventType sw "user.risk." or eventType eq "user.session.context.change" or eventType eq "user.session.impersonation.initiate"''')
+      ORDER BY Epoch
+
+      LET Recent <= SELECT * FROM Events WHERE Epoch >= WindowStart
+
+      LET Flagged = SELECT * FROM foreach(row=Recent, query={
+          SELECT Time, Severity, Detection, User, IPAddress, Location, Device,
+                 dict(Event=EventType, Result=Result, Reason=Reason, Target=Target,
+                      ASOrg=ASOrg, UserAgent=UserAgent, DebugData=DebugData) AS Details
+          FROM foreach(row=OktaMatches(EvType=EventType,
+               EvText=OktaText(Result=Result, Reason=Reason, Target=Target, DebugData=DebugData)))
+          WHERE Category = "signin"
+      })
+
+      LET Successful <= SELECT * FROM Events
+          WHERE EventType = "user.session.start" AND Result =~ "^(SUCCESS|ALLOW)$"
+
+      // New country.
+      LET Baseline <= SELECT User, enumerate(items=Country) AS Countries, count() AS Total
+          FROM Successful WHERE Epoch < WindowStart AND Country
+          GROUP BY User
+      LET BaselineByUser <= to_dict(item={
+          SELECT User AS _key, dict(Countries=Countries, Total=Total) AS _value FROM Baseline })
+
+      LET NewCountry = SELECT Time, "medium" AS Severity,
+             "Sign-in from a new country" AS Detection,
+             User, IPAddress, Location, Device,
+             dict(KnownCountries=get(item=BaselineByUser, field=User).Countries,
+                  ASOrg=ASOrg, UserAgent=UserAgent, SessionId=SessionId) AS Details
+      FROM Successful
+      WHERE Epoch >= WindowStart AND Country
+        AND get(item=BaselineByUser, field=User).Total >= MinBaselineSignIns
+        AND NOT Country in get(item=BaselineByUser, field=User).Countries
+      GROUP BY User, Country
+
+      // Impossible travel between consecutive successful sign-ins.
+      LET Located <= SELECT * FROM Successful WHERE Lat OR Lon
+      LET Sequences = SELECT User, enumerate(items=dict(T=Time, E=Epoch, Lat=Lat, Lon=Lon,
+                 IP=IPAddress, Loc=Location, Country=Country, Device=Device,
+                 UA=UserAgent)) AS Seq
+          FROM Located
+          GROUP BY User
+
+      LET Pairs = SELECT * FROM foreach(row=Sequences, query={
+          SELECT * FROM foreach(
+             row={ SELECT _value AS I, _value - 1 AS J FROM range(start=1, end=len(list=Seq)) },
+             query={ SELECT User, Seq[J] AS A, Seq[I] AS B FROM scope() })
+      })
+
+      LET Travel = SELECT User, A, B,
+             geo_distance(lat1=A.Lat, lon1=A.Lon, lat2=B.Lat, lon2=B.Lon) AS Km,
+             (B.E - A.E) / 3600.0 AS Hours
+      FROM Pairs
+      WHERE B.E >= WindowStart AND A.Country != B.Country
+
+      LET ImpossibleTravel = SELECT B.T AS Time, "high" AS Severity,
+             "Impossible travel between sign-ins" AS Detection,
+             User, B.IP AS IPAddress, B.Loc AS Location, B.Device AS Device,
+             dict(PreviousLocation=A.Loc, PreviousIP=A.IP, PreviousTime=A.T,
+                  Km=int(int=Km), Hours=format(format="%.1f", args=Hours),
+                  UserAgent=B.UA, PreviousUserAgent=A.UA) AS Details
+      FROM Travel
+      WHERE Km >= MinTravelKm AND Km / if(condition=Hours > 0.0167, then=Hours, else=0.0167) > MaxSpeedKmh
+
+      LET Proxy = SELECT Time, "high" AS Severity,
+             "Successful sign-in through an anonymising proxy or Tor" AS Detection,
+             User, IPAddress, Location, Device,
+             dict(ASOrg=ASOrg, UserAgent=UserAgent, SessionId=SessionId) AS Details
+      FROM Successful
+      WHERE Epoch >= WindowStart AND IsProxy
+      GROUP BY User, IPAddress
+
+      SELECT * FROM chain(a=Flagged, b=NewCountry, c=ImpossibleTravel, d=Proxy)
