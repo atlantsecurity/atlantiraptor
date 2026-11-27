@@ -1,0 +1,370 @@
+{
+ "value": [
+  {
+   "id": "da-1",
+   "category": "x",
+   "correlationId": "c1",
+   "result": "success",
+   "activityDisplayName": "Add member to role",
+   "activityDateTime": "NOW-30hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Role",
+     "type": "Role",
+     "userPrincipalName": null,
+     "modifiedProperties": [
+      {
+       "displayName": "Role.DisplayName",
+       "oldValue": null,
+       "newValue": "\"Global Administrator\""
+      }
+     ]
+    },
+    {
+     "id": "t",
+     "displayName": null,
+     "type": "User",
+     "userPrincipalName": "mallory@contoso.com",
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-2",
+   "category": "x",
+   "correlationId": "c2",
+   "result": "success",
+   "activityDisplayName": "Set federation settings on domain",
+   "activityDateTime": "NOW-29hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "contoso.com",
+     "type": "Domain",
+     "userPrincipalName": null,
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-3",
+   "category": "x",
+   "correlationId": "c3",
+   "result": "success",
+   "activityDisplayName": "Update conditional access policy",
+   "activityDateTime": "NOW-28hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Require MFA",
+     "type": "Policy",
+     "userPrincipalName": null,
+     "modifiedProperties": [
+      {
+       "displayName": "ConditionalAccessPolicy",
+       "oldValue": "{\"state\":\"enabled\"}",
+       "newValue": "{\"state\":\"disabled\"}"
+      }
+     ]
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-4",
+   "category": "x",
+   "correlationId": "c4",
+   "result": "success",
+   "activityDisplayName": "User registered security info",
+   "activityDateTime": "NOW-21hZ",
+   "loggedByService": "Authentication Methods",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "alice@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": null,
+     "type": "User",
+     "userPrincipalName": "alice@contoso.com",
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-5",
+   "category": "x",
+   "correlationId": "c5",
+   "result": "success",
+   "activityDisplayName": "User registered security info",
+   "activityDateTime": "NOW-50hZ",
+   "loggedByService": "Authentication Methods",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "bob@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": null,
+     "type": "User",
+     "userPrincipalName": "bob@contoso.com",
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-6",
+   "category": "x",
+   "correlationId": "c6",
+   "result": "success",
+   "activityDisplayName": "Update user",
+   "activityDateTime": "NOW-27hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": null,
+     "type": "User",
+     "userPrincipalName": "carol@contoso.com",
+     "modifiedProperties": [
+      {
+       "displayName": "StrongAuthenticationMethod",
+       "oldValue": "[{}]",
+       "newValue": "[]"
+      }
+     ]
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-7",
+   "category": "x",
+   "correlationId": "c7",
+   "result": "success",
+   "activityDisplayName": "Update user",
+   "activityDateTime": "NOW-26hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": null,
+     "type": "User",
+     "userPrincipalName": "dave@contoso.com",
+     "modifiedProperties": [
+      {
+       "displayName": "Department",
+       "oldValue": "A",
+       "newValue": "B"
+      }
+     ]
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-8",
+   "category": "x",
+   "correlationId": "c8",
+   "result": "success",
+   "activityDisplayName": "Add service principal credentials",
+   "activityDateTime": "NOW-25hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": null,
+    "app": {
+     "displayName": "Payroll Sync",
+     "servicePrincipalId": "sp"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Payroll Sync",
+     "type": "ServicePrincipal",
+     "userPrincipalName": null,
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-9",
+   "category": "x",
+   "correlationId": "c9",
+   "result": "success",
+   "activityDisplayName": "Consent to application",
+   "activityDateTime": "NOW-24hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "bob@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Mail Helper",
+     "type": "ServicePrincipal",
+     "userPrincipalName": null,
+     "modifiedProperties": [
+      {
+       "displayName": "ConsentAction.Permissions",
+       "oldValue": "",
+       "newValue": "Scope: Mail.Read offline_access User.Read"
+      }
+     ]
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-10",
+   "category": "x",
+   "correlationId": "c10",
+   "result": "success",
+   "activityDisplayName": "Add owner to application",
+   "activityDateTime": "NOW-23hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Payroll Sync",
+     "type": "Application",
+     "userPrincipalName": null,
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-11",
+   "category": "x",
+   "correlationId": "c11",
+   "result": "success",
+   "activityDisplayName": "Add service principal",
+   "activityDateTime": "NOW-22hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Zoom",
+     "type": "ServicePrincipal",
+     "userPrincipalName": null,
+     "modifiedProperties": []
+    }
+   ],
+   "additionalDetails": []
+  },
+  {
+   "id": "da-12",
+   "category": "x",
+   "correlationId": "c12",
+   "result": "failure",
+   "activityDisplayName": "Add member to role",
+   "activityDateTime": "NOW-22hZ",
+   "loggedByService": "Core Directory",
+   "operationType": "Add",
+   "initiatedBy": {
+    "user": {
+     "userPrincipalName": "admin@contoso.com",
+     "ipAddress": "198.51.100.7",
+     "id": "u"
+    }
+   },
+   "targetResources": [
+    {
+     "id": "t",
+     "displayName": "Role",
+     "type": "Role",
+     "userPrincipalName": null,
+     "modifiedProperties": [
+      {
+       "displayName": "Role.DisplayName",
+       "newValue": "\"Global Administrator\""
+      }
+     ]
+    }
+   ],
+   "additionalDetails": []
+  }
+ ]
+}

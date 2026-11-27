@@ -1,0 +1,107 @@
+name: Cloud.M365.OAuthApps
+description: |
+  Lists third-party apps that hold permissions in the tenant today and
+  flags the ones attackers use: consent-phishing apps that read mail or
+  files, mail-syncing tools seen in business email compromise, and apps
+  granted tenant-wide application permissions.
+
+  - **critical**: an app on the watchlist (tools seen in BEC cases).
+  - **high**: risky delegated scopes or application permissions from a
+    publisher Microsoft has not verified.
+  - **medium**: risky permissions from a verified publisher, or any app
+    added within the lookback window.
+
+  Microsoft's own apps are skipped. Needs `Application.Read.All` (or
+  `Directory.Read.All`).
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 720
+    description: Apps added within this window are reported even without risky permissions.
+  - name: Watchlist
+    type: regex
+    default: "(?i)^(PerfectData Software|eM Client|Newsletter Software Supermailer|CloudSponge|rclone|SigParser|Mail_Backup|Email Backup)$"
+    description: App names to always report as critical.
+  - name: MicrosoftTenants
+    type: regex
+    default: "^(f8cdef31-a31e-4b4a-93e4-5f571e91255a|72f988bf-86f1-41af-91ab-2d7cd011db47|47df5bb7-e6bc-4256-afb0-dd8c8e3c1ce8|cdc5aeea-15c5-4db6-b079-fcadd2505dc2)$"
+    description: Owner tenants of Microsoft's first-party apps.
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+      LET Me <= SELECT id FROM m365_graph(secret=M365Secret, path="/organization")
+
+      LET ThirdParty <= SELECT id, appId, displayName, appOwnerOrganizationId,
+             publisherName, verifiedPublisher.displayName AS VerifiedPublisher,
+             createdDateTime, accountEnabled
+      FROM m365_graph(secret=M365Secret, path="/servicePrincipals",
+          params=dict(`$select`="id,appId,displayName,appOwnerOrganizationId,publisherName,verifiedPublisher,createdDateTime,accountEnabled,servicePrincipalType",
+                      `$top`="999"))
+      WHERE servicePrincipalType = "Application"
+        AND NOT appOwnerOrganizationId =~ MicrosoftTenants
+        AND NOT appOwnerOrganizationId in Me.id
+
+      // Delegated (on behalf of users) grants.
+      LET Grants <= SELECT clientId, consentType, principalId, scope
+      FROM m365_graph(secret=M365Secret, path="/oauth2PermissionGrants",
+                      params=dict(`$top`="999"))
+
+      LET GrantsFor(Id) = SELECT * FROM Grants WHERE clientId = Id
+
+      // Map Graph app role ids to permission names.
+      LET GraphRoles <= to_dict(item={
+          SELECT * FROM foreach(row={
+              SELECT appRoles FROM m365_graph(secret=M365Secret, path="/servicePrincipals",
+                  params=dict(`$filter`="appId eq '00000003-0000-0000-c000-000000000000'",
+                              `$select`="appRoles"))
+          }, query={
+              SELECT id AS _key, value AS _value FROM foreach(row=appRoles)
+          })
+      })
+
+      LET AppRolesOf(Id) = SELECT get(item=GraphRoles, field=appRoleId) || appRoleId AS Permission,
+             resourceDisplayName AS Resource
+      FROM m365_graph(secret=M365Secret, ignore_not_found=TRUE,
+                      path=format(format="/servicePrincipals/%v/appRoleAssignments", args=Id))
+
+      LET Apps = SELECT *, GrantsFor(Id=id) AS G, AppRolesOf(Id=id) AS R
+      FROM ThirdParty
+
+      LET Scored = SELECT *,
+             join(array=G.scope, sep=" ") AS DelegatedScopes,
+             join(array=R.Permission, sep=" ") AS AppPermissions,
+             len(list=G.scope) AS GrantCount,
+             timestamp(string=createdDateTime).Unix >= WindowStart AS IsNew
+      FROM Apps
+
+      SELECT timestamp(string=createdDateTime) AS Time,
+             if(condition=displayName =~ Watchlist, then="critical",
+                else=if(condition=(DelegatedScopes =~ M365RiskyScopes OR AppPermissions =~ M365RiskyScopes)
+                                  AND NOT VerifiedPublisher, then="high",
+                else="medium")) AS Severity,
+             if(condition=displayName =~ Watchlist, then="App seen in mailbox takeover cases",
+                else=if(condition=AppPermissions =~ M365RiskyScopes,
+                        then="App holds risky tenant-wide permissions",
+                else=if(condition=DelegatedScopes =~ M365RiskyScopes,
+                        then="Users consented risky permissions to an app",
+                else="App added recently"))) AS Detection,
+             displayName AS User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(AppId=appId, Publisher=publisherName, VerifiedPublisher=VerifiedPublisher,
+                  OwnerTenant=appOwnerOrganizationId, Enabled=accountEnabled,
+                  DelegatedScopes=DelegatedScopes, AppPermissions=AppPermissions,
+                  ConsentGrants=GrantCount,
+                  TenantWideConsent="AllPrincipals" in G.consentType) AS Details
+      FROM Scored
+      WHERE displayName =~ Watchlist
+         OR DelegatedScopes =~ M365RiskyScopes
+         OR AppPermissions =~ M365RiskyScopes
+         OR IsNew

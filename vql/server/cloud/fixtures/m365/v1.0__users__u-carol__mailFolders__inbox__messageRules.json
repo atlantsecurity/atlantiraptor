@@ -1,0 +1,1 @@
+{"value": [{"id": "r", "displayName": "To Dave", "isEnabled": true, "conditions": {}, "actions": {"forwardTo": [{"emailAddress": {"address": "dave@contoso.com"}}]}}, {"id": "r", "displayName": "Newsletters", "isEnabled": true, "conditions": {}, "actions": {"moveToFolder": "f2"}}]}

@@ -1,0 +1,38 @@
+{
+ "value": [
+  {
+   "id": "rd1",
+   "riskEventType": "anomalousToken",
+   "riskLevel": "high",
+   "riskState": "atRisk",
+   "riskDetail": "none",
+   "detectedDateTime": "NOW-9hZ",
+   "userPrincipalName": "erin@contoso.com",
+   "ipAddress": "185.2.2.2",
+   "activity": "signin",
+   "source": "IdentityProtection",
+   "requestId": "r1",
+   "location": {
+    "city": "Amsterdam",
+    "countryOrRegion": "NL"
+   }
+  },
+  {
+   "id": "rd2",
+   "riskEventType": "unlikelyTravel",
+   "riskLevel": "medium",
+   "riskState": "atRisk",
+   "riskDetail": "none",
+   "detectedDateTime": "NOW-9hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "ipAddress": "1.1.1.1",
+   "activity": "signin",
+   "source": "IdentityProtection",
+   "requestId": "r2",
+   "location": {
+    "city": "X",
+    "countryOrRegion": "US"
+   }
+  }
+ ]
+}

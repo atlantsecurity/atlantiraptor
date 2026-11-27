@@ -1,0 +1,1 @@
+{"value": [{"id": "r", "displayName": "Move invoices", "isEnabled": true, "conditions": {}, "actions": {"moveToFolder": "f1", "markAsRead": true}}]}

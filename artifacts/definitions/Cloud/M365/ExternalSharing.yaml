@@ -1,0 +1,61 @@
+name: Cloud.M365.ExternalSharing
+description: |
+  Hunts the SharePoint and OneDrive audit log for data leaving through
+  sharing: accounts that created many anyone-with-the-link links or
+  external sharing invitations, and invitations sent to personal mail
+  addresses (Gmail, Outlook.com, Proton and similar).
+
+  Reads the unified audit log (7 days). Needs the Office 365 Management
+  APIs `ActivityFeed.Read` permission.
+
+type: SERVER
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+    description: At most 168 (the API keeps 7 days).
+  - name: SharesThreshold
+    type: int
+    default: 25
+    description: Report an account that created at least this many anonymous links or external invitations.
+  - name: PersonalMailDomains
+    type: regex
+    default: "(?i)@(gmail\\.com|googlemail\\.com|outlook\\.com|hotmail\\.[a-z.]+|live\\.[a-z.]+|msn\\.com|yahoo\\.[a-z.]+|ymail\\.com|icloud\\.com|me\\.com|aol\\.com|proton\\.me|protonmail\\.com|pm\\.me|gmx\\.[a-z.]+|web\\.de|mail\\.ru|yandex\\.[a-z.]+|abv\\.bg|tutanota\\.com|zoho\\.com)$"
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Shares = SELECT timestamp(string=CreationTime).Unix AS Epoch, Operation,
+             UserId AS User, ClientIP AS IPAddress, ObjectId AS Item,
+             lowcase(string=TargetUserOrGroupName || "") AS Recipient
+      FROM m365_audit(secret=M365Secret, content_type="Audit.SharePoint",
+                      start=timestamp(epoch=WindowStart))
+      WHERE Operation =~ "^(AnonymousLinkCreated|AnonymousLinkUpdated|SharingInvitationCreated|AddedToSecureLink|SecureLinkCreated)$"
+        AND (Operation =~ "^Anonymous" OR TargetUserOrGroupType = "Guest" OR Recipient =~ "@")
+
+      LET PerUser = SELECT User, count() AS Total,
+             enumerate(items=if(condition=Operation =~ "^Anonymous", then=Item)) AS AnonymousItems,
+             enumerate(items=if(condition=Recipient =~ PersonalMailDomains, then=Recipient)) AS PersonalRecipients,
+             enumerate(items=Recipient) AS Recipients,
+             enumerate(items=IPAddress) AS IPs, min(item=Epoch) AS First
+      FROM Shares
+      GROUP BY User
+
+      LET Scored = SELECT *, filter(list=PersonalRecipients, condition="x=>x") AS Personal,
+             filter(list=AnonymousItems, condition="x=>x") AS Anonymous
+      FROM PerUser
+
+      SELECT timestamp(epoch=First) AS Time,
+             if(condition=Total >= SharesThreshold, then="high", else="medium") AS Severity,
+             if(condition=Total >= SharesThreshold, then="Unusual amount of external sharing",
+                else="Files shared with personal mail addresses") AS Detection,
+             User, IPs[0] AS IPAddress, "" AS Location, "" AS Device,
+             dict(Shares=Total, AnonymousLinks=len(list=Anonymous),
+                  PersonalRecipients=items(item=to_dict(item={SELECT _value AS _key, 1 AS _value FROM foreach(row=Personal)}))._key,
+                  SampleItems=Anonymous[:20]) AS Details
+      FROM Scored
+      WHERE Total >= SharesThreshold OR Personal

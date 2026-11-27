@@ -71,3 +71,8 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   servers fetch Atlant's signed hunt packs with the customer's licence key. Feeds are
   verified against the Ed25519 keys in `services/huntfeeds/keys.go`; never add a key there
   that wasn't generated for Atlant's feed service, and never commit a private key.
+- Cloud breach hunting (`vql/server/cloud`, artifacts under `artifacts/definitions/Cloud/`,
+  setup in `docs/cloud/`): the server hunts customers' cloud tenants (Microsoft 365 / Entra ID
+  first) read-only, with credentials from the secrets service. Provider endpoints are fixed in
+  code so a query can't send a tenant's token elsewhere; tests point them at fixture servers.
+  Every hunt returns `Time, Severity, Detection, User, IPAddress, Location, Device, Details`.

@@ -1,0 +1,85 @@
+name: Cloud.M365.InboxRules
+description: |
+  Checks every mailbox's inbox rules as they are now, for the rules
+  attackers leave behind after taking over a mailbox:
+
+  - **high**: forwards or redirects mail outside the organisation.
+  - **high**: the rule's name is blank or only punctuation (".", ",,").
+  - **medium**: deletes mail, or moves it to RSS Feeds, Archive,
+    Conversation History, Junk or Deleted Items (hides replies from
+    the real owner).
+
+  Unlike `Cloud.M365.MailForwarding`, which reads the audit log, this
+  finds rules of any age. Needs `MailboxSettings.Read` and
+  `User.Read.All`. Makes one request per mailbox, so expect a few
+  minutes for a thousand users.
+
+type: SERVER
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: UserFilter
+    type: regex
+    default: "."
+    description: Only check users whose UPN matches.
+  - name: HiddenFolders
+    type: regex
+    default: "(?i)^(RSS Feeds|RSS Subscriptions|Archive|Conversation History|Junk Email|Deleted Items)$"
+  - name: SuspiciousName
+    type: regex
+    default: "^[^A-Za-z0-9]{0,3}$"
+
+sources:
+  - query: |
+      LET Domains <= SELECT lowcase(string=id) AS Domain
+          FROM m365_graph(secret=M365Secret, path="/domains")
+
+      // Rule rows have their own id, so name the mailbox's differently.
+      LET Mailboxes = SELECT id AS MailboxId, userPrincipalName, mail
+      FROM m365_graph(secret=M365Secret, path="/users",
+          params=dict(`$select`="id,userPrincipalName,mail,accountEnabled", `$top`="999"))
+      WHERE mail AND userPrincipalName =~ UserFilter
+
+      LET RulesOf(Id) = SELECT * FROM m365_graph(secret=M365Secret, ignore_not_found=TRUE,
+          path=format(format="/users/%v/mailFolders/inbox/messageRules", args=Id))
+
+      LET FolderName(Id, Folder) = SELECT displayName
+      FROM m365_graph(secret=M365Secret, ignore_not_found=TRUE,
+          path=format(format="/users/%v/mailFolders/%v", args=[Id, Folder]))
+
+      LET AddressesOf(List) = SELECT lowcase(string=emailAddress.address) AS A
+          FROM foreach(row=List)
+      LET IsExternal(Address) = Address AND NOT split(string=Address, sep="@")[1] in Domains.Domain
+
+      LET Rules = SELECT * FROM foreach(row=Mailboxes, query={
+          SELECT userPrincipalName AS User, MailboxId, displayName AS RuleName,
+                 isEnabled AS Enabled, conditions AS Conditions, actions AS Actions,
+                 AddressesOf(List=actions.forwardTo).A +
+                   AddressesOf(List=actions.forwardAsAttachmentTo).A +
+                   AddressesOf(List=actions.redirectTo).A AS Recipients,
+                 if(condition=actions.moveToFolder,
+                    then=join(array=FolderName(Id=MailboxId, Folder=actions.moveToFolder).displayName, sep=""),
+                    else="") AS MovesTo
+          FROM RulesOf(Id=MailboxId)
+      })
+
+      LET Scored = SELECT *,
+             filter(list=Recipients, condition="x=>IsExternal(Address=x)") AS External,
+             Actions.delete OR Actions.permanentDelete AS Deletes,
+             MovesTo =~ HiddenFolders AS Hides,
+             RuleName =~ SuspiciousName AS OddName
+      FROM Rules
+
+      SELECT now() AS Time,
+             if(condition=External OR OddName, then="high", else="medium") AS Severity,
+             if(condition=External, then="Inbox rule forwards mail outside the organisation",
+                else=if(condition=OddName, then="Inbox rule with a blank or punctuation name",
+                else=if(condition=Deletes, then="Inbox rule deletes mail",
+                else="Inbox rule hides mail in a rarely read folder"))) AS Detection,
+             User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Rule=RuleName, Enabled=Enabled, ExternalRecipients=External,
+                  Recipients=Recipients, MovesTo=MovesTo, Deletes=Deletes,
+                  Conditions=Conditions, Actions=Actions) AS Details
+      FROM Scored
+      WHERE External OR OddName OR Deletes OR Hides

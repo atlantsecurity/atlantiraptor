@@ -1,0 +1,160 @@
+{
+ "value": [
+  {
+   "id": "ni-1",
+   "createdDateTime": "NOW-10hZ",
+   "userPrincipalName": "erin@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "212.5.1.1",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Sofia",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ERIN-PC"
+   },
+   "sessionId": "S1",
+   "autonomousSystemNumber": 8866,
+   "isInteractive": false,
+   "userAgent": "UA"
+  },
+  {
+   "id": "ni-2",
+   "createdDateTime": "NOW-9hZ",
+   "userPrincipalName": "erin@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "185.2.2.2",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Amsterdam",
+    "countryOrRegion": "NL",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ERIN-PC"
+   },
+   "sessionId": "S1",
+   "autonomousSystemNumber": 60781,
+   "isInteractive": false,
+   "userAgent": "UA"
+  },
+  {
+   "id": "ni-3",
+   "createdDateTime": "NOW-8hZ",
+   "userPrincipalName": "frank@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "212.5.1.2",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Sofia",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "sessionId": "S2",
+   "autonomousSystemNumber": 8866,
+   "isInteractive": false,
+   "userAgent": "UA"
+  },
+  {
+   "id": "ni-4",
+   "createdDateTime": "NOW-450mZ",
+   "userPrincipalName": "frank@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "95.3.3.3",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Plovdiv",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "sessionId": "S2",
+   "autonomousSystemNumber": 43205,
+   "isInteractive": false,
+   "userAgent": "UA"
+  },
+  {
+   "id": "ni-5",
+   "createdDateTime": "NOW-6hZ",
+   "userPrincipalName": "gina@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "212.5.1.3",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Sofia",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "sessionId": "S3",
+   "autonomousSystemNumber": 8866,
+   "isInteractive": false,
+   "userAgent": "UA"
+  },
+  {
+   "id": "ni-6",
+   "createdDateTime": "NOW-5hZ",
+   "userPrincipalName": "gina@contoso.com",
+   "appDisplayName": "Microsoft Office",
+   "ipAddress": "212.5.1.3",
+   "clientAppUsed": "Mobile Apps and Desktop clients",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Sofia",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 0,
+     "longitude": 0
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "sessionId": "S3",
+   "autonomousSystemNumber": 8866,
+   "isInteractive": false,
+   "userAgent": "UA"
+  }
+ ]
+}

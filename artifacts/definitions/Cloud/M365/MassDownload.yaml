@@ -1,0 +1,53 @@
+name: Cloud.M365.MassDownload
+description: |
+  Hunts the SharePoint and OneDrive audit log for data theft: accounts
+  that downloaded or synced an unusual number of files within an hour.
+  Attackers who take over an account, and staff on their way out,
+  often pull whole document libraries.
+
+  Reads the unified audit log (7 days). Needs the Office 365 Management
+  APIs `ActivityFeed.Read` permission.
+
+type: SERVER
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+    description: At most 168 (the API keeps 7 days).
+  - name: FilesPerHour
+    type: int
+    default: 300
+    description: Report an account that downloaded at least this many files in one hour.
+  - name: Operations
+    type: regex
+    default: "^(FileDownloaded|FileSyncDownloadedFull|FileSyncDownloadedPartial|FileCopied)$"
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Downloads = SELECT timestamp(string=CreationTime).Unix AS Epoch,
+             UserId AS User, ClientIP AS IPAddress, SiteUrl, SourceFileName, UserAgent
+      FROM m365_audit(secret=M365Secret, content_type="Audit.SharePoint",
+                      start=timestamp(epoch=WindowStart))
+      WHERE Operation =~ Operations
+
+      LET PerHour = SELECT User, int(int=Epoch / 3600) AS Hour, count() AS Files,
+             enumerate(items=SiteUrl) AS Sites, enumerate(items=IPAddress) AS IPs,
+             enumerate(items=SourceFileName) AS Names, UserAgent, min(item=Epoch) AS First
+      FROM Downloads
+      GROUP BY User, Hour
+
+      SELECT timestamp(epoch=First) AS Time,
+             if(condition=Files >= FilesPerHour * 3, then="high", else="medium") AS Severity,
+             "Mass file download" AS Detection,
+             User, IPs[0] AS IPAddress, "" AS Location, "" AS Device,
+             dict(FilesInHour=Files,
+                  Sites=items(item=to_dict(item={SELECT _value AS _key, 1 AS _value FROM foreach(row=Sites)}))._key,
+                  Addresses=items(item=to_dict(item={SELECT _value AS _key, 1 AS _value FROM foreach(row=IPs)}))._key,
+                  SampleFiles=Names[:20], UserAgent=UserAgent) AS Details
+      FROM PerHour
+      WHERE Files >= FilesPerHour

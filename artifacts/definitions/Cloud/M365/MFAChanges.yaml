@@ -1,0 +1,104 @@
+name: Cloud.M365.MFAChanges
+description: |
+  Hunts for attackers adding their own MFA method to a taken-over
+  account, the step that makes a stolen password or session last:
+
+  - MFA methods (security info) registered, changed or removed.
+  - Per-user MFA disabled.
+  - **Critical** when the account then signed in from a country it had
+    not used before the change: the classic "register an authenticator,
+    then log in from abroad" sequence.
+
+  Needs `AuditLog.Read.All`. The follow-up sign-in check needs Entra ID
+  P1 or P2; without it the MFA changes are still reported.
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: FollowHours
+    type: int
+    default: 48
+    description: Look for sign-ins from new countries this many hours after the change.
+  - name: BaselineDays
+    type: int
+    default: 30
+  - name: CheckSignIns
+    type: bool
+    default: Y
+    description: Check the user's sign-ins after each change (needs Entra ID P1/P2).
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Audits = SELECT * FROM m365_graph(secret=M365Secret,
+          path="/auditLogs/directoryAudits", time_field="activityDateTime",
+          start=timestamp(epoch=WindowStart))
+
+      LET Changes <= SELECT * FROM foreach(row=Audits, query={
+          SELECT timestamp(string=activityDateTime) AS Time,
+                 timestamp(string=activityDateTime).Unix AS Epoch,
+                 Severity, Detection,
+                 // The account whose MFA changed.
+                 targetResources[0].userPrincipalName ||
+                     initiatedBy.user.userPrincipalName AS User,
+                 M365Actor(InitiatedBy=initiatedBy) AS Actor,
+                 initiatedBy.user.ipAddress AS IPAddress,
+                 dict(Activity=activityDisplayName, ChangedBy=M365Actor(InitiatedBy=initiatedBy),
+                      Result=result, Details=additionalDetails,
+                      Changes=targetResources) AS Details
+          FROM foreach(row=M365DirectoryMatches(DirActivity=activityDisplayName,
+                           DirTargets=targetResources, DirDetails=additionalDetails))
+          WHERE Category = "mfa" AND result = "success" AND Severity != "low"
+      })
+
+      LET UserSignIns(U, E) = SELECT location.countryOrRegion AS Country,
+             format(format="%v, %v", args=[location.city, location.countryOrRegion]) AS Location,
+             timestamp(string=createdDateTime).Unix AS T, createdDateTime AS When,
+             ipAddress AS IP, deviceDetail.displayName AS Device
+      FROM m365_graph(secret=M365Secret, beta=TRUE, path="/auditLogs/signIns",
+          params=dict(`$filter`=format(format="userPrincipalName eq '%v'",
+                                       args=regex_replace(source=U, re="'", replace="''"))),
+          time_field="createdDateTime",
+          start=timestamp(epoch=E - BaselineDays * 86400),
+          end=timestamp(epoch=E + FollowHours * 3600))
+      WHERE userPrincipalName = U AND status.errorCode = 0 AND location.countryOrRegion
+
+      // For each change: successful sign-ins after it from countries the
+      // user signed in from before it.
+      LET BeforeChange(Signs, E) = SELECT Country FROM foreach(row=Signs) WHERE T < E
+      LET NewAfterChange(Signs, E, Known) = SELECT When, Location, IP, Device
+          FROM foreach(row=Signs)
+          WHERE T >= E AND len(list=Known) > 0 AND NOT Country in Known
+
+      LET Evaluated = SELECT *, NewAfterChange(Signs=Signs, E=Epoch,
+                 Known=BeforeChange(Signs=Signs, E=Epoch).Country) AS After
+          FROM foreach(row={
+             SELECT *, UserSignIns(U=User, E=Epoch) AS Signs FROM Changes
+          })
+
+      SELECT * FROM if(condition=CheckSignIns,
+        then={
+          SELECT Time,
+                 if(condition=After, then="critical", else=Severity) AS Severity,
+                 if(condition=After,
+                    then="MFA changed, then sign-in from a new country",
+                    else=Detection) AS Detection,
+                 User, IPAddress, After[0].Location || "" AS Location,
+                 After[0].Device || "" AS Device,
+                 Details + dict(NewCountrySignIns=After) AS Details
+          FROM Evaluated
+        },
+        else={
+          SELECT Time, Severity, Detection, User, IPAddress, "" AS Location,
+                 "" AS Device, Details
+          FROM Changes
+        })

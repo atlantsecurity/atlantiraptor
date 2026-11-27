@@ -1,0 +1,45 @@
+name: Cloud.M365.MailForwarding
+description: |
+  Hunts the Exchange Online audit log for the mailbox changes seen in
+  business email compromise: inbox rules that forward, redirect, delete
+  or hide mail, mailbox forwarding, transport rules that copy or
+  redirect mail, mailbox delegation (full access, send as, send on
+  behalf, inbox folder sharing), impersonation rights, and settings
+  that allow automatic external forwarding.
+
+  Reads the unified audit log through the Office 365 Management
+  Activity API, which keeps 7 days; run `Cloud.M365.Monitor` to keep a
+  longer history. `Cloud.M365.InboxRules` finds rules of any age.
+
+  Needs the Office 365 Management APIs `ActivityFeed.Read` permission.
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+    description: At most 168 (the API keeps 7 days).
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Records = SELECT * FROM m365_audit(secret=M365Secret,
+          content_type="Audit.Exchange", start=timestamp(epoch=WindowStart))
+      WHERE Operation =~ "^(New-InboxRule|Set-InboxRule|UpdateInboxRules|Set-Mailbox|New-TransportRule|Set-TransportRule|Add-MailboxPermission|Add-RecipientPermission|Add-MailboxFolderPermission|New-ManagementRoleAssignment|Set-RemoteDomain|New-RemoteDomain|Set-HostedOutboundSpamFilterPolicy|New-HostedOutboundSpamFilterPolicy)$"
+
+      SELECT * FROM foreach(row=Records, query={
+          SELECT timestamp(string=CreationTime) AS Time, Severity, Detection,
+                 UserId AS User, regex_replace(source=ClientIP || "", re=":[0-9]+$", replace="") AS IPAddress,
+                 "" AS Location, "" AS Device,
+                 dict(Operation=Operation, Target=ObjectId, Result=ResultStatus,
+                      Parameters=M365ParamText(Parameters=Parameters || OperationProperties)) AS Details
+          FROM foreach(row=M365AuditMatches(AuditOperation=Operation,
+                AuditParams=M365ParamText(Parameters=Parameters || OperationProperties)))
+      })
