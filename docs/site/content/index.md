@@ -16,6 +16,8 @@ It is based on the open source Velociraptor project and adds a redesigned
 console, guided investigation workflows, cloud breach hunting, premium hunt
 feeds and signed automatic updates. See [What's new in Atlantiraptor](/whats-new/).
 
+![The Atlantiraptor dashboard](/images/dashboard.webp "The dashboard: Rapid hunt, open alerts, connected clients and running hunts at a glance.")
+
 ## Where to start
 
 <div class="cards">
