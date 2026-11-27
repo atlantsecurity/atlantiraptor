@@ -7,6 +7,32 @@ Diagnostics:
 Completions:
 [
  {
+  "label": "geo_distance",
+  "labelDetails": {
+   "detail": "Function",
+   "description": "Great circle distance in kilometres between two ..."
+  },
+  "kind": 1,
+  "detail": "Built in Function",
+  "documentation": {
+   "kind": "markdown",
+   "value": "Great circle distance in kilometres between two latitude/longitude points"
+  },
+  "textEdit": {
+   "range": {
+    "start": {
+     "line": 0,
+     "character": 7
+    },
+    "end": {
+     "line": 0,
+     "character": 13
+    }
+   },
+   "newText": "geo_distance("
+  }
+ },
+ {
   "label": "geoip",
   "labelDetails": {
    "detail": "Function",
@@ -34,6 +60,7 @@ Completions:
  }
 ]
 text edit:
+geoip( -> geo_distance(
 geoip( -> geoip(
 
 Test case 1: Complete VQL plugin
