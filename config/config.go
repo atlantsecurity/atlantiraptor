@@ -123,7 +123,7 @@ func GetDefaultConfig() *config_proto.Config {
 			Links: []*config_proto.GUILink{
 				{
 					Text:    "Documentation",
-					Url:     "https://docs.velociraptor.app/",
+					Url:     "https://atlantsecurity.github.io/atlantiraptor/",
 					NewTab:  true,
 					Type:    "sidebar",
 					IconUrl: VeloIconDataURL,

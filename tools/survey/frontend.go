@@ -47,7 +47,7 @@ func GenerateFrontendPackages(config_obj *config_proto.Config) error {
 		huh.NewNote().
 			Title("Welcome to the Velociraptor multi-frontend configuration generator").
 			Description(`Warning: This configuration is currently experimental. Read more about
-it here https://docs.velociraptor.app/docs/deployment/cloud/multifrontend/
+it here https://atlantsecurity.github.io/atlantiraptor/deployment/scaling/
 
 I will be adding an extra minion frontend to the configuration.
 

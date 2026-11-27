@@ -18,7 +18,7 @@ import (
 var (
 	FrontendIsMaster          = fmt.Errorf("FrontendIsMaster: %w", utils.NotFoundError)
 	NotRunningInFrontendError = utils.Wrap(utils.InvalidConfigError,
-		"Command not available when running without a frontend service. To perform administrative tasks on the command line, connect to the server using the API https://docs.velociraptor.app/docs/server_automation/server_api/")
+		"Command not available when running without a frontend service. To perform administrative tasks on the command line, connect to the server using the API https://atlantsecurity.github.io/atlantiraptor/server-automation/grpc-api/")
 
 	// A bypass for RequireFrontend() set during tests.
 	AllowFrontendPlugins = atomic.Bool{}

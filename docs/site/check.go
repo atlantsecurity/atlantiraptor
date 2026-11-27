@@ -20,6 +20,10 @@ var (
 	idRegex   = regexp.MustCompile(`id="([^"]+)"`)
 )
 
+// DocsIndexFile is where the docs workflow publishes the console's
+// search index (Server.Internal.ToolDependencies downloads it).
+const DocsIndexFile = "docs_index_v1.zip"
+
 // CheckLinks reports links inside the site that point to a page or an
 // anchor that does not exist.
 func (self *Site) CheckLinks() (problems []string) {
@@ -68,6 +72,11 @@ func (self *Site) CheckLinks() (problems []string) {
 					file = rel
 				}
 			default:
+				continue
+			}
+			// The console's search index is written after the check
+			// (-docs-index) and published next to the pages.
+			if file == DocsIndexFile {
 				continue
 			}
 			if _, pres := self.files[file]; !pres {

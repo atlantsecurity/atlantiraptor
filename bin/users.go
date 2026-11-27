@@ -42,7 +42,7 @@ so you should restart the server to pick up these changes.
 The recommended way to make these changes is via the API.
 See the following for more information
 
-https://docs.velociraptor.app/docs/server_automation/server_api/`
+https://atlantsecurity.github.io/atlantiraptor/server-automation/grpc-api/`
 )
 
 var (

@@ -42,6 +42,26 @@ hunt's targeting (labels, OS, last seen).
 3. Collect `Server.Monitor.Profile` while it happens, or start the server
    with `--debug` (see [Debugging](/troubleshooting/debugging/)).
 
+## "Received message larger than max" {#message-too-large}
+
+The console or an API call fails with *received message larger than max*
+when a single response from the server's internal API is over the limit,
+4 MB by default. It usually means one result holds very large values, for
+example a whole file read into a column, or a notebook cell or table page
+with very wide rows.
+
+- Return less per row: upload large content with `upload()` instead of
+  putting it in a column, and select only the columns you need.
+- Page through results with `LIMIT`, or split a large query.
+- If you really need larger responses, raise `api_config.max_grpc_recv_size`
+  in the server configuration, or in the API client's configuration for
+  [gRPC API](/server-automation/grpc-api/) clients.
+
+The datastore has a similar cap for each object it stores,
+`Datastore.max_object_size` (4 MB). Hitting it means a single stored item
+(such as an artifact definition or notebook cell) has grown too big: split
+it rather than raising the limit.
+
 ## The disk is filling up
 
 Monitoring data and uploaded files grow without limit unless you delete

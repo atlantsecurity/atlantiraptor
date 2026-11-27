@@ -92,7 +92,7 @@ description: |
 reference:
   - |
     [Dead disk analysis on a collection container]
-    (http://docs.velociraptor.app/docs/deployment/offline_collections/collection_data/#dead-disk-analysis-on-a-collection-container)
+    (https://atlantsecurity.github.io/atlantiraptor/forensics/deaddisk/)
 
 type: SERVER
 

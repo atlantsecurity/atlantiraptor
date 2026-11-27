@@ -15,7 +15,7 @@ UPSTREAM_BRANCH="${UPSTREAM_BRANCH:-master}"
 BASE="${BASE:-master}"
 MIRROR="${MIRROR:-upstream-master}"
 SYNC="${SYNC:-sync/upstream}"
-KEEP_OURS="${KEEP_OURS:-gui/velociraptor}"
+KEEP_OURS="${KEEP_OURS:-gui/velociraptor README.md CONTRIBUTING.md security.md}"
 DRY_RUN="${DRY_RUN:-}"
 
 git config user.name  "${GIT_AUTHOR_NAME:-github-actions[bot]}"

@@ -39,7 +39,7 @@ description: |
 
 reference:
   - https://github.com/microsoft/Autoruns-for-Linux
-  - https://docs.velociraptor.app/artifact_references/pages/windows.sysinternals.autoruns/
+  - https://atlantsecurity.github.io/atlantiraptor/reference/artifacts/windows.sysinternals.autoruns/
 
 tools:
   - name: AutorunsLinux_amd64
