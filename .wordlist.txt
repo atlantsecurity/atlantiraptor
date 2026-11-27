@@ -64,3 +64,10 @@ allowlist
 Kali
 OpenID
 amazonaws
+Atlantiraptor's
+Okta's
+release's
+zip's
+response's
+metafiles
+plists
