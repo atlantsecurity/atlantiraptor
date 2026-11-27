@@ -39,7 +39,8 @@ const CLOUD_PROVIDERS: Record<string, string> = {
 // The name segment after the platform (Windows.EventLogs.X) grouped into
 // a short list of categories. Unknown segments fall into Other.
 const CATEGORY_SEGMENTS: Record<string, string> = {
-  detection: 'Detection', attack: 'Detection', sigma: 'Detection', yara: 'Detection', persistence: 'Detection',
+  detection: 'Detection', attack: 'Detection', sigma: 'Detection', yara: 'Detection',
+  persistence: 'Persistence', autoruns: 'Persistence',
   forensics: 'Forensics', forensic: 'Forensics', ntfs: 'Forensics', carving: 'Forensics', timeline: 'Forensics', analysis: 'Forensics',
   eventlogs: 'Event logs', etw: 'Event logs', syslog: 'Event logs', logs: 'Event logs', events: 'Event logs',
   registry: 'Registry',
@@ -157,11 +158,11 @@ export function matchesPlatform(f: ArtifactFacets, p: FacetFilter['platform']): 
   return f.platforms.includes(p);
 }
 
-export function matchesFilter(f: ArtifactFacets, filter: FacetFilter, ignore?: keyof FacetFilter): boolean {
-  if (ignore !== 'platform' && !matchesPlatform(f, filter.platform)) return false;
-  if (ignore !== 'cloud' && filter.cloud !== 'all' && f.cloud !== filter.cloud) return false;
-  if (ignore !== 'category' && filter.category !== 'all' && f.category !== filter.category) return false;
-  if (ignore !== 'source' && filter.source !== 'all' && f.source !== filter.source) return false;
+export function matchesFilter(f: ArtifactFacets, filter: FacetFilter, ...ignore: (keyof FacetFilter)[]): boolean {
+  if (!ignore.includes('platform') && !matchesPlatform(f, filter.platform)) return false;
+  if (!ignore.includes('cloud') && filter.cloud !== 'all' && f.cloud !== filter.cloud) return false;
+  if (!ignore.includes('category') && filter.category !== 'all' && f.category !== filter.category) return false;
+  if (!ignore.includes('source') && filter.source !== 'all' && f.source !== filter.source) return false;
   return true;
 }
 
@@ -171,6 +172,8 @@ export function isFiltered(filter: FacetFilter): boolean {
 
 // Counts per facet value. Each facet is counted with the other filters
 // applied, so a count says how many results picking that value gives.
+// Types and cloud services sit under a platform and are reset when it
+// changes, so platform counts ignore them.
 export function facetCounts(all: ArtifactFacets[], filter: FacetFilter) {
   const platform = new Map<Platform | 'all', number>();
   const cloud = new Map<string, number>();
@@ -179,7 +182,7 @@ export function facetCounts(all: ArtifactFacets[], filter: FacetFilter) {
   const bump = <K,>(m: Map<K, number>, k: K) => m.set(k, (m.get(k) ?? 0) + 1);
   const PLATFORMS: Platform[] = ['windows', 'linux', 'macos', 'any', 'cloud', 'server'];
   for (const f of all) {
-    if (matchesFilter(f, filter, 'platform')) {
+    if (matchesFilter(f, filter, 'platform', 'category', 'cloud')) {
       bump(platform, 'all');
       for (const p of PLATFORMS) if (matchesPlatform(f, p)) bump(platform, p);
     }
