@@ -1,60 +1,63 @@
 ---
 title: Atlantiraptor documentation
-description: Documentation for Atlantiraptor, the endpoint and cloud breach hunting platform by Atlant Security.
+description: Learn Atlantiraptor step by step - set up a test lab, run your first Rapid hunt, then collect files, memory and browser history and contain threats.
 ---
 
-Atlantiraptor lets a security team see into every computer it manages and
-into its cloud tenants, ask questions of all of them at once, and act on
-what it finds. An agent runs on each endpoint; a central server sends it
-work, collects the answers and keeps them for investigation. Everything the
-agent does is written as a query in VQL, the Velociraptor Query Language,
-so the same tool covers triage, threat hunting, forensic collection,
-continuous monitoring and response.
+Atlantiraptor lets you look inside every computer you look after, from one
+web page. You install a **server** once, and a small **agent** on each
+computer. The agents stay connected to the server, so you can ask all of
+them a question at once ("has anyone visited this website?"), collect
+files and evidence from any of them, and cut an infected computer off the
+network in a couple of clicks.
 
-Atlantiraptor is developed by [Atlant Security](https://atlantsecurity.com).
-It is based on the open source Velociraptor project and adds a redesigned
-console, guided investigation workflows, cloud breach hunting, premium hunt
-feeds and signed automatic updates. See [What's new in Atlantiraptor](/whats-new/).
+![The Atlantiraptor dashboard](/images/dashboard.webp "The dashboard: Rapid hunt, open alerts, connected computers and running hunts at a glance.")
 
-![The Atlantiraptor dashboard](/images/dashboard.webp "The dashboard: Rapid hunt, open alerts, connected clients and running hunts at a glance.")
-
-## Where to start
+## New here? Start with these four steps
 
 <div class="cards">
-<a href="/quickstart/"><b>Quick start</b><span>Run a complete server and agent on one computer in two minutes.</span></a>
-<a href="/deployment/"><b>Plan a deployment</b><span>Server, certificates, sign-in and rolling out agents.</span></a>
-<a href="/console/"><b>Tour the console</b><span>Dashboard, alerts, Rapid hunt, response and cases.</span></a>
-<a href="/hunts/"><b>Hunt across the fleet</b><span>Ask every endpoint the same question at once.</span></a>
-<a href="/cloud/"><b>Hunt cloud tenants</b><span>Microsoft 365, Google Workspace, Okta and AWS.</span></a>
-<a href="/vql/"><b>Learn VQL</b><span>The query language behind every artifact.</span></a>
+<a href="/overview/"><b>1. What is Atlantiraptor?</b><span>The server, the agents and what you can do with them.</span></a>
+<a href="/quickstart/"><b>2. Set up a test lab</b><span>A server and an agent running in ten minutes, on one computer or two.</span></a>
+<a href="/first-hunt/"><b>3. Your first Rapid hunt</b><span>Ask every computer whether it has seen a website, file or program.</span></a>
+<a href="/tasks/"><b>4. Everyday tasks</b><span>Collect a file, capture memory, get browser history, quarantine a computer.</span></a>
 </div>
 
-## Find your way around
+## Everyday tasks
 
-- **[Getting started](/overview/)** explains what Atlantiraptor is, the
-  words it uses and how the parts fit together.
-- **[Deploying](/deployment/)** covers installing the server, securing it,
-  signing users in, deploying agents and keeping everything up to date.
+Short, step-by-step answers to the things people do most:
+
+- [Look at one computer](/tasks/look-at-a-computer/)
+- [See what's running and who it talks to](/tasks/processes/)
+- [Collect a file](/tasks/collect-a-file/)
+- [Get the browser history](/tasks/browser-history/)
+- [Capture memory](/tasks/memory/)
+- [Search the Windows event logs](/tasks/event-logs/)
+- [Ask every computer the same question](/tasks/every-computer/)
+- [Quarantine a computer](/tasks/quarantine/)
+- [Kill a process or delete a file](/tasks/stop-a-threat/)
+- [Check a Microsoft 365, Google, Okta or AWS account for a breach](/tasks/cloud-tenant/)
+- [Download and share what you collected](/tasks/download-results/)
+- [Add more computers](/tasks/add-computers/)
+
+## When you know the basics
+
+The rest of the documentation goes deeper, roughly from everyday use to
+expert topics:
+
 - **[Using the console](/console/)**, **[Endpoints](/clients/)** and
-  **[Hunting](/hunts/)** are for analysts: finding hosts, collecting
-  evidence, hunting and responding.
-- **[Notebooks and evidence](/notebooks/)** shows how to analyse results
-  and export them.
-- **[Offline collections](/offline/)** covers collecting from machines
-  that cannot reach the server.
-- **[Artifacts](/artifacts/)** and **[VQL](/vql/)** explain how to write
-  your own collections and detections.
-- **[Forensics](/forensics/)** describes the forensic capabilities: file
-  systems, NTFS, event logs, execution evidence, dead disk analysis.
-- **[Automation and integrations](/server-automation/)** connects
-  Atlantiraptor to a SIEM, SOAR, chat or email, and automates the server.
-- **[Troubleshooting](/troubleshooting/)** helps when something does not
-  work.
-- The **Reference** section lists every [VQL plugin and function](/reference/vql/),
-  [built-in artifact](/reference/artifacts/),
-  [configuration setting](/reference/config/),
-  [command](/reference/cli/) and [REST API endpoint](/reference/api/).
-  It is generated from the source code of this version.
+  **[Hunting](/hunts/)** explain every page of the console in detail.
+- **[Deploying](/deployment/)** covers a real installation: certificates,
+  sign-in, rolling agents out to many computers, updates and backups.
+- **[Users and access](/users/)** and **[Offline collections](/offline/)**
+  cover who can do what, and collecting from computers that can't reach
+  the server.
+- **[Notebooks and evidence](/notebooks/)** shows how to analyse and
+  export results.
+- **[Artifacts](/artifacts/)**, the **[query language](/vql/)** and
+  **[Forensics](/forensics/)** are for writing your own collections and
+  detections.
+- **[Automation and integrations](/server-automation/)**,
+  **[Command line](/cli/)** and **[Troubleshooting](/troubleshooting/)**
+  come last, followed by the generated **Reference**.
 
 You can also search these pages from the console: click the **?** icon in
 the top bar.
