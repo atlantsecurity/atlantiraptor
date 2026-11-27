@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Velocidex/ordereddict"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,16 @@ func (self *OktaArtifactsTestSuite) TestPasswordSpray() {
 }
 
 func (self *OktaArtifactsTestSuite) TestMFAFatigue() {
+	self.assertDetections(self.run("Cloud.Okta.MFAFatigue"),
+		"critical|MFA approved after repeated push prompts|erin@example.com",
+		"medium|Burst of MFA push prompts|erin@example.com",
+	)
+}
+
+// Erin's pushes span five minutes. Put a clock hour in the middle of
+// them: the burst must still be found.
+func (self *OktaArtifactsTestSuite) TestMFAFatigueAcrossClockHour() {
+	self.server.now = time.Now().Truncate(time.Hour).Add(62 * time.Minute)
 	self.assertDetections(self.run("Cloud.Okta.MFAFatigue"),
 		"critical|MFA approved after repeated push prompts|erin@example.com",
 		"medium|Burst of MFA push prompts|erin@example.com",
