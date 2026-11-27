@@ -81,5 +81,5 @@ Target, Targets, IPAddress, City, Country, Location, Lat, Lon, UserAgent, Browse
 Device, Zone, SessionId, CredentialType, CredentialProvider, Provider, IsProxy, ASN,
 ASOrg, ISP, Domain, DebugData, TransactionId, UUID`. With `follow=TRUE` it keeps polling
 with an overlap and drops repeats by `UUID`. `okta_api()` only issues GET requests under
-`/api/v1/` and follows `Link` paging. Both wait out Okta's rate limits
+`/api/v1/` and follows `Link` paging. Both wait out the Okta rate limits
 (`X-Rate-Limit-Reset`) and retry 5xx answers.

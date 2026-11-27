@@ -74,6 +74,6 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
 - Cloud breach hunting (`vql/server/cloud`, artifacts under `artifacts/definitions/Cloud/`,
   setup in `docs/cloud/`): the server hunts customers' cloud tenants (Microsoft 365 / Entra ID,
   Google Workspace, Okta; AWS next) read-only, with credentials from the secrets service. Provider endpoints are fixed in
-  code so a query can't send a tenant's token elsewhere (Okta, whose address differs per customer, is limited to Okta's
-  own domains); tests point them at fixture servers.
+  code so a query can't send a tenant's token elsewhere (Okta, whose address differs per customer, is limited to the Okta
+  domains); tests point them at fixture servers.
   Every hunt returns `Time, Severity, Detection, User, IPAddress, Location, Device, Details`.
