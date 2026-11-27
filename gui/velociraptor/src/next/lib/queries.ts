@@ -319,14 +319,15 @@ export function usePrepareHuntDownload() {
 // ----------------------------------------------------------- Artifacts
 
 export function useArtifactSearch(
-  term: string, type: '' | 'CLIENT' | 'SERVER' | 'CLIENT_EVENT' | 'SERVER_EVENT' = 'CLIENT', enabled = true) {
+  term: string, type: '' | 'CLIENT' | 'SERVER' | 'CLIENT_EVENT' | 'SERVER_EVENT' = 'CLIENT', enabled = true,
+  limit = 100) {
   return useQuery({
-    queryKey: ['artifact-search', type, term],
+    queryKey: ['artifact-search', type, term, limit],
     enabled,
     queryFn: ({ signal }) => api.post<GetArtifactsResponse>('v1/GetArtifacts', {
       type: type || undefined,
       search_term: term,
-      number_of_results: 100,
+      number_of_results: limit,
       fields: { name: true, description: true },
     }, signal),
     select: d => d.items ?? [],
