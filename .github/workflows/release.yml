@@ -20,6 +20,10 @@ name: Release
 on:
   push:
     branches: [master]
+    # Website-only changes don't need a new server release.
+    paths-ignore:
+      - "docs/site/**"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
     inputs:
       version:

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{if .Page.Path}}{{.Page.Title}} · {{end}}Atlantiraptor documentation</title>
+<meta name="description" content="{{.Description}}">
+<link rel="icon" href="{{.Base}}assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="{{.Base}}assets/style.css">
+<script>
+  try { var t = localStorage.getItem("atl-docs-theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+</head>
+<body data-base="{{.Base}}">
+<a class="skip" href="#content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-button" type="button" aria-label="Show navigation" aria-expanded="false" aria-controls="sidebar">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <a class="brand" href="{{.Base}}">
+    <img src="{{.Base}}assets/logo.svg" alt="" width="28" height="28">
+    <span>Atlantiraptor <span class="brand-sub">Docs</span></span>
+  </a>
+  <div class="search" role="search">
+    <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input id="search-input" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the documentation" aria-controls="search-results">
+    <kbd class="search-key">/</kbd>
+    <div id="search-results" class="search-results" role="listbox" hidden></div>
+  </div>
+  <div class="topbar-links">
+    <button class="theme-button" type="button" aria-label="Switch between light and dark theme" title="Light or dark theme">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+    </button>
+    <a class="github" href="https://github.com/atlantsecurity/atlantiraptor" aria-label="Atlantiraptor on GitHub" title="Source code on GitHub">
+      <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="sidebar" class="sidebar" aria-label="Documentation">
+    {{range .Nav}}
+    <details class="nav-section"{{if .Open}} open{{end}}>
+      <summary>{{.Title}}</summary>
+      <ul>
+        {{range .Groups}}<li><a href="{{.URL}}"{{if .Current}} aria-current="page" class="current"{{end}}>{{.Title}}</a></li>
+        {{end}}
+      </ul>
+    </details>
+    {{end}}
+  </nav>
+
+  <main id="content" class="content">
+    <article class="article">
+      {{if .Crumbs}}<nav class="crumbs" aria-label="Breadcrumb">{{range .Crumbs}}<a href="{{.URL}}">{{.Title}}</a><span aria-hidden="true">›</span>{{end}}</nav>{{end}}
+      <h1>{{.Page.Title}}</h1>
+      {{.Page.HTML}}
+
+      {{if or .Prev .Next}}
+      <nav class="pager" aria-label="Previous and next page">
+        {{with .Prev}}<a class="pager-prev" href="{{.URL}}"><span>Previous</span>{{.Title}}</a>{{else}}<span></span>{{end}}
+        {{with .Next}}<a class="pager-next" href="{{.URL}}"><span>Next</span>{{.Title}}</a>{{end}}
+      </nav>
+      {{end}}
+
+      <footer class="page-footer">
+        {{if .EditURL}}<p><a href="{{.EditURL}}">Edit this page on GitHub</a></p>{{end}}
+        <p>© {{.Year}} Atlant Security EOOD. Atlantiraptor is free software under the
+        <a href="https://github.com/atlantsecurity/atlantiraptor/blob/master/LICENSE">GNU Affero General Public License v3</a>.
+        It is based on Velociraptor by Velocidex, and keeps its copyright notices.
+        Velociraptor is a trademark of its owner; Atlantiraptor is not affiliated with or endorsed by it.</p>
+      </footer>
+    </article>
+
+    {{if .Page.TOC}}
+    <aside class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+        {{range .Page.TOC}}<li class="toc-l{{.Level}}"><a href="#{{.ID}}">{{.Title}}</a></li>
+        {{end}}
+      </ul>
+    </aside>
+    {{end}}
+  </main>
+</div>
+<script src="{{.Base}}assets/site.js" defer></script>
+</body>
+</html>

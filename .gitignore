@@ -32,3 +32,4 @@ artifacts/testdata/server/users/
 build/packages/
 # Release builds (signed binaries are shipped, not committed)
 /dist/
+docs/site/public/

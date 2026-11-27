@@ -13,7 +13,7 @@ description: |
   artifact reads the journal's own index the way `journalctl` does, so
   gigabytes of journals are listed fast. Note that it does not parse
   entries, just unique occurrances. Use
-  [`Linux.Forensics.Journal`](/artifact_references/pages/linux.forensics.journal/)
+  [`Linux.Forensics.Journal`](https://atlantsecurity.github.io/atlantiraptor/reference/artifacts/linux.forensics.journal/)
   for the whole journal. Each distinct value is read straight from the
   index together with its entry count and the time of its first and
   last entry (information that `journalctl -F` does not include).
@@ -79,7 +79,7 @@ description: |
   Only the modern compact journal format is supported (systemd v252 and
   later, the default since 2022). Legacy non-compact journals are skipped
   with a warning; parse those with
-  [`Linux.Forensics.Journal`](/artifact_references/pages/linux.forensics.journal/)
+  [`Linux.Forensics.Journal`](https://atlantsecurity.github.io/atlantiraptor/reference/artifacts/linux.forensics.journal/)
   instead.
 
   The last entry of a value is read from the tail of the journal's
