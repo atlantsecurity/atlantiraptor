@@ -21,6 +21,8 @@ Click **Configure** to see the monitoring table:
 - **Label groups**: extra artifacts that run only on clients with a label
   (for example `Windows.ETW.DNS` only on `servers`).
 
+![Client monitoring configuration](/images/monitoring-config.webp "Configuring client monitoring: artifacts for all clients, label groups, and the event artifacts available.")
+
 Add artifacts from the list on the right, set their parameters, and save.
 Clients pick up the change within a minute. Removing an artifact stops it.
 
@@ -45,6 +47,8 @@ artifacts.
 Pick an artifact and a time window (a day, or a range). The table shows the
 rows from that window; filter, sort, pivot, and export the window as CSV or
 JSON. **Classic timeline view** shows several artifacts on one timeline.
+
+![Client events table](/images/client-events.webp "Generic.Client.Stats rows for the last 24 hours.")
 
 If an artifact shows "not running (historical data only)", it was removed
 from the monitoring table but its old data is still stored.

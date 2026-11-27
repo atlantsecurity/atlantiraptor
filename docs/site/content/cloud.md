@@ -59,6 +59,8 @@ Browse them all in the [artifact reference](/reference/artifacts/).
 4. Start the provider's `Monitor` under **Server events** so that
    evidence is kept from now on.
 
+![Cloud hunt in the New hunt dialog](/images/cloud-hunt.webp "Picking a Microsoft 365 hunt: it runs on the server against the tenant, so the dialog shows Run cloud hunt instead of targeting.")
+
 ## Why run the monitor from day one
 
 Providers keep their logs for a short time: Entra ID sign-ins for 7 days

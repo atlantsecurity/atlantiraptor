@@ -251,6 +251,7 @@ var (
 	calloutRegex = regexp.MustCompile(`<blockquote>\s*<p><strong>(Note|Tip|Warning|Important|Atlantiraptor)(:?)</strong>:?`)
 	headingRegex = regexp.MustCompile(`<h([23]) id="([^"]+)">(.*?)</h[23]>`)
 	tagRegex     = regexp.MustCompile(`<[^>]+>`)
+	figureRegex  = regexp.MustCompile(`<p><img src="([^"]*)" alt="([^"]*)" title="([^"]*)" ?/?></p>`)
 )
 
 func (self *Site) renderMarkdown(md, source string) template.HTML {
@@ -268,6 +269,12 @@ func (self *Site) renderMarkdown(md, source string) template.HTML {
 		kind := strings.ToLower(sm[1])
 		return `<blockquote class="callout callout-` + kind + `"><p><strong>` + sm[1] + `</strong>`
 	})
+
+	// A paragraph holding only an image with a title becomes a figure
+	// with that title as its caption.
+	res = figureRegex.ReplaceAllString(res,
+		`<figure><a href="$1"><img loading="lazy" src="$1" alt="$2" /></a><figcaption>$3</figcaption></figure>`)
+	res = strings.ReplaceAll(res, "<img src=", `<img loading="lazy" src=`)
 
 	// Tables can be wider than the column on phones.
 	res = strings.ReplaceAll(res, "<table>", `<div class="table-wrap"><table>`)
@@ -493,6 +500,23 @@ func (self *Site) write() error {
 			return err
 		}
 		self.files["assets/"+e.Name()] = data
+	}
+
+	// Screenshots and other images (docs/site/images).
+	imgDir := filepath.Join(self.Opts.Root, "docs/site/images")
+	imgs, err := os.ReadDir(imgDir)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, e := range imgs {
+		if e.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(imgDir, e.Name()))
+		if err != nil {
+			return err
+		}
+		self.files["images/"+e.Name()] = data
 	}
 
 	// Website search index.

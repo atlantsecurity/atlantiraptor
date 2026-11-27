@@ -31,6 +31,8 @@ atlantiraptor --config server.config.yaml user add --role reader jane@example.co
 
 Roles add up: a user with `hunter` and `artifact_writer` can do both.
 
+![User roles](/images/users.webp "A user's roles in an organization, and the permissions they grant.")
+
 | Role | Label in the console | Can |
 |---|---|---|
 | `reader` | Read-only | Look at clients, collected results, hunts and notebooks. Change nothing |

@@ -31,6 +31,10 @@ Search for artifacts and pick one or more. Filters narrow the list by
 operating system and category. Set each artifact's parameters; every
 parameter has a default.
 
+![New hunt dialog](/images/new-hunt.webp "New hunt with Windows event log artifacts selected; the filters on the left narrow the list by OS and type.")
+
+![New hunt artifact filters](/images/new-hunt-types.webp "Picking Windows shows that platform's artifact types, such as System, Forensics, Registry and Persistence, with counts.")
+
 Artifacts that query cloud tenants run on the server instead of on clients
 (see [Cloud breach hunting](/cloud/)). When you pick only cloud artifacts
 the dialog shows **Runs on the server** and **Run cloud hunt** starts one
@@ -111,6 +115,8 @@ Results tables work like everywhere else in the console: sort, filter,
 pivot on any value and export the table as CSV or JSON. The client ID and
 host name columns link to the host page.
 
+![Hunt results](/images/hunt-results.webp "A hunt's Results tab, filtered as you type.")
+
 To combine, count or stack results across hosts, use the hunt's
 [notebook](/notebooks/). For example, count how many hosts have each
 autorun entry, most rare first:
@@ -131,6 +137,8 @@ of every client, in the same layout as a collection export. It can be
 password protected with your [downloads password](/console/preferences/#the-downloads-password).
 Exports are kept on the server until the hunt is deleted. See
 [Exporting evidence](/evidence/).
+
+![Export hunt dialog](/images/hunt-export.webp "Export hunt: full evidence or combined results, as JSON or CSV.")
 
 ## Clients that did not run the hunt
 

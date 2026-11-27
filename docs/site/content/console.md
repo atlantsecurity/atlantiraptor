@@ -38,6 +38,8 @@ hidden or read-only.
 Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd>+<kbd>K</kbd> on a Mac)
 anywhere. Type to jump to any page, client, hunt, case or notebook.
 
+![Command palette with an indicator](/images/command-palette-indicator.webp "Pasting an indicator into the command palette offers a Rapid hunt or an IOC sweep for it.")
+
 Paste an **IP address, domain, URL, hash or file path** and the palette
 offers **Hunt for this indicator**, which starts a [Rapid hunt](/console/rapid-hunt/)
 for it. Paste several indicators at once and it offers an
@@ -60,6 +62,8 @@ Every results table in the console works the same way:
   - **Look up on VirusTotal**,
   - **Copy**.
 
+![Pivot menu on a result value](/images/pivot-menu.webp "Clicking a value in a results table offers filters, Rapid hunt, IOC sweep and adding it to a case.")
+
 Large result sets load in pages; scroll to the end to load the rest, or use
 the server-side search where a page offers it, so filters see every row.
 
@@ -69,12 +73,16 @@ The console follows a light theme by default. Switch to dark in the account
 menu. **Settings…** has more themes, the display time zone and language.
 See [Preferences](/console/preferences/).
 
+![Dashboard in the dark theme](/images/dashboard-dark.webp "The dashboard in the dark theme.")
+
 ## On a phone
 
 The console works on phones and tablets: the sidebar becomes a menu, tables
 scroll sideways, and the dashboard, alerts, Rapid hunt and host pages are
 laid out for a narrow screen. This is handy for checking an alert or
 quarantining a host when you are away from your desk.
+
+![Dashboard on a phone](/images/phone-dashboard.webp "The dashboard on a phone.")
 
 ## The classic view
 
