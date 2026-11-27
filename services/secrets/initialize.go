@@ -157,6 +157,17 @@ var (
 			"skip_verify":             "FALSE",
 		},
 	}, {
+		TypeName: constants.M365_CREDS,
+		Description: "Read-only access to a Microsoft 365 / Entra ID tenant for cloud " +
+			"breach hunting (m365_graph() and m365_audit()). Use the app " +
+			"registration's client ID and secret and the customer's tenant ID.",
+		Verifier: "x=>x.tenant_id AND x.client_id AND x.client_secret",
+		Fields: []string{
+			"tenant_id",
+			"client_id",
+			"client_secret",
+		},
+	}, {
 		TypeName:    constants.SMTP_CREDS,
 		Verifier:    "x=>x.server && x.server_port",
 		Description: "Credentials to be used in mail() plugin.",

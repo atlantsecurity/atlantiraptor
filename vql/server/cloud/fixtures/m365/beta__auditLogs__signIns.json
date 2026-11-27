@@ -1,0 +1,1884 @@
+{
+ "value": [
+  {
+   "id": "si-22",
+   "createdDateTime": "NOW-10hZ",
+   "userPrincipalName": "carol@contoso.com",
+   "userId": "carol@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Paris",
+    "state": "",
+    "countryOrRegion": "FR",
+    "geoCoordinates": {
+     "latitude": 48.85,
+     "longitude": 2.35
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "high",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-12",
+   "createdDateTime": "NOW-19hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "102.89.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Lagos",
+    "state": "",
+    "countryOrRegion": "NG",
+    "geoCoordinates": {
+     "latitude": 6.52,
+     "longitude": 3.37
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-1",
+   "createdDateTime": "NOW-200hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-13",
+   "createdDateTime": "NOW-200hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-11",
+   "createdDateTime": "NOW-20hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "198.51.100.7",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-2",
+   "createdDateTime": "NOW-220hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-14",
+   "createdDateTime": "NOW-220hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-3",
+   "createdDateTime": "NOW-240hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-15",
+   "createdDateTime": "NOW-240hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-21",
+   "createdDateTime": "NOW-240hZ",
+   "userPrincipalName": "carol@contoso.com",
+   "userId": "carol@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Berlin",
+    "state": "",
+    "countryOrRegion": "DE",
+    "geoCoordinates": {
+     "latitude": 52.52,
+     "longitude": 13.4
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-20",
+   "createdDateTime": "NOW-250hZ",
+   "userPrincipalName": "carol@contoso.com",
+   "userId": "carol@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Berlin",
+    "state": "",
+    "countryOrRegion": "DE",
+    "geoCoordinates": {
+     "latitude": 52.52,
+     "longitude": 13.4
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-4",
+   "createdDateTime": "NOW-260hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-16",
+   "createdDateTime": "NOW-260hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-5",
+   "createdDateTime": "NOW-280hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-17",
+   "createdDateTime": "NOW-280hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-6",
+   "createdDateTime": "NOW-300hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-18",
+   "createdDateTime": "NOW-300hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-19",
+   "createdDateTime": "NOW-30hZ",
+   "userPrincipalName": "bob@contoso.com",
+   "userId": "bob@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "IMAP4",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Austin",
+    "state": "",
+    "countryOrRegion": "US",
+    "geoCoordinates": {
+     "latitude": 30.27,
+     "longitude": -97.74
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-7",
+   "createdDateTime": "NOW-320hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-8",
+   "createdDateTime": "NOW-340hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-9",
+   "createdDateTime": "NOW-360hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-10",
+   "createdDateTime": "NOW-380hZ",
+   "userPrincipalName": "alice@contoso.com",
+   "userId": "alice@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "203.0.113.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0,
+    "failureReason": ""
+   },
+   "location": {
+    "city": "Sofia",
+    "state": "",
+    "countryOrRegion": "BG",
+    "geoCoordinates": {
+     "latitude": 42.69,
+     "longitude": 23.32
+    }
+   },
+   "deviceDetail": {
+    "displayName": "ALICE-LAPTOP",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "si-23",
+   "createdDateTime": "NOW-5hZ",
+   "userPrincipalName": "dave@contoso.com",
+   "userId": "dave@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126,
+    "failureReason": "Invalid username or password"
+   },
+   "location": {
+    "city": "Moscow",
+    "state": "",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": "",
+    "operatingSystem": "Windows10",
+    "browser": "Edge"
+   },
+   "authenticationRequirement": "multiFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "Mozilla/5.0",
+   "isInteractive": true
+  },
+  {
+   "id": "sp-1",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user0@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-2",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user1@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-3",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user2@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-4",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user3@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-5",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user4@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-6",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user5@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-7",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user6@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-8",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user7@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-9",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user8@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-10",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user9@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-11",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user10@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-12",
+   "createdDateTime": "NOW-3hZ",
+   "userPrincipalName": "user11@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-13",
+   "createdDateTime": "NOW-2hZ",
+   "userPrincipalName": "henry@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "45.1.1.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 0
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-14",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.0",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-15",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.1",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-16",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.2",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-17",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.3",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-18",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.4",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-19",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.5",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-20",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.6",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-21",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.7",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-22",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.8",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-23",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.9",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-24",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.10",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-25",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.11",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-26",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.12",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-27",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.13",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-28",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.14",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-29",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.15",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-30",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.16",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-31",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.17",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-32",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.18",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-33",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.19",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-34",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.20",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-35",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.21",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-36",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.22",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-37",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.23",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-38",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.24",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-39",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.25",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-40",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.26",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-41",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.27",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-42",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.28",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-43",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.29",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  },
+  {
+   "id": "sp-44",
+   "createdDateTime": "NOW-4hZ",
+   "userPrincipalName": "ivan@contoso.com",
+   "appDisplayName": "Office 365 Exchange Online",
+   "ipAddress": "77.7.7.30",
+   "clientAppUsed": "Browser",
+   "status": {
+    "errorCode": 50126
+   },
+   "location": {
+    "city": "Moscow",
+    "countryOrRegion": "RU",
+    "geoCoordinates": {
+     "latitude": 55.75,
+     "longitude": 37.62
+    }
+   },
+   "deviceDetail": {
+    "displayName": ""
+   },
+   "authenticationRequirement": "singleFactorAuthentication",
+   "riskLevelDuringSignIn": "none",
+   "riskState": "none",
+   "userAgent": "python-requests/2.31"
+  }
+ ]
+}

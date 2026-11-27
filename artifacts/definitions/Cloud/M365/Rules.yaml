@@ -1,0 +1,144 @@
+name: Cloud.M365.Rules
+description: |
+  Shared detection rules for the `Cloud.M365.*` breach hunts and the
+  `Cloud.M365.Monitor` event artifact. Other artifacts import this one;
+  it collects nothing by itself.
+
+  Two rule tables match single records:
+
+  - `M365DirectoryRules` match Entra ID directory audit events from
+    Microsoft Graph (`/auditLogs/directoryAudits`) on their
+    `activityDisplayName`.
+  - `M365AuditRules` match unified audit log records (Exchange,
+    SharePoint) on their `Operation` and cmdlet parameters.
+
+  A rule whose `Escalate` regex also matches the record is raised to
+  `EscalateTo`. Rules that need many records (password spray, mass
+  download, impossible travel) live in their own hunts.
+
+type: SERVER
+
+export: |
+  // Roles that give control of the tenant.
+  LET M365PrivilegedRoles <= "Global Administrator|Privileged Role Administrator|Privileged Authentication Administrator|Security Administrator|Exchange Administrator|SharePoint Administrator|Application Administrator|Cloud Application Administrator|Hybrid Identity Administrator|User Administrator|Authentication Administrator|Conditional Access Administrator|Intune Administrator|Partner Tier2 Support"
+
+  // OAuth scopes and app roles that read or send mail, read files or
+  // change the directory: what consent phishing and BEC apps ask for.
+  LET M365RiskyScopes <= '''(?i)\b(Mail\.(Read|ReadWrite|Send)|Mail\.(Read|ReadWrite)\.Shared|MailboxSettings\.ReadWrite|Files\.(Read|ReadWrite)\.All|Sites\.(Read|ReadWrite|FullControl|Manage)\.All|full_access_as_user|full_access_as_app|EWS\.AccessAsUser\.All|(IMAP|POP)\.AccessAsUser\.All|SMTP\.Send|Directory\.ReadWrite\.All|User\.ReadWrite\.All|Application\.ReadWrite\.All|AppRoleAssignment\.ReadWrite\.All|RoleManagement\.ReadWrite\.Directory|Contacts\.Read)\b'''
+
+  LET M365DirectoryRules <= (
+    dict(Category="privileged", Activity="^(Add member to role|Add eligible member to role|Add scoped member to role|Add member to role completed \\(PIM activation\\))$",
+         Detection="Admin role granted", Severity="high",
+         Escalate=M365PrivilegedRoles, EscalateTo="critical"),
+    dict(Category="privileged", Activity="^(Set domain authentication|Set federation settings on domain|Add unverified domain|Verify domain)$",
+         Detection="Domain federation or verification changed (forged sign-in risk)", Severity="critical",
+         Escalate="", EscalateTo=""),
+    dict(Category="privileged", Activity="^(Delete conditional access policy|Delete policy)$",
+         Detection="Conditional Access policy deleted", Severity="high",
+         Escalate="", EscalateTo=""),
+    dict(Category="privileged", Activity="^(Update conditional access policy|Update policy)$",
+         Detection="Conditional Access policy changed", Severity="medium",
+         Escalate="(?i)state\\W+disabled|reportOnly", EscalateTo="high"),
+    dict(Category="privileged", Activity="^(Add partner to company|Add delegated admin relationship|Approve delegated admin relationship)$",
+         Detection="Partner or delegated admin access added", Severity="high",
+         Escalate="", EscalateTo=""),
+    dict(Category="mfa", Activity="^(User registered security info|Admin registered security info|User registered all required security info|User changed default security info|Admin updated security info)$",
+         Detection="MFA method registered or changed", Severity="medium",
+         Escalate="", EscalateTo=""),
+    dict(Category="mfa", Activity="^(User deleted security info|Admin deleted security info|Delete authentication method|Reset user's security info|Admin reset security info)$",
+         Detection="MFA method removed", Severity="medium",
+         Escalate="", EscalateTo=""),
+    dict(Category="mfa", Activity="^(Disable Strong Authentication|Update user)$",
+         Detection="Per-user MFA disabled or strong authentication changed", Severity="low",
+         Escalate="StrongAuthenticationRequirement|StrongAuthenticationMethod", EscalateTo="high"),
+    dict(Category="app", Activity="^(Add service principal credentials|Update application – Certificates and secrets management|Update application - Certificates and secrets management)$",
+         Detection="Secret or certificate added to an app", Severity="high",
+         Escalate="", EscalateTo=""),
+    dict(Category="app", Activity="^(Consent to application|Add delegated permission grant|Add app role assignment to service principal)$",
+         Detection="Permissions granted to an app", Severity="medium",
+         Escalate=M365RiskyScopes, EscalateTo="high"),
+    dict(Category="app", Activity="^(Add owner to application|Add owner to service principal)$",
+         Detection="Owner added to an app", Severity="medium",
+         Escalate="", EscalateTo=""),
+    dict(Category="app", Activity="^(Add service principal|Add application)$",
+         Detection="New app registered or added", Severity="low",
+         Escalate="", EscalateTo="")
+  )
+
+  LET M365AuditRules <= (
+    dict(Category="mail", Operation="^(New|Set)-InboxRule$",
+         Params="(^|;)(ForwardTo|ForwardAsAttachmentTo|RedirectTo)=[^;]",
+         Detection="Inbox rule forwards mail", Severity="high"),
+    dict(Category="mail", Operation="^(New|Set)-InboxRule$",
+         Params="(^|;)(DeleteMessage=True|MoveToFolder=[^;]*(RSS|Archive|Conversation History|Junk|Deleted)|SoftDeleteMessage=True)",
+         Detection="Inbox rule hides or deletes mail", Severity="medium"),
+    dict(Category="mail", Operation="^New-InboxRule$",
+         Params="(^|;)Name=[^A-Za-z0-9;]{0,3}(;|$)",
+         Detection="Inbox rule with a blank or punctuation name", Severity="high"),
+    dict(Category="mail", Operation="^UpdateInboxRules$",
+         Params="(?i)forward|redirect|delete",
+         Detection="Inbox rule that forwards or deletes changed from Outlook", Severity="medium"),
+    dict(Category="mail", Operation="^Set-Mailbox$",
+         Params="(^|;)(ForwardingSmtpAddress|ForwardingAddress)=[^;]",
+         Detection="Mailbox forwarding set", Severity="high"),
+    dict(Category="mail", Operation="^(New|Set)-TransportRule$",
+         Params="(^|;)(RedirectMessageTo|BlindCopyTo|CopyTo|AddToRecipients|AddManagerAsRecipientType)=[^;]",
+         Detection="Transport rule copies or redirects mail", Severity="high"),
+    dict(Category="mail", Operation="^Add-MailboxPermission$",
+         Params="FullAccess",
+         Detection="Full access to a mailbox granted", Severity="medium"),
+    dict(Category="mail", Operation="^Add-RecipientPermission$",
+         Params="SendAs",
+         Detection="Send-as permission granted", Severity="medium"),
+    dict(Category="mail", Operation="^Set-Mailbox$",
+         Params="(^|;)GrantSendOnBehalfTo=[^;]",
+         Detection="Send-on-behalf permission granted", Severity="medium"),
+    dict(Category="mail", Operation="^Add-MailboxFolderPermission$",
+         Params="(?i)Inbox|Top of Information Store",
+         Detection="Inbox folder shared with another user", Severity="medium"),
+    dict(Category="mail", Operation="^New-ManagementRoleAssignment$",
+         Params="ApplicationImpersonation",
+         Detection="Mailbox impersonation role assigned", Severity="high"),
+    dict(Category="mail", Operation="^(Set-RemoteDomain|New-RemoteDomain)$",
+         Params="(^|;)AutoForwardEnabled=True",
+         Detection="Automatic external forwarding allowed", Severity="high"),
+    dict(Category="mail", Operation="^(Set-HostedOutboundSpamFilterPolicy|New-HostedOutboundSpamFilterPolicy)$",
+         Params="(^|;)AutoForwardingMode=On",
+         Detection="Automatic external forwarding allowed", Severity="high")
+  )
+
+  // "Name=Value;Name=Value" text of an Exchange cmdlet's parameters, or
+  // of a record's OperationProperties (UpdateInboxRules).
+  LET M365ParamQuery(Parameters) = SELECT format(format="%v=%v", args=[Name, Value]) AS x
+      FROM foreach(row=Parameters)
+  LET M365ParamText(Parameters) = join(array=M365ParamQuery(Parameters=Parameters).x, sep=";")
+
+  // Parameter names must differ from the rule table's columns, which
+  // shadow them inside foreach().
+  LET M365DirectoryMatches(DirActivity, DirTargets, DirDetails) =
+      SELECT Category, Detection,
+             if(condition=Escalate AND serialize(item=[DirTargets, DirDetails]) =~ Escalate,
+                then=EscalateTo, else=Severity) AS Severity
+      FROM foreach(row=M365DirectoryRules)
+      WHERE DirActivity =~ Activity
+
+  LET M365AuditMatches(AuditOperation, AuditParams) =
+      SELECT Category, Detection, Severity
+      FROM foreach(row=M365AuditRules)
+      WHERE AuditOperation =~ Operation AND AuditParams =~ Params
+
+  // Who did it: a user, or an app acting on its own.
+  LET M365Actor(InitiatedBy) = InitiatedBy.user.userPrincipalName ||
+      InitiatedBy.app.displayName || InitiatedBy.app.servicePrincipalName
+
+  // What it was done to, as readable text.
+  LET M365TargetsQuery(Targets) = SELECT userPrincipalName || displayName || id AS x
+      FROM foreach(row=Targets)
+  LET M365TargetText(Targets) = join(array=M365TargetsQuery(Targets=Targets).x, sep=", ")
+
+  LET M365Rank <= dict(critical=0, high=1, medium=2, low=3, info=4)
+  LET M365MinRank(Level) = get(item=M365Rank, field=Level, default=3)
+
+sources:
+  - query: |
+      SELECT * FROM scope() WHERE FALSE

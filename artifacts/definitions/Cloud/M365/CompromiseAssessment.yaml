@@ -1,0 +1,41 @@
+name: Cloud.M365.CompromiseAssessment
+description: |
+  Runs every Microsoft 365 / Entra ID breach hunt against one tenant in
+  a single collection: the starting point of a Microsoft 365 compromise
+  assessment. Each source is one hunt; all rows share the columns
+  `Time, Severity, Detection, User, IPAddress, Location, Device,
+  Details`, so the results can be sorted into one findings list.
+
+  Hunts that need a licence or permission the tenant lacks log why and
+  return nothing; the others still run. See `docs/cloud/m365.md` for
+  the app registration and permissions.
+
+type: SERVER
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+
+sources:
+  - name: SignIns
+    query: SELECT * FROM Artifact.Cloud.M365.SignIns(M365Secret=M365Secret)
+  - name: TokenTheft
+    query: SELECT * FROM Artifact.Cloud.M365.TokenTheft(M365Secret=M365Secret)
+  - name: PasswordSpray
+    query: SELECT * FROM Artifact.Cloud.M365.PasswordSpray(M365Secret=M365Secret)
+  - name: MFAChanges
+    query: SELECT * FROM Artifact.Cloud.M365.MFAChanges(M365Secret=M365Secret)
+  - name: PrivilegedChanges
+    query: SELECT * FROM Artifact.Cloud.M365.PrivilegedChanges(M365Secret=M365Secret)
+  - name: AppChanges
+    query: SELECT * FROM Artifact.Cloud.M365.AppChanges(M365Secret=M365Secret)
+  - name: OAuthApps
+    query: SELECT * FROM Artifact.Cloud.M365.OAuthApps(M365Secret=M365Secret)
+  - name: InboxRules
+    query: SELECT * FROM Artifact.Cloud.M365.InboxRules(M365Secret=M365Secret)
+  - name: MailForwarding
+    query: SELECT * FROM Artifact.Cloud.M365.MailForwarding(M365Secret=M365Secret)
+  - name: MassDownload
+    query: SELECT * FROM Artifact.Cloud.M365.MassDownload(M365Secret=M365Secret)
+  - name: ExternalSharing
+    query: SELECT * FROM Artifact.Cloud.M365.ExternalSharing(M365Secret=M365Secret)

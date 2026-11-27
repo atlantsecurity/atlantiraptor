@@ -1,0 +1,108 @@
+{
+ "value": [
+  {
+   "id": "sp-graph",
+   "appId": "00000003-0000-0000-c000-000000000000",
+   "displayName": "Microsoft Graph",
+   "appOwnerOrganizationId": "f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-9000hZ",
+   "accountEnabled": true,
+   "publisherName": "",
+   "verifiedPublisher": {
+    "displayName": null
+   }
+  },
+  {
+   "id": "sp-emc",
+   "appId": "a1",
+   "displayName": "eM Client",
+   "appOwnerOrganizationId": "9a9a",
+   "publisherName": "eM Client",
+   "verifiedPublisher": {
+    "displayName": null
+   },
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-2000hZ",
+   "accountEnabled": true
+  },
+  {
+   "id": "sp-mh",
+   "appId": "a2",
+   "displayName": "Mail Helper",
+   "appOwnerOrganizationId": "8b8b",
+   "publisherName": "Unknown",
+   "verifiedPublisher": {
+    "displayName": null
+   },
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-2000hZ",
+   "accountEnabled": true
+  },
+  {
+   "id": "sp-sync",
+   "appId": "a3",
+   "displayName": "Payroll Sync",
+   "appOwnerOrganizationId": "11111111-2222-3333-4444-555555555555",
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-2000hZ",
+   "accountEnabled": true,
+   "publisherName": "",
+   "verifiedPublisher": {
+    "displayName": null
+   }
+  },
+  {
+   "id": "sp-zoom",
+   "appId": "a4",
+   "displayName": "Zoom",
+   "appOwnerOrganizationId": "7c7c",
+   "publisherName": "Zoom",
+   "verifiedPublisher": {
+    "displayName": "Zoom Video Communications"
+   },
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-22hZ",
+   "accountEnabled": true
+  },
+  {
+   "id": "sp-old",
+   "appId": "a5",
+   "displayName": "Old Calendar",
+   "appOwnerOrganizationId": "6d6d",
+   "publisherName": "X",
+   "verifiedPublisher": {
+    "displayName": "X"
+   },
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-5000hZ",
+   "accountEnabled": true
+  },
+  {
+   "id": "sp-exp",
+   "appId": "a6",
+   "displayName": "Exporter",
+   "appOwnerOrganizationId": "5e5e",
+   "publisherName": "X",
+   "verifiedPublisher": {
+    "displayName": null
+   },
+   "servicePrincipalType": "Application",
+   "createdDateTime": "NOW-5000hZ",
+   "accountEnabled": true
+  },
+  {
+   "id": "sp-mi",
+   "appId": "a7",
+   "displayName": "Managed identity",
+   "appOwnerOrganizationId": "5e5e",
+   "servicePrincipalType": "ManagedIdentity",
+   "createdDateTime": "NOW-5hZ",
+   "accountEnabled": true,
+   "publisherName": "",
+   "verifiedPublisher": {
+    "displayName": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,128 @@
+name: Cloud.M365.TokenTheft
+description: |
+  Hunts for stolen session tokens and adversary-in-the-middle phishing,
+  which get past MFA because the attacker replays a session the user
+  already completed MFA for:
+
+  - **Session used from several countries**: the same Entra session ID
+    appears in sign-ins (interactive or not) from more than one country.
+  - **Session used from several networks**: the same session moves to a
+    different autonomous system (ISP) within a short time.
+  - **Entra ID Protection token detections**: anomalous token, token
+    issuer anomaly, attacker in the middle and similar detections
+    (needs Entra ID P2; skipped with a log message otherwise).
+
+  A hit here usually means an infostealer or a phishing proxy took the
+  user's cookies. Revoke the user's sessions, reset the password, then
+  hunt the user's laptop (`Device` column) for infostealers and browser
+  cookie theft.
+
+  Needs Entra ID P1 or P2 and `AuditLog.Read.All`;
+  `IdentityRiskEvent.Read.All` for the P2 detections.
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 72
+    description: Non-interactive sign-ins are numerous; keep this short.
+  - name: MaxNetworkHopMinutes
+    type: int
+    default: 60
+    description: A session that changes network within this many minutes is reported.
+  - name: RiskEventTypes
+    type: regex
+    default: "^(anomalousToken|tokenIssuerAnomaly|attackerinTheMiddle|suspiciousBrowser|unfamiliarFeatures|maliciousIPAddress|adminConfirmedUserCompromised|nationStateIP|suspiciousAPITraffic|mcasSuspiciousInboxManipulationRules|anomalousUserActivity)$"
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Fetch(Filter) = SELECT * FROM m365_graph(secret=M365Secret, beta=TRUE,
+          path="/auditLogs/signIns", time_field="createdDateTime",
+          start=timestamp(epoch=WindowStart),
+          params=dict(`$top`="999", `$filter`=Filter))
+
+      LET Normalize(Rows) = SELECT timestamp(string=createdDateTime) AS Time,
+             timestamp(string=createdDateTime).Unix AS Epoch,
+             userPrincipalName AS User, sessionId AS Session,
+             ipAddress AS IPAddress, autonomousSystemNumber AS ASN,
+             location.countryOrRegion AS Country,
+             format(format="%v, %v", args=[location.city, location.countryOrRegion]) AS Location,
+             deviceDetail.displayName AS Device, appDisplayName AS App,
+             isInteractive AS Interactive, userAgent AS UserAgent
+      FROM Rows
+      WHERE status.errorCode = 0 AND sessionId
+
+      LET SignIns <= SELECT * FROM chain(
+          a=Normalize(Rows=Fetch(Filter="signInEventTypes/any(t: t eq 'interactiveUser')")),
+          b=Normalize(Rows=Fetch(Filter="signInEventTypes/any(t: t eq 'nonInteractiveUser')")))
+      ORDER BY Epoch
+
+      LET BySession <= SELECT User, Session,
+             enumerate(items=dict(T=Time, E=Epoch, IP=IPAddress, ASN=ASN, Loc=Location,
+                                  Country=Country, Device=Device, App=App,
+                                  Interactive=Interactive, UserAgent=UserAgent)) AS Seq
+      FROM SignIns
+      GROUP BY Session
+
+      // Distinct countries and addresses per session.
+      LET SessionCountries <= SELECT Session, Country, enumerate(items=IPAddress) AS IPs
+          FROM SignIns WHERE Country
+          GROUP BY Session, Country
+      LET CountriesPerSession <= SELECT Session, count() AS N,
+             enumerate(items=Country) AS Countries, enumerate(items=IPs[0]) AS IPs
+          FROM SessionCountries
+          GROUP BY Session
+      LET MultiCountrySessions <= to_dict(item={
+          SELECT Session AS _key, dict(Countries=Countries, IPs=IPs) AS _value
+          FROM CountriesPerSession WHERE N > 1 })
+
+      LET MultiCountry = SELECT Seq[0].T AS Time, "high" AS Severity,
+             "Session used from several countries (possible token theft)" AS Detection,
+             User,
+             join(array=get(item=MultiCountrySessions, field=Session).IPs, sep=", ") AS IPAddress,
+             join(array=get(item=MultiCountrySessions, field=Session).Countries, sep=", ") AS Location,
+             Seq[0].Device AS Device,
+             dict(Session=Session, SignIns=Seq) AS Details
+      FROM BySession
+      WHERE get(item=MultiCountrySessions, field=Session)
+
+      // Network hops: consecutive sign-ins in a session on different ASNs.
+      LET Hops = SELECT * FROM foreach(row=BySession, query={
+          SELECT * FROM foreach(
+             row={ SELECT _value AS I, _value - 1 AS J FROM range(start=1, end=len(list=Seq)) },
+             query={ SELECT User, Session, Seq[J] AS A, Seq[I] AS B FROM scope() })
+      })
+
+      LET NetworkHop = SELECT B.T AS Time, "medium" AS Severity,
+             "Session moved to another network" AS Detection,
+             User, B.IP AS IPAddress, B.Loc AS Location, A.Device AS Device,
+             dict(Session=Session, PreviousIP=A.IP, PreviousASN=A.ASN, PreviousTime=A.T,
+                  ASN=B.ASN, App=B.App, UserAgent=B.UserAgent, PreviousUserAgent=A.UserAgent,
+                  Minutes=int(int=(B.E - A.E) / 60)) AS Details
+      FROM Hops
+      WHERE A.ASN AND B.ASN AND A.ASN != B.ASN AND A.Country = B.Country
+        AND B.E - A.E <= MaxNetworkHopMinutes * 60
+      GROUP BY Session
+
+      LET RiskDetections = SELECT timestamp(string=detectedDateTime) AS Time,
+             if(condition=riskLevel = "high" OR riskEventType =~ "attackerinTheMiddle|anomalousToken|tokenIssuerAnomaly|adminConfirmedUserCompromised",
+                then="high", else="medium") AS Severity,
+             format(format="Entra ID Protection: %v", args=riskEventType) AS Detection,
+             userPrincipalName AS User, ipAddress AS IPAddress,
+             format(format="%v, %v", args=[location.city, location.countryOrRegion]) AS Location,
+             "" AS Device,
+             dict(RiskLevel=riskLevel, RiskState=riskState, Detail=riskDetail,
+                  Activity=activity, Source=source, RequestId=requestId) AS Details
+      FROM m365_graph(secret=M365Secret, path="/identityProtection/riskDetections",
+                      time_field="detectedDateTime", start=timestamp(epoch=WindowStart))
+      WHERE riskEventType =~ RiskEventTypes
+
+      SELECT * FROM chain(a=MultiCountry, b=NetworkHop, c=RiskDetections)

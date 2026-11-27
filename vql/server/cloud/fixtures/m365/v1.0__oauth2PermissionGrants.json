@@ -1,0 +1,28 @@
+{
+ "value": [
+  {
+   "clientId": "sp-mh",
+   "consentType": "Principal",
+   "principalId": "u-bob",
+   "scope": "Mail.Read offline_access User.Read"
+  },
+  {
+   "clientId": "sp-zoom",
+   "consentType": "Principal",
+   "principalId": "u-bob",
+   "scope": "User.Read Calendars.ReadWrite"
+  },
+  {
+   "clientId": "sp-old",
+   "consentType": "AllPrincipals",
+   "principalId": null,
+   "scope": "User.Read Calendars.Read"
+  },
+  {
+   "clientId": "sp-emc",
+   "consentType": "Principal",
+   "principalId": "u-x",
+   "scope": "EWS.AccessAsUser.All offline_access"
+  }
+ ]
+}

@@ -3801,6 +3801,33 @@
   - linux_amd64_cgo
   - windows_386_cgo
   - windows_amd64_cgo
+- name: geo_distance
+  description: Great circle distance in kilometres between two latitude/longitude
+    points.
+  type: Function
+  args:
+  - name: lat1
+    type: float64
+    description: Latitude of the first point in degrees.
+    required: true
+  - name: lon1
+    type: float64
+    description: Longitude of the first point in degrees.
+    required: true
+  - name: lat2
+    type: float64
+    description: Latitude of the second point in degrees.
+    required: true
+  - name: lon2
+    type: float64
+    description: Longitude of the second point in degrees.
+    required: true
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
 - name: geoip
   description: |
     Lookup an IP Address using the MaxMind GeoIP database.
@@ -6253,6 +6280,116 @@
     type: uint64
     description: The uncompressed size
   category: encode
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: m365_audit
+  description: Read the Microsoft 365 unified audit log (Exchange, SharePoint, OneDrive,
+    Entra ID, Teams...) through the Office 365 Management Activity API. Starts the
+    content subscription when needed.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of a 'Microsoft 365 Creds' secret holding tenant_id, client_id
+      and client_secret.
+  - name: tenant_id
+    type: string
+    description: Tenant ID (GUID) when no secret is used.
+  - name: client_id
+    type: string
+    description: App registration client ID when no secret is used.
+  - name: client_secret
+    type: string
+    description: App registration client secret when no secret is used.
+  - name: content_type
+    type: string
+    description: One of Audit.AzureActiveDirectory, Audit.Exchange, Audit.SharePoint,
+      Audit.General, DLP.All.
+    required: true
+  - name: start
+    type: Any
+    description: Start of the window (default 24 hours ago, at most 7 days ago).
+  - name: end
+    type: Any
+    description: End of the window (default now).
+  - name: follow
+    type: bool
+    description: Keep polling for new audit content. Use in event artifacts.
+  - name: poll
+    type: int64
+    description: Seconds between polls in follow mode (default 300).
+  - name: overlap
+    type: int64
+    description: Seconds each poll re-reads before the last one (default 1800).
+  metadata:
+    permissions: NETWORK
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: m365_graph
+  description: Read from the Microsoft Graph API of a Microsoft 365 / Entra ID tenant
+    (GET only), following paging. Rows are the items of the result's value list.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of a 'Microsoft 365 Creds' secret holding tenant_id, client_id
+      and client_secret.
+  - name: tenant_id
+    type: string
+    description: Tenant ID (GUID) when no secret is used.
+  - name: client_id
+    type: string
+    description: App registration client ID when no secret is used.
+  - name: client_secret
+    type: string
+    description: App registration client secret when no secret is used.
+  - name: path
+    type: string
+    description: Graph path, e.g. /auditLogs/signIns or /users.
+    required: true
+  - name: params
+    type: ordereddict.Dict
+    description: Query parameters such as $filter, $select and $top.
+  - name: beta
+    type: bool
+    description: Use the beta endpoint instead of v1.0.
+  - name: time_field
+    type: string
+    description: Timestamp property to filter on with start and end (e.g. createdDateTime,
+      activityDateTime).
+  - name: start
+    type: Any
+    description: Only items with time_field at or after this time.
+  - name: end
+    type: Any
+    description: Only items with time_field before this time.
+  - name: max_rows
+    type: int64
+    description: 'Stop after this many rows (default: no limit).'
+  - name: follow
+    type: bool
+    description: Keep polling for new items (needs time_field). Use in event artifacts.
+  - name: poll
+    type: int64
+    description: Seconds between polls in follow mode (default 300).
+  - name: overlap
+    type: int64
+    description: Seconds each poll re-reads before the last one, for late records
+      (default 900).
+  - name: ignore_not_found
+    type: bool
+    description: Return no rows instead of logging an error when the object does not
+      exist (e.g. a user without a mailbox).
+  metadata:
+    permissions: NETWORK
   platforms:
   - darwin_amd64_cgo
   - darwin_arm64_cgo

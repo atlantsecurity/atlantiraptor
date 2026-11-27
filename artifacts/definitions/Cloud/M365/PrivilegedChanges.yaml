@@ -1,0 +1,54 @@
+name: Cloud.M365.PrivilegedChanges
+description: |
+  Hunts Entra ID directory audit events for changes attackers make to
+  keep control of a tenant: admin roles granted (critical for Global
+  Administrator and similar), domain federation changed or a domain
+  added (used to forge sign-ins), Conditional Access policies deleted or
+  switched off, and partner or delegated admin access added.
+
+  Needs `AuditLog.Read.All`. Works on the free tier (7 days of events);
+  run `Cloud.M365.Monitor` to keep events longer.
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+    description: Entra keeps directory audit events 7 days on the free tier and 30 days with P1/P2.
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Audits = SELECT * FROM m365_graph(secret=M365Secret,
+          path="/auditLogs/directoryAudits", time_field="activityDateTime",
+          start=timestamp(epoch=WindowStart))
+
+      LET Matches = SELECT * FROM foreach(row=Audits, query={
+          SELECT timestamp(string=activityDateTime) AS Time, Severity, Detection,
+                 M365Actor(InitiatedBy=initiatedBy) AS User,
+                 initiatedBy.user.ipAddress AS IPAddress, "" AS Location, "" AS Device,
+                 dict(Activity=activityDisplayName,
+                      Target=M365TargetText(Targets=targetResources),
+                      Result=result, Service=loggedByService,
+                      CorrelationId=correlationId,
+                      Changes=targetResources) AS Details,
+                 Category AS RuleCategory, result AS Result
+          FROM foreach(row=M365DirectoryMatches(DirActivity=activityDisplayName,
+                           DirTargets=targetResources, DirDetails=additionalDetails))
+      })
+
+      SELECT Time, Severity, Detection, User, IPAddress, Location, Device, Details
+      FROM Matches
+      WHERE RuleCategory = "privileged" AND Result = "success"
+        AND M365MinRank(Level=Severity) <= M365MinRank(Level=MinSeverity)

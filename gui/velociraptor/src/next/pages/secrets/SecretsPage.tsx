@@ -31,6 +31,7 @@ const USE_HINT: Record<string, string> = {
   'Splunk Creds': "splunk_upload(secret='NAME', ...)",
   'ADX Creds': "adx_upload(secret='NAME', ...)",
   'Azure Monitor Creds': "azure_monitor_upload(secret='NAME', ...)",
+  'Microsoft 365 Creds': "Cloud.M365.* artifacts: M365Secret='NAME'",
   'Execve Secrets': "execve(secret='NAME', ...)",
 };
 

@@ -1,0 +1,154 @@
+name: Cloud.M365.SignIns
+description: |
+  Hunts Entra ID sign-ins for account takeover:
+
+  - **New country**: a successful sign-in from a country the user never
+    signed in from during the baseline period.
+  - **Impossible travel**: two successful sign-ins further apart than
+    anyone could travel in the time between them.
+  - **Legacy authentication**: a successful sign-in over IMAP, POP,
+    SMTP, ActiveSync or other protocols that cannot do MFA.
+  - **Risky sign-in**: a successful sign-in that Entra ID Protection
+    rated high risk, or a user it marked compromised.
+
+  Needs an Entra ID P1 or P2 licence (sign-in logs are not in Graph on
+  the free tier) and the `AuditLog.Read.All` permission. Entra keeps
+  sign-ins for 30 days, which bounds the baseline.
+
+  The `Device` column is the Entra device name when the device is
+  registered: hunt that host with `Rapid hunt` or open it in the
+  console to look at the laptop behind a suspicious sign-in.
+
+type: SERVER
+
+imports:
+  - Cloud.M365.Rules
+
+parameters:
+  - name: M365Secret
+    description: Name of the "Microsoft 365 Creds" secret for the tenant.
+  - name: LookbackHours
+    type: int
+    default: 168
+    description: Report sign-ins from this many hours back.
+  - name: BaselineDays
+    type: int
+    default: 30
+    description: Countries seen in this many days before the lookback window count as known (Entra keeps 30 days).
+  - name: MinBaselineSignIns
+    type: int
+    default: 5
+    description: Only flag new countries for users with at least this many baseline sign-ins.
+  - name: MaxSpeedKmh
+    type: int
+    default: 900
+    description: Faster than this between two sign-ins is impossible travel.
+  - name: MinTravelKm
+    type: int
+    default: 500
+    description: Ignore jumps shorter than this (IP geolocation is coarse).
+  - name: LegacyClients
+    type: regex
+    default: "^(IMAP4|POP3|SMTP|Authenticated SMTP|Exchange ActiveSync|Exchange Web Services|Other clients|AutoDiscover|Exchange Online PowerShell|MAPI Over HTTP|Offline Address Book|Outlook Anywhere \\(RPC over HTTP\\)|Reporting Web Services|Universal Outlook)$"
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+      LET BaselineStart <= now() - (LookbackHours + BaselineDays * 24) * 3600
+
+      LET Raw = SELECT * FROM m365_graph(secret=M365Secret, beta=TRUE,
+          path="/auditLogs/signIns", time_field="createdDateTime",
+          start=timestamp(epoch=BaselineStart),
+          params=dict(`$top`="999"))
+
+      LET SignIns <= SELECT timestamp(string=createdDateTime) AS Time,
+             timestamp(string=createdDateTime).Unix AS Epoch,
+             userPrincipalName AS User,
+             ipAddress AS IPAddress,
+             location.countryOrRegion AS Country,
+             format(format="%v, %v", args=[location.city, location.countryOrRegion]) AS Location,
+             location.geoCoordinates.latitude AS Lat,
+             location.geoCoordinates.longitude AS Lon,
+             deviceDetail.displayName AS Device,
+             appDisplayName AS App,
+             clientAppUsed AS ClientApp,
+             status.errorCode AS ErrorCode,
+             authenticationRequirement AS AuthRequirement,
+             riskLevelDuringSignIn AS Risk,
+             riskState AS RiskState,
+             userAgent AS UserAgent,
+             id AS SignInId
+      FROM Raw
+      ORDER BY Epoch
+
+      LET Successful <= SELECT * FROM SignIns WHERE ErrorCode = 0
+      LET Recent <= SELECT * FROM Successful WHERE Epoch >= WindowStart
+
+      // Per user: the countries of the baseline period.
+      LET Baseline <= SELECT User, enumerate(items=Country) AS Countries, count() AS Total
+          FROM Successful
+          WHERE Epoch < WindowStart AND Country
+          GROUP BY User
+      LET BaselineByUser <= to_dict(item={
+          SELECT User AS _key, dict(Countries=Countries, Total=Total) AS _value FROM Baseline })
+
+      LET NewCountry = SELECT Time, if(condition=AuthRequirement = "singleFactorAuthentication",
+                 then="high", else="medium") AS Severity,
+             "Sign-in from a new country" AS Detection,
+             User, IPAddress, Location, Device,
+             dict(App=App, ClientApp=ClientApp, AuthRequirement=AuthRequirement,
+                  KnownCountries=get(item=BaselineByUser, field=User).Countries,
+                  UserAgent=UserAgent, SignInId=SignInId) AS Details
+      FROM Recent
+      WHERE Country
+        AND get(item=BaselineByUser, field=User).Total >= MinBaselineSignIns
+        AND NOT Country in get(item=BaselineByUser, field=User).Countries
+      GROUP BY User, Country
+
+      // Impossible travel: consecutive successful sign-ins per user.
+      LET Located <= SELECT * FROM Successful WHERE Lat OR Lon
+      LET Sequences = SELECT User, enumerate(items=dict(T=Time, E=Epoch, Lat=Lat, Lon=Lon,
+                 IP=IPAddress, Loc=Location, Country=Country, Device=Device, App=App)) AS Seq
+          FROM Located
+          GROUP BY User
+
+      LET Pairs = SELECT * FROM foreach(row=Sequences, query={
+          SELECT * FROM foreach(
+             row={ SELECT _value AS I, _value - 1 AS J FROM range(start=1, end=len(list=Seq)) },
+             query={ SELECT User, Seq[J] AS A, Seq[I] AS B FROM scope() })
+      })
+
+      LET Travel = SELECT User, A, B,
+             geo_distance(lat1=A.Lat, lon1=A.Lon, lat2=B.Lat, lon2=B.Lon) AS Km,
+             (B.E - A.E) / 3600.0 AS Hours
+      FROM Pairs
+      WHERE B.E >= WindowStart AND A.Country != B.Country
+
+      LET ImpossibleTravel = SELECT B.T AS Time, "high" AS Severity,
+             "Impossible travel between sign-ins" AS Detection,
+             User, B.IP AS IPAddress, B.Loc AS Location, B.Device AS Device,
+             dict(PreviousLocation=A.Loc, PreviousIP=A.IP, PreviousTime=A.T, PreviousDevice=A.Device,
+                  Km=int(int=Km), Hours=format(format="%.1f", args=Hours),
+                  App=B.App) AS Details
+      FROM Travel
+      WHERE Km >= MinTravelKm AND Km / if(condition=Hours > 0.0167, then=Hours, else=0.0167) > MaxSpeedKmh
+
+      LET Legacy = SELECT Time, "medium" AS Severity,
+             "Successful sign-in with legacy authentication (no MFA possible)" AS Detection,
+             User, IPAddress, Location, Device,
+             dict(ClientApp=ClientApp, App=App, UserAgent=UserAgent, SignInId=SignInId) AS Details
+      FROM Recent
+      WHERE ClientApp =~ LegacyClients
+      GROUP BY User, ClientApp, IPAddress
+
+      LET Risky = SELECT Time, "high" AS Severity,
+             if(condition=RiskState = "confirmedCompromised",
+                then="Sign-in by a user Entra marked compromised",
+                else="High-risk sign-in succeeded") AS Detection,
+             User, IPAddress, Location, Device,
+             dict(Risk=Risk, RiskState=RiskState, App=App, UserAgent=UserAgent,
+                  SignInId=SignInId) AS Details
+      FROM Recent
+      WHERE Risk = "high" OR RiskState = "confirmedCompromised"
+
+      SELECT * FROM chain(a=NewCountry, b=ImpossibleTravel, c=Legacy, d=Risky)
