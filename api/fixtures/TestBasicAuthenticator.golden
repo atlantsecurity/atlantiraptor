@@ -78,6 +78,13 @@
    " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
    " http.HandlerFunc"
   ],
+  "/velociraptor/api/v1/atl/update": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/app/": [
    "authenticators.IpFilter",
    " utils.StripPrefix",
