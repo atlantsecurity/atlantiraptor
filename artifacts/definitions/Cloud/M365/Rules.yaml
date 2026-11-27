@@ -138,7 +138,3 @@ export: |
 
   LET M365Rank <= dict(critical=0, high=1, medium=2, low=3, info=4)
   LET M365MinRank(Level) = get(item=M365Rank, field=Level, default=3)
-
-sources:
-  - query: |
-      SELECT * FROM scope() WHERE FALSE
