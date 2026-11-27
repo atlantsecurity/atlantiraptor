@@ -1,8 +1,17 @@
+# Changes that only touch the documentation website or Markdown skip
+# this workflow; the Docs and Vale workflows check them.
 name: Linux Build Musl Static
 #on: [ pull_request ]
 on:
   pull_request:
     types: [closed]
+    paths-ignore:
+      - "docs/site/**"
+      - "**/*.md"
+      - ".wordlist.txt"
+      - ".vale.ini"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/vale.yaml"
   workflow_dispatch:
 
 jobs:
