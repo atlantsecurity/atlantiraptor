@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -146,7 +147,11 @@ func (self *ExecutorTestSuite) TestCancellation() {
 			return false
 		}
 
-		return stats.FlowStats.FlowComplete
+		// Log messages are batched separately from the status, so
+		// the cancellation log can arrive after the final status.
+		return stats.FlowStats.FlowComplete &&
+			strings.Contains(getLogMessages(received_messages),
+				"Cancelled all in-flight queries")
 	})
 
 	received_messages := collector.Messages()
@@ -210,9 +215,13 @@ func (self *ExecutorTestSuite) TestUploadCancellation() {
 	vtesting.WaitUntil(time.Second*5, self.T(), func() bool {
 		received_messages := collector.Messages()
 
-		// Should be at least one stat message and several log messages
+		// Should be at least one stat message and several log
+		// messages. Log messages are batched separately from the
+		// status, so wait for the cancellation log too.
 		return len(received_messages) >= 3 &&
-			getFlowStat(received_messages) != nil
+			getFlowStat(received_messages) != nil &&
+			strings.Contains(getLogMessages(received_messages),
+				"Cancelled all in-flight queries")
 	})
 
 	received_messages := collector.Messages()
@@ -280,9 +289,13 @@ func (self *ExecutorTestSuite) TestRowLimitCancellation() {
 	vtesting.WaitUntil(time.Second*5, self.T(), func() bool {
 		received_messages := collector.Messages()
 
-		// Should be at least one stat message and several log messages
+		// Should be at least one stat message and several log
+		// messages. Log messages are batched separately from the
+		// status, so wait for the cancellation log too.
 		return len(received_messages) >= 3 &&
-			getFlowStat(received_messages) != nil
+			getFlowStat(received_messages) != nil &&
+			strings.Contains(getLogMessages(received_messages),
+				"Cancelled all in-flight queries")
 	})
 
 	received_messages := collector.Messages()
@@ -408,7 +421,7 @@ func (self *ExecutorTestSuite) TestLogMessages() {
 	// response.
 	log_messages := []*crypto_proto.LogMessage{}
 
-	vtesting.WaitUntilWithError(2*time.Second, self.T(), func() bool {
+	vtesting.WaitUntilWithError(10*time.Second, self.T(), func() bool {
 		var total_messages uint64
 		log_messages = nil
 

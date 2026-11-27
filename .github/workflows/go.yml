@@ -1,17 +1,62 @@
-# Only trigger when a PR is committed or manually.
-name: Linux Build All Arches
-#on: [pull_request]
+# Runs Linux tests on every push and pull request. The full
+# multi-architecture build runs on pushes to master and on demand.
+name: Linux Build and Test
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - master
+  pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  test:
+    name: Linux Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+    - name: Set up Go 1.27
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+      with:
+        go-version: '^1.27.2'
+        cache: false
+
+    - run: go version
+
+    # Generates the fileb0x ab0x.go files (artifacts, config, gui,
+    # crypto) that are gitignored but required to compile.
+    - name: Generate assets
+      run: go run make.go -v BasicAssets
+
+    - name: Build
+      env:
+        CGO_ENABLED: "0"
+      run: go build -tags "server_vql extras" -o ./output/velociraptor ./bin/
+
+    - name: Test
+      env:
+        # Disable CGO for tests, matching the Windows workflow.
+        CGO_ENABLED: "0"
+      run: |
+        set -o pipefail
+        # Only run short tests on CI because the CI machines are slow
+        go test -short ./... --tags "velomain server_vql" -p 2 2>&1 | tee test.log
+
+    # The test output is very noisy. Repeat just the failures at the
+    # end of the log so they are easy to find.
+    - name: Summarize test failures
+      if: failure()
+      run: |
+        grep -E '^(\s*--- FAIL|FAIL|panic:)|Error Trace:|Error:|_test\.go:[0-9]+:' test.log || true
+
   build:
-    if: github.event.pull_request.merged || github.event_name == 'workflow_dispatch'
-    name: Build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    name: Build All Arches
     runs-on: ubuntu-latest
     steps:
 
