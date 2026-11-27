@@ -286,6 +286,13 @@ func (self *TestSuite) TearDownTest() {
 		self.Sm.Close()
 	}
 
+	// Services started by the test run their goroutines on self.Wg,
+	// not on the service manager's group, so Sm.Close() does not wait
+	// for them. Wait here before clearing the stores: a service that
+	// writes on shutdown (the hunt dispatcher flushes its index)
+	// would otherwise land its write in the next test's empty store.
+	self.waitForServices(10 * time.Second)
+
 	file_store.FlushFilestore(self.ConfigObj)
 
 	// These may not be memory based in the test switched to other
@@ -311,5 +318,25 @@ func (self *TestSuite) TearDownTest() {
 	db := GetMemoryDataStore(self.T(), self.ConfigObj)
 	if db != nil {
 		db.Clear()
+	}
+}
+
+// Wait up to timeout for the goroutines on self.Wg to exit. A service
+// that does not exit in time is reported but does not fail the test.
+func (self *TestSuite) waitForServices(timeout time.Duration) {
+	if self.Wg == nil {
+		return
+	}
+
+	done := make(chan struct{})
+	go func() {
+		self.Wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(timeout):
+		self.T().Logf("TearDownTest: services still running after %v", timeout)
 	}
 }
