@@ -25,6 +25,7 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 	"time"
+	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"errors"
 
@@ -127,6 +128,9 @@ var (
 )
 
 func main() {
+	// After a self-update, wait for the replaced process to exit.
+	selfupdate.WaitForPreviousProcess()
+
 	app.HelpFlag.Short('h')
 	app.UsageTemplate(kingpin.CompactUsageTemplate)
 	app.Terminate(func(s int) {

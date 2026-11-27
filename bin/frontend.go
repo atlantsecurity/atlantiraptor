@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"github.com/sirupsen/logrus"
 	"www.velocidex.com/golang/velociraptor/config"
@@ -106,6 +107,9 @@ func doFrontend() error {
 		return fmt.Errorf("starting frontend: %w", err)
 	}
 	defer sm.Close()
+
+	// Keep the server on the latest signed GitHub release.
+	selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
 
 	// Wait here for completion.
 	sm.Wg.Wait()
