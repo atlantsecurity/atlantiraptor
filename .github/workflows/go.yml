@@ -43,8 +43,16 @@ jobs:
         # Disable CGO for tests, matching the Windows workflow.
         CGO_ENABLED: "0"
       run: |
+        set -o pipefail
         # Only run short tests on CI because the CI machines are slow
-        go test -short ./... --tags "velomain server_vql" -p 2
+        go test -short ./... --tags "velomain server_vql" -p 2 2>&1 | tee test.log
+
+    # The test output is very noisy. Repeat just the failures at the
+    # end of the log so they are easy to find.
+    - name: Summarize test failures
+      if: failure()
+      run: |
+        grep -E '^(\s*--- FAIL|FAIL|panic:)|Error Trace:|Error:|_test\.go:[0-9]+:' test.log || true
 
   build:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
