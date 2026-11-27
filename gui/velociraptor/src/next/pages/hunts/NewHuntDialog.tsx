@@ -457,7 +457,7 @@ export function ArtifactParams({ name, def, values, expanded, onToggle, onChange
           </Tooltip>
         )}
         <Tooltip content="Remove">
-          <button type="button" onClick={onRemove} className="tw:p-1 tw:rounded tw:text-faint tw:hover:text-bad tw:hover:bg-hover">
+          <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="tw:p-1 tw:rounded tw:text-faint tw:hover:text-bad tw:hover:bg-hover">
             <X className="tw:size-3.5" />
           </button>
         </Tooltip>
