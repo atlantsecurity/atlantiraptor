@@ -1,34 +1,33 @@
-# Sidebar of the documentation website, in reading order. Each page is
+# Sidebar of the documentation website, in reading order: a beginner's
+# path first (start here, everyday tasks), then the console in depth,
+# deployment, and only then artifacts and the query language. Each page is
 # docs/site/content/<path>.md unless "source" names another Markdown
 # file in the repository (paths from the repository root). The
 # Reference section is generated and added after these.
 sections:
-  - title: Getting started
+  - title: Start here
     pages:
       - path: ""
         title: Home
       - path: overview
-      - path: concepts
       - path: quickstart
-      - path: whats-new
+      - path: first-hunt
 
-  - title: Deploying
+  - title: Everyday tasks
     pages:
-      - path: deployment
-      - path: deployment/server
-      - path: deployment/docker
-      - path: deployment/configuration
-      - path: deployment/tls
-      - path: deployment/authentication
-      - path: deployment/clients
-      - path: deployment/network-access
-      - path: deployment/orgs
-      - path: deployment/scaling
-      - path: deployment/updates
-      - path: deployment/storage
-      - path: deployment/backups
-      - path: deployment/logging
-      - path: deployment/performance
+      - path: tasks
+      - path: tasks/look-at-a-computer
+      - path: tasks/processes
+      - path: tasks/collect-a-file
+      - path: tasks/browser-history
+      - path: tasks/memory
+      - path: tasks/event-logs
+      - path: tasks/every-computer
+      - path: tasks/quarantine
+      - path: tasks/stop-a-threat
+      - path: tasks/cloud-tenant
+      - path: tasks/download-results
+      - path: tasks/add-computers
 
   - title: Using the console
     pages:
@@ -66,10 +65,29 @@ sections:
       - path: cloud/aws
         source: docs/cloud/aws.md
 
-  - title: Notebooks and evidence
+  - title: Deploying
     pages:
-      - path: notebooks
-      - path: evidence
+      - path: deployment
+      - path: deployment/server
+      - path: deployment/docker
+      - path: deployment/configuration
+      - path: deployment/tls
+      - path: deployment/authentication
+      - path: deployment/clients
+      - path: deployment/network-access
+      - path: deployment/orgs
+      - path: deployment/scaling
+      - path: deployment/updates
+      - path: deployment/storage
+      - path: deployment/backups
+      - path: deployment/logging
+      - path: deployment/performance
+
+  - title: Users and access
+    pages:
+      - path: users
+      - path: users/permissions
+      - path: secrets
 
   - title: Offline collections
     pages:
@@ -78,14 +96,14 @@ sections:
       - path: offline/running
       - path: offline/importing
 
-  - title: Users and access
+  - title: Notebooks and evidence
     pages:
-      - path: users
-      - path: users/permissions
-      - path: secrets
+      - path: notebooks
+      - path: evidence
 
   - title: Artifacts
     pages:
+      - path: concepts
       - path: artifacts
       - path: artifacts/writing
       - path: artifacts/parameters
@@ -139,5 +157,6 @@ sections:
 
   - title: About
     pages:
+      - path: whats-new
       - path: security
       - path: support
