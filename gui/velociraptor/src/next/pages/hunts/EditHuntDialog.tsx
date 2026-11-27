@@ -3,16 +3,18 @@ import { toast } from 'sonner';
 import type { Hunt } from '../../lib/types';
 import { useHuntTags, useModifyHunt } from '../../lib/queries';
 import { toDate } from '../../lib/format';
-import { Button, Dialog, Field, Input } from '../../ui/primitives';
+import { Button, Dialog, Field, Input, Switch } from '../../ui/primitives';
 import { TagInput } from './TagInput';
-import { toLocalInput, fromLocalInput } from './time';
+import { toLocalInput, fromLocalInput, runsUntilStopped, untilStoppedExpiry } from './time';
 
 export default function EditHuntDialog({ hunt, open, onOpenChange }: {
   hunt: Hunt; open: boolean; onOpenChange: (v: boolean) => void;
 }) {
   const [description, setDescription] = useState(hunt.hunt_description ?? '');
   const [tags, setTags] = useState<string[]>(hunt.tags ?? []);
-  const [expires, setExpires] = useState(toLocalInput(toDate(hunt.expires)));
+  const [untilStopped, setUntilStopped] = useState(() => runsUntilStopped(toDate(hunt.expires)?.getTime()));
+  const [expires, setExpires] = useState(() => toLocalInput(untilStopped
+    ? new Date(Date.now() + 3600 * 1000) : toDate(hunt.expires)));
   const { data: allTags = [] } = useHuntTags();
   const modify = useModifyHunt();
 
@@ -25,7 +27,7 @@ export default function EditHuntDialog({ hunt, open, onOpenChange }: {
       hunt_id: hunt.hunt_id,
       description: description || ' ',
       tags: newTags,
-      expires: exp ? exp.getTime() * 1000 : undefined,
+      expires: untilStopped ? untilStoppedExpiry() : exp ? exp.getTime() * 1000 : undefined,
     }, {
       onSuccess: () => {
         toast.success('Hunt updated');
@@ -48,8 +50,11 @@ export default function EditHuntDialog({ hunt, open, onOpenChange }: {
         <Field label="Tags" hint="Press Enter to add a tag.">
           <TagInput value={tags} onChange={setTags} suggestions={allTags} />
         </Field>
-        <Field label="Expires">
-          <Input type="datetime-local" value={expires} onChange={e => setExpires(e.target.value)} />
+        <Field label="Stops" hint={untilStopped ? 'Keeps going until someone stops it.' : 'Set a time, or let it run until stopped.'}>
+          <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+            {!untilStopped && <Input type="datetime-local" value={expires} onChange={e => setExpires(e.target.value)} className="tw:w-auto" />}
+            <Switch checked={untilStopped} onChange={setUntilStopped} label="Run until stopped" />
+          </div>
         </Field>
       </div>
     </Dialog>

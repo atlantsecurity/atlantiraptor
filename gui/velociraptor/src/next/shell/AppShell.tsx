@@ -23,6 +23,7 @@ const NetworkPage = lazy(() => import('../pages/network/NetworkPage'));
 const SecurityPage = lazy(() => import('../pages/account/SecurityPage'));
 const ClientsPage = lazy(() => import('../pages/clients/ClientsPage'));
 const ClientOverview = lazy(() => import('../pages/host/ClientOverview'));
+const ShellPage = lazy(() => import('../pages/host/ShellPage'));
 const ArtifactsPage = lazy(() => import('../pages/artifacts/ArtifactsPage'));
 const FileBrowser = lazy(() => import('../pages/vfs/FileBrowser'));
 const CollectionsPage = lazy(() => import('../pages/collections/CollectionsPage'));
@@ -123,6 +124,9 @@ export default function AppShell() {
                 </Route>
                 <Route path="/search/:query?">
                   <ClientsPage />
+                </Route>
+                <Route path="/host/:client_id(C\.[^/]+)/shell">
+                  <ShellPage />
                 </Route>
                 <Route path="/host/:client_id(C\.[^/]+)/:action?">
                   <ClientOverview />

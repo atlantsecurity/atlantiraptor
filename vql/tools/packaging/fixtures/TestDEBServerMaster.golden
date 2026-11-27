@@ -260,7 +260,7 @@ Monitoring:
 api_config: {}
 obfuscation_nonce: RzlAlmdcUyw=
 defaults:
-  hunt_expiry_hours: 168
+  hunt_expiry_hours: 1
   notebook_cell_timeout_min: 10
   notebook_number_of_local_workers: 5
   backup_period_seconds: -1

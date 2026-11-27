@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Velocidex/ordereddict"
 	"github.com/stretchr/testify/suite"
@@ -15,6 +16,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/file_store/test_utils"
 	"www.velocidex.com/golang/velociraptor/utils"
 	_ "www.velocidex.com/golang/velociraptor/vql_plugins"
+	"www.velocidex.com/golang/velociraptor/vtesting"
 	"www.velocidex.com/golang/velociraptor/vtesting/assert"
 )
 
@@ -343,6 +345,7 @@ func (self *AtlAPITestSuite) TestApprovals() {
 	// Another responder can.
 	code, out = self.call("POST", "approvals/"+id+"/approve", self.keyBy("bob", "responder"), nil)
 	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	self.waitForHuntState(id, requester, "RUNNING")
 	code, out = self.call("GET", "hunts/"+id, requester, nil)
 	assert.Equal(self.T(), "RUNNING", utils.ToString(out["data"].(map[string]interface{})["state"]))
 	// Decided requests can't be decided again.
@@ -357,6 +360,7 @@ func (self *AtlAPITestSuite) TestApprovals() {
 	id2 := utils.ToString(out["data"].(map[string]interface{})["hunt_id"])
 	code, out = self.call("POST", "approvals/"+id2+"/reject", self.keyBy("dave", "responder"), nil)
 	assert.Equal(self.T(), 200, code, fmt.Sprint(out))
+	self.waitForHuntState(id2, requester, "STOPPED")
 	code, _ = self.call("POST", "hunts/"+id2+"/start", requester, nil)
 	assert.Equal(self.T(), 403, code)
 	_, err = runAPIQuery(self.Ctx, self.ConfigObj, utils.GetSuperuserName(self.ConfigObj),
@@ -364,6 +368,16 @@ func (self *AtlAPITestSuite) TestApprovals() {
 	assert.NoError(self.T(), err)
 	code, out = self.call("GET", "hunts/"+id2, requester, nil)
 	assert.Equal(self.T(), "STOPPED", utils.ToString(out["data"].(map[string]interface{})["state"]))
+}
+
+// Decisions reach the hunt through the hunt manager's queue, so wait
+// for one to land before checking what it allows.
+func (self *AtlAPITestSuite) waitForHuntState(id, key, state string) {
+	vtesting.WaitUntil(5*time.Second, self.T(), func() bool {
+		_, out := self.call("GET", "hunts/"+id, key, nil)
+		data, ok := out["data"].(map[string]interface{})
+		return ok && utils.ToString(data["state"]) == state
+	})
 }
 
 func (self *AtlAPITestSuite) TestRevokedRequesterKeyStillBlocksOwner() {

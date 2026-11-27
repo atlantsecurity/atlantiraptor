@@ -3,27 +3,48 @@
 // drill-down actions on each alert.
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { BellRing, FlaskConical, Power } from 'lucide-react';
+import { BellRing, CheckCheck, EyeOff, FlaskConical, Power, X } from 'lucide-react';
 import { usePermission, useRecentClients } from '../../../lib/queries';
 import { Badge, Button, Card, CardHeader, EmptyState, Segmented, Skeleton, cn } from '../../../ui/primitives';
 import { AlertRow } from './AlertRow';
-import { bySeverity, sendTestAlert, useAlerts, useDetectionSetup } from './hooks';
+import { bySeverity, sendTestAlert, useAlerts, useAlertTriage, useDetectionSetup } from './hooks';
+import { isOpen, removeSuppression, setState, stateOf, suppressedBy, type AlertStatus } from './triage';
 import { SEVERITIES, SEVERITY_TONE, type Severity } from './model';
 
 type Filter = 'open24' | 'all';
+type View = 'open' | 'all' | 'suppressed';
 const DAY_MS = 24 * 3600 * 1000;
 const SHOWN = 25;
 
 export function AlertsPanel() {
   const { alerts, isLoading } = useAlerts();
-  const [filter, setFilter] = useState<Filter>('open24');
+  const triage = useAlertTriage();
+  const [view, setView] = useState<View>('open');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [busy, setBusy] = useState(false);
   const [severity, setSeverity] = useState<Severity | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   const scoped = useMemo(() => {
     const since = Date.now() - DAY_MS;
-    return filter === 'open24' ? alerts.filter(a => (a.time?.getTime() ?? 0) >= since) : alerts;
-  }, [alerts, filter]);
+    const inRange = filter === 'open24' ? alerts.filter(a => (a.time?.getTime() ?? 0) >= since) : alerts;
+    return inRange.filter(a => (view === 'open' ? isOpen(triage.record, a)
+      : view === 'suppressed' ? !!suppressedBy(triage.record, a) : true));
+  }, [alerts, filter, view, triage.record]);
+  const openCount = useMemo(() => alerts.filter(a => isOpen(triage.record, a)).length, [alerts, triage.record]);
+
+  const bulk = async (status: AlertStatus) => {
+    setBusy(true);
+    try {
+      const ids = scoped.map(a => a.id);
+      await triage.update(r => setState(r, ids, { status }, triage.me));
+      toast.success(`${ids.length} alert${ids.length === 1 ? '' : 's'} marked ${status === 'closed' ? 'closed' : 'acknowledged'}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const counts = useMemo(() => {
     const c: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     scoped.forEach(a => { c[a.severity] += 1; });
@@ -38,9 +59,13 @@ export function AlertsPanel() {
   return (
     <Card>
       <CardHeader icon={<BellRing className="tw:size-4" />} title="Alerts"
-        subtitle={filter === 'open24' ? 'Raised in the last 24 hours, worst first' : 'Raised in the last 7 days, worst first'}
-        actions={<Segmented value={filter} onChange={v => setFilter(v as Filter)}
-          options={[{ value: 'open24', label: '24h' }, { value: 'all', label: '7d' }]} />} />
+        subtitle={`${openCount} open · ${filter === 'open24' ? 'raised in the last 24 hours' : 'raised in the last 7 days'}, worst first`}
+        actions={<div className="tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
+          <Segmented value={view} onChange={v => setView(v as View)}
+            options={[{ value: 'open', label: 'Open' }, { value: 'all', label: 'All' }, { value: 'suppressed', label: 'Suppressed' }]} />
+          <Segmented value={filter} onChange={v => setFilter(v as Filter)}
+            options={[{ value: 'open24', label: '24h' }, { value: 'all', label: '7d' }]} />
+        </div>} />
 
       <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-1.5 tw:px-4 tw:py-2.5 tw:border-b tw:border-line">
         {SEVERITIES.map(s => (
@@ -52,18 +77,45 @@ export function AlertsPanel() {
             <span className="rx-num tw:font-semibold">{counts[s]}</span>
           </button>
         ))}
+        {view === 'open' && scoped.length > 0 && (
+          <span className="tw:flex tw:items-center tw:gap-1">
+            <Button size="sm" variant="ghost" icon={<CheckCheck className="tw:size-3.5" />} loading={busy}
+              onClick={() => bulk('acknowledged')}>Acknowledge {scoped.length}</Button>
+            <Button size="sm" variant="ghost" icon={<X className="tw:size-3.5" />} loading={busy}
+              onClick={() => bulk('closed')}>Close {scoped.length}</Button>
+          </span>
+        )}
         <DetectionControls />
       </div>
+
+      {view === 'suppressed' && triage.record.suppress.length > 0 && (
+        <div className="tw:px-4 tw:py-2.5 tw:border-b tw:border-line tw:space-y-1">
+          <div className="tw:text-2xs tw:text-muted">Suppression rules (hide matching alerts from Open for everyone):</div>
+          {triage.record.suppress.map(sp => (
+            <div key={sp.id} className="tw:flex tw:items-center tw:gap-2 tw:text-xs">
+              <EyeOff className="tw:size-3.5 tw:text-faint" />
+              <span className="tw:font-medium">{sp.rule}</span>
+              <span className="tw:text-muted">{sp.clientId ? `on ${sp.clientId}` : 'on every host'} · by {sp.by}</span>
+              <button type="button" className="tw:ml-auto tw:text-accent tw:hover:underline"
+                onClick={() => triage.update(r => removeSuppression(r, sp.id)).catch(e => toast.error((e as Error).message))}>
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="tw:p-4 tw:space-y-3">{[0, 1, 2].map(i => <Skeleton key={i} />)}</div>
       ) : visible.length === 0 ? (
-        <EmptyState icon={<BellRing />} title={scoped.length ? 'No alerts at this severity' : 'No alerts'}>
+        <EmptyState icon={<BellRing />} title={scoped.length ? 'No alerts at this severity'
+          : view === 'open' && alerts.length ? 'Nothing open: every alert has been handled' : 'No alerts'}>
           Alerts appear here when the Sigma and YARA monitors, or any artifact that calls alert(), find something.
         </EmptyState>
       ) : (
         <div className="tw:divide-y tw:divide-line">
-          {visible.map(a => <AlertRow key={a.key} alert={a} />)}
+          {visible.map(a => <AlertRow key={a.key} alert={a} state={stateOf(triage.record, a)}
+            suppressed={!!suppressedBy(triage.record, a)} me={triage.me} update={triage.update} />)}
           {hiddenCount > 0 && (
             <button type="button" onClick={() => setShowAll(true)}
               className="tw:w-full tw:py-2 tw:text-xs tw:text-accent tw:hover:underline">Show {hiddenCount} more</button>

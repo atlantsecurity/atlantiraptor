@@ -9,10 +9,11 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  ArrowDown, ArrowUp, Columns3, Download, FileJson, X, Braces, ChevronsUpDown,
+  ArrowDown, ArrowUp, MoreHorizontal, Columns3, Download, FileJson, X, Braces, ChevronsUpDown,
 } from 'lucide-react';
 import type { Row } from '../lib/table';
 import { toCSV, downloadText } from '../lib/table';
+import { PivotMenu, type PivotTarget, type RowSource } from './PivotMenu';
 import { cellToString, fmtNum, fmtTime } from '../lib/format';
 import {
   Button, cn, CopyButton, EmptyState, IconButton, Menu, MenuContent, MenuItem, MenuLabel,
@@ -53,6 +54,19 @@ export interface DataTableProps {
   filter?: string;
   onFilterChange?: (v: string) => void;
   hideSearch?: boolean;
+  // Server-side mode: the filter and sort are applied by the server over
+  // every row, so the table does not filter or sort locally and keeps
+  // loading pages while a filter is set.
+  serverSide?: boolean;
+  sort?: { column: string; desc: boolean } | null;
+  onSortChange?: (s: { column: string; desc: boolean } | null) => void;
+  // Extra export entries, e.g. "Download every row" through the server.
+  exportExtra?: { label: string; icon?: React.ReactNode; onSelect: () => void }[];
+  // Right-click (or the ⋯ button) on a cell offers hunts, cases and
+  // lookups for its value. Off for tables of settings and the like.
+  pivot?: boolean;
+  // Where the rows came from, for "Add this row to a case".
+  rowSource?: RowSource;
 }
 
 function loadState<T>(key: string | undefined, fallback: T): T {
@@ -130,7 +144,16 @@ export function DataTable(props: DataTableProps) {
     return [...seen];
   }, [props.columns, rows]);
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [innerSorting, setInnerSorting] = useState<SortingState>([]);
+  const serverSide = !!props.serverSide;
+  const sorting: SortingState = serverSide
+    ? (props.sort ? [{ id: props.sort.column, desc: props.sort.desc }] : [])
+    : innerSorting;
+  const setSorting = (u: SortingState | ((old: SortingState) => SortingState)) => {
+    const next = typeof u === 'function' ? u(sorting) : u;
+    if (serverSide) props.onSortChange?.(next[0] ? { column: next[0].id, desc: next[0].desc } : null);
+    else setInnerSorting(next);
+  };
   const [innerFilter, setInnerFilter] = useState('');
   const filter = props.filter ?? innerFilter;
   const setFilter = props.onFilterChange ?? setInnerFilter;
@@ -147,6 +170,8 @@ export function DataTable(props: DataTableProps) {
   const [sizing, setSizing] = useState<ColumnSizingState>(
     () => loadState(storageKey && `${storageKey}:size`, {}));
   const [inspected, setInspected] = useState<Row | null>(null);
+  const [pivotAt, setPivotAt] = useState<PivotTarget | null>(null);
+  const pivot = props.pivot ?? true;
 
   useEffect(() => saveState(storageKey && `${storageKey}:vis`, visibility), [storageKey, visibility]);
   useEffect(() => saveState(storageKey && `${storageKey}:size`, sizing), [storageKey, sizing]);
@@ -209,6 +234,8 @@ export function DataTable(props: DataTableProps) {
       return false;
     },
     columnResizeMode: 'onChange',
+    manualSorting: serverSide,
+    manualFiltering: serverSide,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -229,10 +256,13 @@ export function DataTable(props: DataTableProps) {
   const items = virtualizer.getVirtualItems();
   const lastIndex = items.length ? items[items.length - 1].index : 0;
   useEffect(() => {
-    if (hasMore && !loadingMore && onLoadMore && !filter && lastIndex >= modelRows.length - 20) {
+    if (hasMore && !loadingMore && onLoadMore && (serverSide || !filter) && lastIndex >= modelRows.length - 20) {
       onLoadMore();
     }
-  }, [hasMore, loadingMore, onLoadMore, lastIndex, modelRows.length, filter]);
+  }, [hasMore, loadingMore, onLoadMore, lastIndex, modelRows.length, filter, serverSide]);
+
+  // A local filter only sees the rows loaded so far; say so.
+  const partialFilter = !serverSide && !!filter && !!hasMore;
 
   const totalWidth = table.getVisibleLeafColumns().reduce((s, c) => s + c.getSize(), 0);
 
@@ -249,10 +279,19 @@ export function DataTable(props: DataTableProps) {
         )}
         {toolbar}
         <div className="tw:ml-auto tw:flex tw:items-center tw:gap-1">
+          {partialFilter && (
+            <span className="tw:text-2xs tw:text-warn tw:mr-1" title="Scroll to the end to load the rest, or use the server-side search where offered.">
+              Filtering only the rows loaded so far
+            </span>
+          )}
           <span className="tw:text-xs tw:text-faint rx-num tw:mr-2">
-            {filter ? `${fmtNum(modelRows.length)} of ` : ''}
-            {fmtNum(rows.length)}
-            {total !== undefined && total > rows.length ? ` / ${fmtNum(total)}` : ''} rows
+            {serverSide
+              ? <>{fmtNum(rows.length)}{total !== undefined && total > rows.length ? ` of ${fmtNum(total)}` : ''} {filter ? 'matching ' : ''}{(total ?? rows.length) === 1 ? 'row' : 'rows'}</>
+              : <>
+                {filter ? `${fmtNum(modelRows.length)} of ` : ''}
+                {fmtNum(rows.length)}
+                {total !== undefined && total > rows.length ? ` / ${fmtNum(total)}` : ''} rows
+              </>}
           </span>
           {toolbarRight}
           <Menu>
@@ -283,18 +322,26 @@ export function DataTable(props: DataTableProps) {
               <IconButton label="Export" size="sm" icon={<Download className="tw:size-3.5" />} />
             </MenuTrigger>
             <MenuContent>
-              <MenuLabel>Export {fmtNum(modelRows.length)} rows</MenuLabel>
+              <MenuLabel>Export {fmtNum(modelRows.length)} loaded rows</MenuLabel>
               <MenuItem icon={<Download />} onSelect={() =>
                 downloadText(`${exportName}.csv`, toCSV(visibleCols, exportRows()), 'text/csv')}>CSV</MenuItem>
               <MenuItem icon={<FileJson />} onSelect={() =>
                 downloadText(`${exportName}.json`, exportRows().map(r => JSON.stringify(r)).join('\n'), 'application/json')}>
                 JSON lines
               </MenuItem>
+              {(props.exportExtra ?? []).length > 0 && <MenuSeparator />}
+              {(props.exportExtra ?? []).map(x => (
+                <MenuItem key={x.label} icon={x.icon ?? <Download />} onSelect={x.onSelect}>{x.label}</MenuItem>
+              ))}
             </MenuContent>
           </Menu>
         </div>
       </div>
 
+      {pivotAt && (
+        <PivotMenu target={pivotAt} onClose={() => setPivotAt(null)} source={props.rowSource}
+          onFilter={props.hideSearch ? undefined : v => setFilter(v)} />
+      )}
       <div className="tw:flex tw:flex-1 tw:min-h-0">
         <div ref={scrollRef} className="tw:flex-1 tw:overflow-auto tw:relative tw:min-w-0">
           <div style={{ width: Math.max(totalWidth, 100) }} className="tw:min-w-full">
@@ -351,8 +398,23 @@ export function DataTable(props: DataTableProps) {
                       style={{ top: vr.start, height: rowHeight, width: totalWidth }}>
                       {row.getVisibleCells().map(cell => (
                         <div key={cell.id} style={{ width: cell.column.getSize() }}
-                          className="tw:px-2.5 tw:truncate tw:shrink-0">
+                          onContextMenu={pivot ? e => {
+                            e.preventDefault();
+                            setPivotAt({ value: cell.getValue(), column: cell.column.id, row: row.original, x: e.clientX, y: e.clientY });
+                          } : undefined}
+                          className={cn('tw:px-2.5 tw:truncate tw:shrink-0', pivot && 'tw:relative tw:group/cell')}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {pivot && cell.getValue() !== null && cell.getValue() !== undefined && cell.getValue() !== '' && (
+                            <button type="button" aria-label="Pivot on this value" title="Hunt, filter, add to case…"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const r = e.currentTarget.getBoundingClientRect();
+                                setPivotAt({ value: cell.getValue(), column: cell.column.id, row: row.original, x: r.left, y: r.bottom + 2 });
+                              }}
+                              className="tw:absolute tw:right-0.5 tw:top-1/2 tw:-translate-y-1/2 tw:hidden tw:group-hover/cell:flex tw:items-center tw:justify-center tw:size-5 tw:rounded tw:bg-raised tw:border tw:border-line tw:text-muted tw:hover:text-fg">
+                              <MoreHorizontal className="tw:size-3" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

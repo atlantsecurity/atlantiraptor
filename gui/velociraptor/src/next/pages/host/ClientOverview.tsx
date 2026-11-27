@@ -4,7 +4,7 @@ import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Activity, Cpu, ExternalLink, FolderTree, History, Info, Monitor, MoreHorizontal, Network, Plus, RefreshCw,
+  Activity, Cpu, FolderTree, History, Info, Monitor, MoreHorizontal, Network, Plus, RefreshCw,
   ShieldAlert, ShieldCheck, Tags, Trash2, Users, Zap, Clock, Globe, KeyRound, ListTree, Terminal, Save,
   Download, HardDrive, PlayCircle,
 } from 'lucide-react';
@@ -12,7 +12,6 @@ import {
   useClient, useClientFlowList, useClientMetadata, useExistingArtifacts, useLabelClients, useSetClientMetadata,
   runArtifact, runArtifacts, usePermission,
 } from '../../lib/queries';
-import type { ApiClient } from '../../lib/types';
 import { clientStatus, fmtBytes, fmtCompact, fmtTime, timeAgo, toNum } from '../../lib/format';
 import {
   Badge, Button, Card, CardHeader, CopyButton, Dialog, EmptyState, IconButton, Input, Menu, MenuContent,
@@ -22,14 +21,12 @@ import { TagInput } from '../hunts/TagInput';
 import { FlowStateBadge } from '../collections/FlowDetail';
 import { useSelectedClient } from '../../shell/client-context';
 import { MftWindowDialog, type MftWindow } from './MftWindowDialog';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
+import { TriagePanel } from './TriagePanel';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
 
-type OS = 'windows' | 'linux' | 'darwin' | 'other';
-const osOf = (c?: ApiClient): OS => {
-  const s = (c?.os_info?.system ?? '').toLowerCase();
-  return s === 'windows' ? 'windows' : s === 'linux' ? 'linux' : s === 'darwin' || s === 'macos' ? 'darwin' : 'other';
-};
+import { osOf, type OS } from '../../lib/triage';
 
 const QUARANTINE: Record<OS, string> = {
   windows: 'Windows.Remediation.Quarantine',
@@ -157,7 +154,9 @@ export default function ClientOverview() {
     setRunning(q.artifact);
     try {
       const r = await runArtifacts(clientId, arts, params, true);
-      if (r.flow_id) history.push(`/collected/${clientId}/${r.flow_id}`);
+      if (r.flow_id) toast.success(`Collecting ${q.label.toLowerCase()}`, {
+        action: { label: 'Open', onClick: () => history.push(`/collected/${clientId}/${r.flow_id}`) },
+      });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -216,6 +215,8 @@ export default function ClientOverview() {
             <Button variant="primary" icon={<Plus className="tw:size-3.5" />} disabled={!canCollect} onClick={() => setCollectOpen(true)}>Collect</Button>
             <Button variant="secondary" icon={<History className="tw:size-3.5" />} onClick={() => history.push(`/collected/${clientId}`)}>Collections</Button>
             <Button variant="secondary" icon={<FolderTree className="tw:size-3.5" />} onClick={() => history.push(`/vfs/${clientId}/`)}>Files</Button>
+            <AddToCaseButton suggestedTitle={`Investigation: ${hostname}`}
+              item={{ kind: 'client', ref: clientId, label: `${hostname} (${clientId})` }} />
             <Menu>
               <MenuTrigger asChild>
                 <IconButton label="More actions" variant="secondary" icon={<MoreHorizontal className="tw:size-4" />} />
@@ -225,8 +226,7 @@ export default function ClientOverview() {
                 {canQuarantine && !quarantined && <MenuItem icon={<ShieldAlert />} danger onSelect={() => setQuarantineOpen(true)}>Quarantine host…</MenuItem>}
                 {canQuarantine && quarantined && <MenuItem icon={<ShieldCheck />} onSelect={unquarantine}>Lift quarantine</MenuItem>}
                 <MenuSeparator />
-                <MenuItem icon={<Terminal />} onSelect={() => history.push(`/classic/host/${clientId}/shell`)}>Shell (classic)</MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/host/${clientId}`)}>Open in classic view</MenuItem>
+                <MenuItem icon={<Terminal />} onSelect={() => history.push(`/host/${clientId}/shell`)}>Shell</MenuItem>
               </MenuContent>
             </Menu>
           </div>
@@ -234,9 +234,11 @@ export default function ClientOverview() {
       </div>
 
       <div className="tw:p-3 tw:md:p-6 tw:grid tw:grid-cols-1 tw:xl:grid-cols-3 tw:gap-4">
+        <TriagePanel clientId={clientId} client={client} canCollect={canCollect} />
+
         {/* --------------------------------------------------- Quick triage */}
         <Card className="tw:xl:col-span-3">
-          <CardHeader icon={<Zap className="tw:size-4" />} title="Quick triage" subtitle="One click collects from this host. Results open in Collections." />
+          <CardHeader icon={<Zap className="tw:size-4" />} title="Quick collect" subtitle="One click collects one thing from this host. You stay here; open it from the notification or Recent collections." />
           <div className="tw:grid tw:grid-cols-2 tw:md:grid-cols-3 tw:xl:grid-cols-5 tw:gap-2 tw:p-3">
             {quick.filter(q => !existing || artifactsOf(q).some(a => existing.has(a))).map(q => (
               <button key={q.artifact} type="button" disabled={!canCollect || running === q.artifact}

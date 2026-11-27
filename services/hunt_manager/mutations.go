@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"time"
 
 	"github.com/Velocidex/ordereddict"
 	api_proto "www.velocidex.com/golang/velociraptor/api/proto"
@@ -138,7 +139,21 @@ func (self *HuntManager) processMutation(
 				hunt_obj.State != api_proto.Hunt_RUNNING {
 				hunt_obj.Stats.Stopped = false
 				hunt_obj.State = api_proto.Hunt_RUNNING
-				hunt_obj.StartTime = uint64(utils.GetTime().Now().UTC().UnixNano() / 1000)
+				now := uint64(utils.GetTime().Now().UTC().UnixNano() / 1000)
+
+				// A hunt created paused (for review or approval) gets its
+				// full time window from when it actually starts, so the
+				// default hour is not used up while it waits. Hunts set
+				// to run until stopped (a window of a year or more) and
+				// hunts that ran before keep their expiry.
+				if hunt_obj.StartTime == 0 && hunt_obj.Expires > hunt_obj.CreateTime &&
+					hunt_obj.CreateTime > 0 && now > hunt_obj.CreateTime {
+					window := hunt_obj.Expires - hunt_obj.CreateTime
+					if window < uint64(365*24*time.Hour/time.Microsecond) {
+						hunt_obj.Expires = now + window
+					}
+				}
+				hunt_obj.StartTime = now
 
 				// This hunt is now started, let all dispatchers know
 				// to participate connected clients.

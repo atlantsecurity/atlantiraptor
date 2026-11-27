@@ -1,8 +1,22 @@
 name: Generic.Detection.RapidHunt
 description: |
-  Answers "which machines visited this website or IP?" quickly.
+  Answers "which machines have seen this?" quickly, for one indicator.
 
-  Give a domain, URL or IP address. Each endpoint checks, in one pass:
+  `Kind` says what the indicator is (the console picks it for you):
+
+  - `web` (a domain, URL or IP address): see below.
+  - `hash` (MD5, SHA1 or SHA256): running process executables, and files
+    under the user, temp and ProgramData folders (up to 100 MB each).
+  - `file` (a file name or full path): the path itself, files with that
+    name in the same folders, running processes and Windows Prefetch
+    (evidence the program ran).
+  - `process` (a program name such as `rclone.exe`): running processes,
+    Prefetch and Sysmon process start events (event 1).
+  - `user` (a user name, with or without `DOMAIN\`): processes running
+    as the user, a profile folder, and Windows logons and failed logons
+    (Security events 4624/4625).
+
+  For `web`, each endpoint checks, in one pass:
 
   - Browser history (Chrome, Edge, Brave, Vivaldi, Opera and Firefox) for
     visits to the domain or any of its subdomains, or to the IP.
@@ -19,7 +33,17 @@ type: CLIENT
 
 parameters:
   - name: Indicator
-    description: A domain (example.com), URL (https://example.com/x) or IP address.
+    description: A domain, URL, IP address, hash, file name or path, process name or user name.
+  - name: Kind
+    description: What the indicator is.
+    type: choices
+    default: web
+    choices:
+      - web
+      - hash
+      - file
+      - process
+      - user
   - name: DaysBack
     description: How far back to look in browser history and event logs.
     type: int
@@ -101,7 +125,9 @@ sources:
         WHERE if(condition=IsIP, then=Record = Target, else=Name =~ NameRe)
 
       // The IPs to look for in live connections.
-      LET ResolvedIPs <= SELECT Record FROM DnsCache WHERE Name =~ NameRe AND RecordType =~ "^(A|AAAA)$"
+      LET ResolvedIPs <= SELECT Record FROM if(condition=Kind = "web", then={
+          SELECT Record FROM DnsCache WHERE Name =~ NameRe AND RecordType =~ "^(A|AAAA)$"
+        })
       LET TargetIPs <= if(condition=IsIP, then=[Target], else=ResolvedIPs.Record)
       LET ProcName(P) = SELECT Name FROM pslist(pid=P)
 
@@ -148,10 +174,106 @@ sources:
             AND EventData.QueryName =~ NameRe
         })
 
-      SELECT * FROM if(condition=Target, then={
-        SELECT * FROM chain(
+      LET WebHits = SELECT * FROM chain(
           a=ChromiumHits, b=FirefoxHits, c=DnsHits, d=ConnectionHits,
           e=SysmonHits, f=DnsClientHits, async=TRUE)
-      }, else={
+
+      // ----------------------------------------- hash, file, process, user
+      LET Raw <= regex_replace(source=Indicator, re='''^\s+|\s+$''', replace="")
+      LET HashType <= if(condition=Clean =~ '''^[0-9a-f]{64}$''', then="SHA256",
+          else=if(condition=Clean =~ '''^[0-9a-f]{40}$''', then="SHA1", else="MD5"))
+      LET IsPath <= Raw =~ '''[\\/]'''
+      LET BaseName <= lowcase(string=regex_replace(source=Raw, re='''^.*[\\/]''', replace=""))
+      LET ExeName <= if(condition=IsWindows AND NOT BaseName =~ '''\.[a-z0-9]{1,5}$''',
+          then=BaseName + ".exe", else=BaseName)
+      LET EscapedExe <= regex_replace(source=ExeName, re='''([.*+?^${}()|\[\]\\])''', replace='''\$1''')
+      LET UserName <= lowcase(string=regex_replace(source=Raw, re='''^.*\\|@.*$''', replace=""))
+
+      LET FileGlobs <= if(condition=IsWindows,
+          then=["C:/Users/*/{Downloads,Desktop,Documents,AppData/Local/Temp,AppData/Roaming,AppData/Local/Programs}/**",
+                "C:/ProgramData/**", "C:/Windows/Temp/**"],
+          else=if(condition=ThisOS =~ "darwin",
+            then=["/Users/*/{Downloads,Desktop,Documents}/**", "/private/tmp/**"],
+            else=["/home/*/**", "/root/**", "/tmp/**", "/var/tmp/**", "/dev/shm/**"]))
+
+      LET Procs = SELECT Pid, Name, Exe, CommandLine, Username, CreateTime FROM pslist()
+      LET DiskFiles = SELECT OSPath, Name, Size, Mtime FROM glob(globs=FileGlobs, nosymlink=TRUE)
+        WHERE NOT IsDir AND Size > 0 AND Size < 104857600
+
+      LET ProcHit(P) = SELECT "Running process" AS Source, CreateTime AS Time, Username AS User, Name AS Process,
+             Exe AS Match, format(format="pid %v: %v", args=[Pid, CommandLine]) AS Detail, Exe AS Path
+        FROM P
+
+      LET ProcHashHits = SELECT * FROM ProcHit(P={
+          SELECT * FROM Procs WHERE Exe AND lowcase(string=get(item=hash(path=Exe), field=HashType)) = Clean })
+      LET DiskHashHits = SELECT "File on disk" AS Source, Mtime AS Time, "" AS User, "" AS Process,
+             OSPath.Basename AS Match, format(format="%v bytes, %v %v", args=[Size, HashType, Clean]) AS Detail,
+             OSPath AS Path
+        FROM DiskFiles
+        WHERE lowcase(string=get(item=hash(path=OSPath), field=HashType)) = Clean
+      LET HashHits = SELECT * FROM chain(a=ProcHashHits, b=DiskHashHits, async=TRUE)
+
+      LET PrefetchHits = SELECT * FROM if(condition=IsWindows, then={
+          SELECT "Executed (Prefetch)" AS Source, Mtime AS Time, "" AS User, ExeName AS Process,
+                 Name AS Match, "Prefetch file modified when the program last ran" AS Detail, OSPath AS Path
+          FROM glob(globs="C:/Windows/Prefetch/*.pf")
+          WHERE Name =~ ("(?i)^" + EscapedExe + "-[0-9a-f]{8}\\.pf$")
+        })
+      LET ExactPathHits = SELECT * FROM if(condition=IsPath, then={
+          SELECT "File exists" AS Source, Mtime AS Time, "" AS User, "" AS Process,
+                 OSPath.Basename AS Match, format(format="%v bytes", args=Size) AS Detail, OSPath AS Path
+          FROM glob(globs=regex_replace(source=Raw, re='''\\''', replace="/"), nosymlink=TRUE)
+          LIMIT 50
+        })
+      LET NameOnDiskHits = SELECT "File on disk" AS Source, Mtime AS Time, "" AS User, "" AS Process,
+             Name AS Match, format(format="%v bytes", args=Size) AS Detail, OSPath AS Path
+        FROM DiskFiles
+        WHERE lowcase(string=Name) = BaseName
+      LET ProcNameHits = SELECT * FROM ProcHit(P={
+          SELECT * FROM Procs WHERE lowcase(string=Name) = BaseName OR lowcase(string=Name) = ExeName })
+      LET FileHits = SELECT * FROM chain(
+          a=ExactPathHits, b=NameOnDiskHits, c=ProcNameHits, d=PrefetchHits, async=TRUE)
+
+      LET SysmonProcHits = SELECT * FROM if(condition=IsWindows AND IncludeEventLogs AND stat(filename=SysmonLog).Size, then={
+          SELECT "Sysmon process start" AS Source, System.TimeCreated.SystemTime AS Time,
+                 EventData.User AS User, EventData.Image AS Process, EventData.Image AS Match,
+                 EventData.CommandLine AS Detail, SysmonLog AS Path
+          FROM parse_evtx(filename=SysmonLog)
+          WHERE System.EventID.Value = 1
+            AND System.TimeCreated.SystemTime > Since.Unix
+            AND EventData.Image =~ ("(?i)[\\\\/]" + EscapedExe + "$")
+        })
+      LET ProcessHits = SELECT * FROM chain(a=ProcNameHits, b=PrefetchHits, c=SysmonProcHits, async=TRUE)
+
+      LET SecurityLog = "C:/Windows/System32/winevt/Logs/Security.evtx"
+      LET UserProcHits = SELECT * FROM ProcHit(P={
+          SELECT * FROM Procs WHERE Exe AND lowcase(string=regex_replace(source=Username, re='''^.*\\''', replace="")) = UserName })
+      LET ProfileHits = SELECT "User profile" AS Source, Mtime AS Time, Name AS User, "" AS Process,
+             Name AS Match, "Profile folder exists" AS Detail, OSPath AS Path
+        FROM glob(globs=HomeGlobs)
+        WHERE IsDir AND lowcase(string=Name) = UserName
+      LET LogonHits = SELECT * FROM if(condition=IsWindows AND IncludeEventLogs AND stat(filename=SecurityLog).Size, then={
+          SELECT if(condition=System.EventID.Value = 4624, then="Logon", else="Failed logon") AS Source,
+                 System.TimeCreated.SystemTime AS Time,
+                 format(format="%v\\%v", args=[EventData.TargetDomainName, EventData.TargetUserName]) AS User,
+                 EventData.ProcessName AS Process,
+                 EventData.TargetUserName AS Match,
+                 format(format="logon type %v from %v (%v)",
+                        args=[EventData.LogonType, EventData.IpAddress, EventData.WorkstationName]) AS Detail,
+                 SecurityLog AS Path
+          FROM parse_evtx(filename=SecurityLog)
+          WHERE System.EventID.Value in (4624, 4625)
+            AND System.TimeCreated.SystemTime > Since.Unix
+            AND lowcase(string=EventData.TargetUserName) = UserName
+        })
+      LET UserHits = SELECT * FROM chain(a=UserProcHits, b=ProfileHits, c=LogonHits, async=TRUE)
+
+      SELECT * FROM if(condition=NOT Raw, then={
         SELECT log(message="No indicator given") AS Source FROM scope() WHERE FALSE
+      }, else={
+        SELECT * FROM if(condition=Kind = "hash", then=HashHits,
+          else={ SELECT * FROM if(condition=Kind = "file", then=FileHits,
+          else={ SELECT * FROM if(condition=Kind = "process", then=ProcessHits,
+          else={ SELECT * FROM if(condition=Kind = "user", then=UserHits,
+          else=WebHits) }) }) })
       })

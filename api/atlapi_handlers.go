@@ -746,6 +746,8 @@ type huntRequest struct {
 	Tags        []string
 	Pause       bool
 	UserData    string
+	// Without it the hunt stops after the default (one hour).
+	RunUntilStopped bool
 }
 
 func (c *apiCtx) hunt(h huntRequest) (string, bool) {
@@ -753,8 +755,13 @@ func (c *apiCtx) hunt(h huntRequest) (string, bool) {
 		Set("Description", h.Description).Set("Artifacts", h.Artifacts).Set("Spec", h.Spec).
 		Set("Tags", h.Tags).Set("Pause", h.Pause).Set("UserData", h.UserData).
 		Set("Labels", h.Target.Labels).Set("Exclude", h.Target.ExcludeLabels).Set("OS", h.Target.OS)
+	expires := ""
+	if h.RunUntilStopped {
+		// Ten years: effectively until someone stops it.
+		expires = ", expires=now() + 315360000"
+	}
 	rows, ok := c.query(`SELECT hunt(description=Description, artifacts=Artifacts, spec=Spec, tags=Tags,
-		pause=Pause, include_labels=Labels, exclude_labels=Exclude, os=OS, user_data=UserData) AS Hunt FROM scope()`, env, 1)
+		pause=Pause, include_labels=Labels, exclude_labels=Exclude, os=OS, user_data=UserData`+expires+`) AS Hunt FROM scope()`, env, 1)
 	if !ok {
 		return "", false
 	}
@@ -864,6 +871,8 @@ func startHunt(c *apiCtx) {
 		Parameters  artifactParams `json:"parameters,omitempty"`
 		Target      apiTarget      `json:"target"`
 		Paused      bool           `json:"paused,omitempty"`
+		// Hunts stop after one hour unless this is set.
+		RunUntilStopped bool `json:"run_until_stopped,omitempty"`
 	}
 	if !decodeBody(c, &body) {
 		return
@@ -893,7 +902,7 @@ func startHunt(c *apiCtx) {
 		desc = "API hunt: " + strings.Join(body.Artifacts, ", ")
 	}
 	id, ok := c.huntTarget(huntRequest{Description: desc + " (via API key " + c.key.Name + ")", Artifacts: body.Artifacts,
-		Spec: spec, Target: body.Target, Tags: []string{"api"}, Pause: body.Paused})
+		Spec: spec, Target: body.Target, Tags: []string{"api"}, Pause: body.Paused, RunUntilStopped: body.RunUntilStopped})
 	if !ok {
 		return
 	}

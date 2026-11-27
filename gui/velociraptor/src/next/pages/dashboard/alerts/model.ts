@@ -19,6 +19,8 @@ export const SEVERITY_TONE: Record<Severity, 'bad' | 'warn' | 'accent' | 'info' 
 
 export interface Alert {
   key: string;
+  // Stable across reloads (unlike key): used to remember triage state.
+  id: string;
   name: string;
   time: Date | null;
   clientId: string;
@@ -57,12 +59,23 @@ function asSeverity(v: unknown): Severity {
 
 const str = (v: unknown): string => (v === undefined || v === null ? '' : String(v));
 
+/** Short FNV-1a hash, enough to tell alerts with the same name and time apart. */
+export function shortHash(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
 export function toAlert(r: Row, index: number): Alert {
   const data = asObject(r.event_data);
   const time = toDate((r.timestamp ?? r._ts) as string | number);
   const clientId = str(r.client_id);
   return {
     key: `${clientId}-${str(r.timestamp)}-${str(r.name)}-${index}`,
+    id: `${clientId}|${str(r.timestamp)}|${str(r.name)}|${shortHash(JSON.stringify(r.event_data ?? ''))}`,
     name: str(r.name) || 'Alert',
     time,
     clientId,

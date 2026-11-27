@@ -6,7 +6,7 @@ import { AiTriageButton } from '../ai/AiTriage';
 import { flowContext } from '../ai/context';
 import { toast } from 'sonner';
 import {
-  Ban, BookOpen, CircleAlert, Clock, Download, ExternalLink, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
+  Ban, BookOpen, CircleAlert, Clock, Download, FileDown, FolderArchive, LayoutList, Logs, MoreHorizontal, RefreshCw,
   Rows3, RotateCcw, ScrollText, Table2,
 } from 'lucide-react';
 import { useCancelFlow, useFlow, useFlowTable, useArtifactDefinitions } from '../../lib/queries';
@@ -20,6 +20,7 @@ import {
 } from '../../ui/primitives';
 import { DataTable } from '../../ui/DataTable';
 import { ArchiveList } from '../evidence/ArchiveList';
+import { AddToCaseButton } from '../cases/AddToCaseButton';
 import { promoteColumns, UploadsTable, withUploadCells } from '../evidence/UploadLink';
 
 type TabKey = 'overview' | 'results' | 'files' | 'logs' | 'notebook';
@@ -97,6 +98,8 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
               {preparing ? 'Building zip…' : 'Download zip'}
             </Button>
             <Button variant="secondary" icon={<RotateCcw className="tw:size-3.5" />} onClick={() => onCollectAgain(flow)}>Collect again</Button>
+            <AddToCaseButton suggestedTitle={`${(flow.request?.artifacts ?? []).join(', ')} on ${hostname}`}
+              item={{ kind: 'flow', ref: flow.session_id, clientId, label: `${(flow.request?.artifacts ?? []).join(', ')} on ${hostname} (${flow.session_id})` }} />
             {rows > 0 && (
               <AiTriageButton size="md" task="Triage the results of this collection."
                 getContext={() => flowContext(clientId, flowId, artifacts, hostname)} />
@@ -107,7 +110,6 @@ export default function FlowDetail({ clientId, flowId, tab, hostname, onCollectA
               </MenuTrigger>
               <MenuContent>
                 <MenuItem icon={<RefreshCw />} onSelect={() => q.refetch()}>Refresh</MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/collected/${clientId}/${flowId}`)}>Open in classic view</MenuItem>
               </MenuContent>
             </Menu>
           </div>
@@ -293,6 +295,7 @@ function Results({ clientId, flow, live }: { clientId: string; flow: Flow; live:
     <DataTable key={source} rows={rows} columns={ordered} loading={q.isLoading}
       hasMore={q.hasNextPage} loadingMore={q.isFetchingNextPage} onLoadMore={() => q.fetchNextPage()}
       storageKey={`flow-results:${source}`} exportName={`${flow.session_id}-${source?.replace(/[^\w.-]+/g, '_')}`}
+      rowSource={{ ref: String(flow.session_id ?? ''), clientId: String(flow.client_id ?? ''), label: `Collection ${flow.session_id} · ${source}` }}
       renderers={uploadRenderers}
       toolbar={sources.length > 1
         ? <Select value={source} onChange={e => setSource(e.target.value)} className="tw:max-w-[360px] tw:font-mono tw:text-xs">
