@@ -1,0 +1,78 @@
+name: Cloud.Okta.SessionHijack
+description: |
+  Hunts for stolen Okta session cookies (infostealers, AiTM phishing
+  kits): one Okta session used from places a single browser could not
+  be.
+
+  - **high**: one session used from several countries.
+  - **high**: one session used from a different browser or operating
+    system and a different address than it started with.
+  - **critical**: either of the above, and the session opened the Okta
+    Admin Console.
+
+  Reads sign-on, single sign-on and admin console events, which carry
+  the session ID. Needs an API token of a Read-only Administrator.
+
+type: SERVER
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 72
+
+sources:
+  - query: |
+      LET Events <= SELECT timestamp(string=Time) AS Time,
+             timestamp(string=Time).Unix AS Epoch,
+             EventType, Actor AS User, IPAddress, Country, Location, Device,
+             UserAgent, format(format="%v / %v", args=[Browser, OS]) AS Client,
+             ASOrg, SessionId, Target
+      FROM okta_logs(secret=OktaSecret, start=now() - LookbackHours * 3600,
+          filter='''eventType eq "user.session.start" or eventType eq "user.authentication.sso" or eventType eq "policy.evaluate_sign_on" or eventType eq "user.session.access_admin_app"''')
+      WHERE SessionId
+      ORDER BY Epoch
+
+      LET PerSession = SELECT SessionId, User, min(item=Epoch) AS First,
+             enumerate(items=dict(T=Time, E=Epoch, IP=IPAddress, Country=Country,
+                 Loc=Location, Client=Client, UA=UserAgent, ASOrg=ASOrg,
+                 Event=EventType, App=Target)) AS Uses
+          FROM Events GROUP BY SessionId
+
+      LET CountriesOf(U) = SELECT Country FROM foreach(row=U) WHERE Country GROUP BY Country
+      LET ClientsOf(U) = SELECT Client FROM foreach(row=U) GROUP BY Client
+      LET AddressesOf(U) = SELECT IP FROM foreach(row=U) GROUP BY IP
+
+      LET Scored = SELECT SessionId, User, Uses, Uses[0] AS Start,
+             CountriesOf(U=Uses).Country AS Countries,
+             ClientsOf(U=Uses).Client AS Clients,
+             AddressesOf(U=Uses).IP AS Addresses,
+             "user.session.access_admin_app" in Uses.Event AS Admin
+          FROM PerSession
+
+      // The first use from somewhere the session did not start.
+      LET FirstForeign(U, StartIP, StartClient, StartCountry) =
+          SELECT * FROM foreach(row=U)
+          WHERE (Country AND StartCountry AND Country != StartCountry)
+             OR (Client != StartClient AND IP != StartIP)
+          LIMIT 1
+
+      LET Findings = SELECT *, FirstForeign(U=Uses, StartIP=Start.IP, StartClient=Start.Client,
+                 StartCountry=Start.Country)[0] AS Foreign
+          FROM Scored
+          WHERE len(list=Countries) > 1 OR (len(list=Clients) > 1 AND len(list=Addresses) > 1)
+
+      SELECT Foreign.T AS Time,
+             if(condition=Admin, then="critical", else="high") AS Severity,
+             if(condition=len(list=Countries) > 1,
+                then="Okta session used from several countries",
+                else="Okta session used from a different browser and address") +
+             if(condition=Admin, then=", including the Admin Console", else="") AS Detection,
+             User, Foreign.IP AS IPAddress, Foreign.Loc AS Location, Foreign.Client AS Device,
+             dict(SessionId=SessionId, StartedFrom=Start.IP, StartedIn=Start.Loc,
+                  StartedWith=Start.Client, StartedAt=Start.T,
+                  ForeignEvent=Foreign.Event, ForeignApp=Foreign.App, ForeignASOrg=Foreign.ASOrg,
+                  ForeignUserAgent=Foreign.UA,
+                  Countries=Countries, Clients=Clients, Addresses=Addresses) AS Details
+      FROM Findings

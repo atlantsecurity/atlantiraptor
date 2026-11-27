@@ -1,0 +1,96 @@
+name: Cloud.Okta.Rules
+description: |
+  Shared detection rules for the `Cloud.Okta.*` breach hunts and
+  `Cloud.Okta.Monitor`. Other artifacts import this one; it collects
+  nothing by itself.
+
+  `OktaRules` match single System Log events on the event type,
+  optionally on the event's text (`Params`, a regex over
+  `result=...;reason=...;target=...;name=value;...` built from the
+  outcome, the targets and the debug data). A rule whose `Escalate`
+  regex also matches is raised to `EscalateTo`.
+
+type: SERVER
+
+export: |
+  LET OktaRules <= (
+    // Sign-ins and sessions.
+    dict(Category="signin", Event="^security\\.threat\\.detected$", Params="",
+         Detection="Okta ThreatInsight flagged sign-in attempts", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="signin", Event="^user\\.(session\\.start|authentication\\.)", Params="^result=(SUCCESS|ALLOW);.*(^|;)threatSuspected=true",
+         Detection="Sign-in succeeded although ThreatInsight suspected it", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", Event="^user\\.session\\.start$", Params="^result=(SUCCESS|ALLOW);.*level=HIGH",
+         Detection="High-risk sign-in succeeded", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", Event="^user\\.account\\.report_suspicious_activity_by_enduser$", Params="",
+         Detection="User reported suspicious activity on their account", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="signin", Event="^user\\.risk\\.(detect|change)$", Params="",
+         Detection="Identity Threat Protection raised the user's risk", Severity="medium", Escalate="(?i)level=HIGH|riskLevel=HIGH", EscalateTo="high"),
+    dict(Category="signin", Event="^user\\.session\\.context\\.change$", Params="",
+         Detection="Session's IP or device changed mid-session", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="signin", Event="^user\\.session\\.impersonation\\.initiate$", Params="",
+         Detection="Okta support impersonation session started", Severity="high", Escalate="", EscalateTo=""),
+
+    // MFA and passwords.
+    dict(Category="account", Event="^user\\.mfa\\.factor\\.reset_all$", Params="",
+         Detection="All MFA factors reset", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="account", Event="^user\\.mfa\\.factor\\.deactivate$", Params="",
+         Detection="MFA factor removed", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="account", Event="^user\\.mfa\\.factor\\.(activate|update)$", Params="",
+         Detection="MFA factor enrolled", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="account", Event="^user\\.account\\.reset_password$", Params="",
+         Detection="Password reset by an administrator", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="account", Event="^user\\.account\\.update_password$", Params="",
+         Detection="Password changed", Severity="low", Escalate="", EscalateTo=""),
+    dict(Category="account", Event="^user\\.mfa\\.attempt_bypass$", Params="",
+         Detection="Attempt to bypass MFA", Severity="high", Escalate="", EscalateTo=""),
+
+    // Administration.
+    dict(Category="admin", Event="^(user\\.account|group)\\.privilege\\.grant$", Params="",
+         Detection="Admin role granted", Severity="high", Escalate="(?i)super ?admin", EscalateTo="critical"),
+    dict(Category="admin", Event="^iam\\.resourceset\\.bindings\\.add$", Params="",
+         Detection="Custom admin role assigned", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^system\\.api_token\\.create$", Params="",
+         Detection="API token created", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^system\\.idp\\.lifecycle\\.create$", Params="",
+         Detection="Identity provider added (can sign users in)", Severity="critical", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^system\\.idp\\.lifecycle\\.(update|activate)$", Params="",
+         Detection="Identity provider changed", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^policy\\.lifecycle\\.(deactivate|delete)$", Params="",
+         Detection="Sign-on or MFA policy disabled or deleted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^policy\\.rule\\.(deactivate|delete)$", Params="",
+         Detection="Policy rule disabled or deleted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^policy\\.(rule|lifecycle)\\.update$", Params="",
+         Detection="Policy or policy rule changed", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^(security\\.authenticator\\.lifecycle|system\\.mfa\\.factor)\\.deactivate$", Params="",
+         Detection="Authenticator turned off for the organisation", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^zone\\.(update|deactivate|delete)$", Params="",
+         Detection="Network zone changed", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^user\\.session\\.impersonation\\.grant$", Params="",
+         Detection="Okta support access granted", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^system\\.log_stream\\.lifecycle\\.(deactivate|delete)$", Params="",
+         Detection="Log stream turned off", Severity="high", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^security\\.trusted_origin\\.create$", Params="",
+         Detection="Trusted origin added", Severity="medium", Escalate="", EscalateTo=""),
+    dict(Category="admin", Event="^application\\.lifecycle\\.create$", Params="",
+         Detection="App integration created", Severity="medium", Escalate="", EscalateTo="")
+  )
+
+  LET OktaDebugQuery(D) = SELECT format(format="%v=%v", args=[_key, _value]) AS x
+      FROM items(item=D)
+
+  // The text that rules' Params and Escalate regexes run against.
+  LET OktaText(Result, Reason, Target, DebugData) = format(
+      format="result=%v;reason=%v;target=%v;%v",
+      args=[Result, Reason, Target, join(array=OktaDebugQuery(D=DebugData).x, sep=";")])
+
+  // Parameter names differ from the rule table's columns, which shadow
+  // them inside foreach().
+  LET OktaMatches(EvType, EvText) =
+      SELECT Category, Detection,
+             if(condition=Escalate AND EvText =~ Escalate, then=EscalateTo,
+                else=Severity) AS Severity
+      FROM foreach(row=OktaRules)
+      WHERE EvType =~ Event AND (NOT Params OR EvText =~ Params)
+
+  LET OktaRank <= dict(critical=0, high=1, medium=2, low=3, info=4)
+  LET OktaMinRank(Level) = get(item=OktaRank, field=Level, default=3)

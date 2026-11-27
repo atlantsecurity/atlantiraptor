@@ -1,0 +1,56 @@
+name: Cloud.Okta.Monitor
+description: |
+  Collects an Okta organisation's whole System Log continuously and
+  raises alerts in the shared alert queue for single events that
+  matter: identity providers added, admin roles granted, API tokens
+  created, policies and authenticators turned off, Okta support
+  access, MFA reset, ThreatInsight and Identity Threat Protection
+  detections (`Cloud.Okta.Rules`).
+
+  Okta keeps the System Log for 90 days; this keeps it on the
+  Atlantiraptor server for as long as server event data is kept, and
+  keeps the API token in use (Okta revokes tokens unused for 30 days).
+
+  Add it under Server Events and grant the configuring user the secret.
+
+type: SERVER_EVENT
+
+imports:
+  - Cloud.Okta.Rules
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: PollSeconds
+    type: int
+    default: 60
+  - name: BackfillHours
+    type: int
+    default: 24
+  - name: AlertLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low]
+
+export: |
+  LET Raise(Detections, Alertable, User, IP, What, Whom, When) = SELECT alert(
+        name=format(format="Okta: %v (%v)", args=[Detection, Whom || User]),
+        dedup=86400, level=Severity, source="Okta", rule=Detection,
+        description=format(format="%v: %v by %v from %v%v",
+            args=[Detection, What, User, IP || "unknown address",
+                  if(condition=Whom, then=" on " + Whom, else="")]),
+        user=User, ip=IP, activity=What, target=Whom, time=When, tenant=OktaSecret) AS Raised
+    FROM foreach(row=Detections)
+    WHERE Alertable AND OktaMinRank(Level=Severity) <= OktaMinRank(Level=AlertLevel)
+
+sources:
+  - query: |
+      // Every event is kept. Alerts are raised for successful events
+      // only, plus ThreatInsight (whose events record blocked attempts).
+      SELECT * FROM okta_logs(secret=OktaSecret,
+          start=timestamp(epoch=now() - BackfillHours * 3600),
+          follow=TRUE, poll=PollSeconds)
+      WHERE (Raise(Detections=OktaMatches(EvType=EventType,
+               EvText=OktaText(Result=Result, Reason=Reason, Target=Target, DebugData=DebugData)),
+             Alertable=(Result != "FAILURE" OR EventType =~ "^security\\.threat"),
+             User=Actor, IP=IPAddress, What=EventType, Whom=Target, When=Time) OR TRUE)

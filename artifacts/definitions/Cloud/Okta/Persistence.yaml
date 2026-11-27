@@ -1,0 +1,56 @@
+name: Cloud.Okta.Persistence
+description: |
+  Lists what lets someone back into an Okta organisation without a
+  user's password, as it is configured now, of any age:
+
+  - **Identity providers**: an IdP added by an attacker signs users in
+    without their password or MFA. **high** when created or changed
+    within the lookback, otherwise **low** (review the list).
+  - **API tokens**: each acts with its creator's admin rights.
+    **high** when created within the lookback, otherwise **low**.
+
+  Unlike `Cloud.Okta.AdminChanges`, which reads the 90-day System Log,
+  this finds backdoors of any age. Needs an API token of a Read-only
+  Administrator (API tokens are listed only to super administrators;
+  without that, a 403 is logged and only the IdPs are listed).
+
+type: SERVER
+
+parameters:
+  - name: OktaSecret
+    description: Name of the "Okta Creds" secret for the organisation.
+  - name: LookbackHours
+    type: int
+    default: 720
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET IdPs = SELECT timestamp(string=lastUpdated) AS Time,
+             if(condition=timestamp(string=lastUpdated).Unix >= WindowStart,
+                then="high", else="low") AS Severity,
+             if(condition=timestamp(string=created).Unix >= WindowStart,
+                then="Identity provider created recently",
+                else=if(condition=timestamp(string=lastUpdated).Unix >= WindowStart,
+                        then="Identity provider changed recently",
+                        else="Identity provider configured")) AS Detection,
+             name AS User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Id=id, Type=type, Status=status, Protocol=protocol.type,
+                  Created=created, LastUpdated=lastUpdated,
+                  AccountLink=policy.accountLink.action,
+                  Provisioning=policy.provisioning.action) AS Details
+      FROM okta_api(secret=OktaSecret, path="/api/v1/idps")
+
+      LET Tokens = SELECT timestamp(string=created) AS Time,
+             if(condition=timestamp(string=created).Unix >= WindowStart,
+                then="high", else="low") AS Severity,
+             if(condition=timestamp(string=created).Unix >= WindowStart,
+                then="API token created recently", else="API token exists") AS Detection,
+             name AS User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Id=id, OwnerUserId=userId, ClientName=clientName,
+                  Created=created, LastUpdated=lastUpdated, ExpiresAt=expiresAt,
+                  Network=network.connection) AS Details
+      FROM okta_api(secret=OktaSecret, path="/api/v1/api-tokens", ignore_not_found=TRUE)
+
+      SELECT * FROM chain(a=IdPs, b=Tokens)

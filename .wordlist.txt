@@ -43,3 +43,11 @@ manifest's
 lookback
 multitenant
 mailbox's
+Okta
+ThreatInsight
+IdP
+IdPs
+infostealers
+AiTM
+oktapreview
+SSWS

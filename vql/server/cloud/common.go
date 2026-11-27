@@ -179,6 +179,10 @@ func (self *apiClient) do(ctx context.Context, req request) (
 
 		wait := parseRetryAfter(resp.Header.Get("Retry-After"))
 		if wait == 0 {
+			// Okta sends the epoch second its rate limit resets.
+			wait = parseRateLimitReset(resp.Header.Get("X-Rate-Limit-Reset"))
+		}
+		if wait == 0 {
 			wait = backoff(attempt)
 		}
 		if !self.sleep(ctx, wait) {
@@ -219,6 +223,23 @@ func parseRetryAfter(v string) time.Duration {
 	}
 
 	if d < 0 {
+		return 0
+	}
+	if d > maxRetryAfter {
+		return maxRetryAfter
+	}
+	return d
+}
+
+// parseRateLimitReset turns an X-Rate-Limit-Reset epoch into a wait,
+// plus a second for clock skew.
+func parseRateLimitReset(v string) time.Duration {
+	epoch, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+	if err != nil || epoch <= 0 {
+		return 0
+	}
+	d := time.Until(time.Unix(epoch, 0)) + time.Second
+	if d <= 0 {
 		return 0
 	}
 	if d > maxRetryAfter {

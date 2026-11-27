@@ -1,0 +1,4894 @@
+[
+ {
+  "uuid": "evt-0001",
+  "published": "NOW-300hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx1",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0002",
+  "published": "NOW-320hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx2",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0003",
+  "published": "NOW-340hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx3",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0004",
+  "published": "NOW-360hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx4",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0005",
+  "published": "NOW-380hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx5",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0006",
+  "published": "NOW-20hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.20",
+   "geographicalContext": {
+    "city": "Berlin",
+    "state": null,
+    "country": "Germany",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 52.5,
+     "lon": 13.4
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx6",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.20"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0007",
+  "published": "NOW-10hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ubob",
+   "type": "User",
+   "alternateId": "bob@example.com",
+   "displayName": "Bob",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.30",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 40.7,
+     "lon": -74.0
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx7",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.30"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0008",
+  "published": "NOW-9hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ubob",
+   "type": "User",
+   "alternateId": "bob@example.com",
+   "displayName": "Bob",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.31",
+   "geographicalContext": {
+    "city": "Tokyo",
+    "state": null,
+    "country": "Japan",
+    "postalCode": null,
+    "geolocation": {
+     "lat": 35.7,
+     "lon": 139.7
+    }
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx8",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.31"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0009",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser1",
+   "type": "User",
+   "alternateId": "user1@example.com",
+   "displayName": "User1",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx9",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0010",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser2",
+   "type": "User",
+   "alternateId": "user2@example.com",
+   "displayName": "User2",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx10",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0011",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser3",
+   "type": "User",
+   "alternateId": "user3@example.com",
+   "displayName": "User3",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx11",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0012",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser4",
+   "type": "User",
+   "alternateId": "user4@example.com",
+   "displayName": "User4",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx12",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0013",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser5",
+   "type": "User",
+   "alternateId": "user5@example.com",
+   "displayName": "User5",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx13",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0014",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser6",
+   "type": "User",
+   "alternateId": "user6@example.com",
+   "displayName": "User6",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx14",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0015",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser7",
+   "type": "User",
+   "alternateId": "user7@example.com",
+   "displayName": "User7",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx15",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0016",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser8",
+   "type": "User",
+   "alternateId": "user8@example.com",
+   "displayName": "User8",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx16",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0017",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser9",
+   "type": "User",
+   "alternateId": "user9@example.com",
+   "displayName": "User9",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx17",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0018",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser10",
+   "type": "User",
+   "alternateId": "user10@example.com",
+   "displayName": "User10",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx18",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0019",
+  "published": "NOW-30hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uuser11",
+   "type": "User",
+   "alternateId": "user11@example.com",
+   "displayName": "User11",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx19",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0020",
+  "published": "NOW-29hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ucarol",
+   "type": "User",
+   "alternateId": "carol@example.com",
+   "displayName": "Carol",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx20",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0021",
+  "published": "NOW-31hZ",
+  "eventType": "security.threat.detected",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "security.threat.detected",
+  "actor": {
+   "id": "00uunknown",
+   "type": "SystemPrincipal",
+   "alternateId": "unknown",
+   "displayName": "Unknown",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.50",
+   "geographicalContext": {
+    "city": "Moscow",
+    "state": null,
+    "country": "Russia",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "DENY",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx21",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {
+    "threatDetections": "{\"Password Spray\":\"ATTACK\"}"
+   }
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.50"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0022",
+  "published": "NOW-3000mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx22",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0023",
+  "published": "NOW-3001mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx23",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0024",
+  "published": "NOW-3002mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx24",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0025",
+  "published": "NOW-3003mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx25",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0026",
+  "published": "NOW-3004mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx26",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0027",
+  "published": "NOW-3005mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx27",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0028",
+  "published": "NOW-3006mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx28",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0029",
+  "published": "NOW-3007mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx29",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0030",
+  "published": "NOW-3008mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx30",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0031",
+  "published": "NOW-3009mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx31",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0032",
+  "published": "NOW-3010mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx32",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0033",
+  "published": "NOW-3011mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx33",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0034",
+  "published": "NOW-3012mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx34",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0035",
+  "published": "NOW-3013mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx35",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0036",
+  "published": "NOW-3014mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx36",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0037",
+  "published": "NOW-3015mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx37",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0038",
+  "published": "NOW-3016mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx38",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0039",
+  "published": "NOW-3017mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx39",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0040",
+  "published": "NOW-3018mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx40",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0041",
+  "published": "NOW-3019mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "INVALID_CREDENTIALS"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx41",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0042",
+  "published": "NOW-2990mZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uhank",
+   "type": "User",
+   "alternateId": "hank@example.com",
+   "displayName": "Hank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.7",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx42",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.7"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0043",
+  "published": "NOW-5hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00udave",
+   "type": "User",
+   "alternateId": "dave@example.com",
+   "displayName": "Dave",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.66",
+   "geographicalContext": {
+    "city": "Amsterdam",
+    "state": null,
+    "country": "Netherlands",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx43",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": true
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.66"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0044",
+  "published": "NOW-4hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00uivy",
+   "type": "User",
+   "alternateId": "ivy@example.com",
+   "displayName": "Ivy",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.80",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx44",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {
+    "risk": "{reasons=Anomalous Device, New IP, level=HIGH}",
+    "threatSuspected": "false"
+   }
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.80"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0045",
+  "published": "NOW-3hZ",
+  "eventType": "user.account.report_suspicious_activity_by_enduser",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.account.report_suspicious_activity_by_enduser",
+  "actor": {
+   "id": "00ujane",
+   "type": "User",
+   "alternateId": "jane@example.com",
+   "displayName": "Jane",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00ujane",
+    "type": "User",
+    "alternateId": "jane@example.com",
+    "displayName": "Jane",
+    "detailEntry": null
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx45",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0046",
+  "published": "NOW-64mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx46",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0047",
+  "published": "NOW-63mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx47",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0048",
+  "published": "NOW-62mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx48",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0049",
+  "published": "NOW-61mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx49",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0050",
+  "published": "NOW-60mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx50",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0051",
+  "published": "NOW-59mZ",
+  "eventType": "system.push.send_factor_verify_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.push.send_factor_verify_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx51",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0052",
+  "published": "NOW-62mZ",
+  "eventType": "user.mfa.okta_verify.deny_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.mfa.okta_verify.deny_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.90",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "User rejected Okta push verify"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx52",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.90"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0053",
+  "published": "NOW-61mZ",
+  "eventType": "user.mfa.okta_verify.deny_push",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.mfa.okta_verify.deny_push",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "198.51.100.90",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": "User rejected Okta push verify"
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx53",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "198.51.100.90"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0054",
+  "published": "NOW-55mZ",
+  "eventType": "user.authentication.auth_via_mfa",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.authentication.auth_via_mfa",
+  "actor": {
+   "id": "00uerin",
+   "type": "User",
+   "alternateId": "erin@example.com",
+   "displayName": "Erin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.77",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx54",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {
+    "factor": "OKTA_VERIFY_PUSH"
+   }
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.77"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0055",
+  "published": "NOW-26hZ",
+  "eventType": "user.mfa.factor.reset_all",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.mfa.factor.reset_all",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00ufrank",
+    "type": "User",
+    "alternateId": "frank@example.com",
+    "displayName": "Frank",
+    "detailEntry": null
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx55",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0056",
+  "published": "NOW-25hZ",
+  "eventType": "user.mfa.factor.activate",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.mfa.factor.activate",
+  "actor": {
+   "id": "00ufrank",
+   "type": "User",
+   "alternateId": "frank@example.com",
+   "displayName": "Frank",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.88",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00ufrank",
+    "type": "User",
+    "alternateId": "frank@example.com",
+    "displayName": "Frank",
+    "detailEntry": null
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx56",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {
+    "factor": "SMS_FACTOR"
+   }
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.88"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0057",
+  "published": "NOW-40hZ",
+  "eventType": "user.mfa.factor.deactivate",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.mfa.factor.deactivate",
+  "actor": {
+   "id": "00ukate",
+   "type": "User",
+   "alternateId": "kate@example.com",
+   "displayName": "Kate",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00ukate",
+    "type": "User",
+    "alternateId": "kate@example.com",
+    "displayName": "Kate",
+    "detailEntry": null
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx57",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0058",
+  "published": "NOW-8hZ",
+  "eventType": "user.session.start",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.start",
+  "actor": {
+   "id": "00ugina",
+   "type": "User",
+   "alternateId": "gina@example.com",
+   "displayName": "Gina",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.10",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx58",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessGINA"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.10"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0059",
+  "published": "NOW-7hZ",
+  "eventType": "user.authentication.sso",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.authentication.sso",
+  "actor": {
+   "id": "00ugina",
+   "type": "User",
+   "alternateId": "gina@example.com",
+   "displayName": "Gina",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.10",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "0oa1",
+    "type": "AppInstance",
+    "alternateId": "Salesforce",
+    "displayName": "Salesforce"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx59",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessGINA"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.10"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0060",
+  "published": "NOW-6hZ",
+  "eventType": "user.authentication.sso",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.authentication.sso",
+  "actor": {
+   "id": "00ugina",
+   "type": "User",
+   "alternateId": "gina@example.com",
+   "displayName": "Gina",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (X11; Linux x86_64) Firefox/131.0",
+    "os": "Linux",
+    "browser": "FIREFOX"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.99",
+   "geographicalContext": {
+    "city": "Amsterdam",
+    "state": null,
+    "country": "Netherlands",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "0oa2",
+    "type": "AppInstance",
+    "alternateId": "Okta Admin Console",
+    "displayName": "Okta Admin Console"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx60",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessGINA"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.99"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0061",
+  "published": "NOW-6hZ",
+  "eventType": "user.session.access_admin_app",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.session.access_admin_app",
+  "actor": {
+   "id": "00ugina",
+   "type": "User",
+   "alternateId": "gina@example.com",
+   "displayName": "Gina",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (X11; Linux x86_64) Firefox/131.0",
+    "os": "Linux",
+    "browser": "FIREFOX"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "203.0.113.99",
+   "geographicalContext": {
+    "city": "Amsterdam",
+    "state": null,
+    "country": "Netherlands",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx61",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessGINA"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "203.0.113.99"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0062",
+  "published": "NOW-8hZ",
+  "eventType": "user.authentication.sso",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.authentication.sso",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.11",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx62",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessALICE"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.11"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0063",
+  "published": "NOW-7hZ",
+  "eventType": "user.authentication.sso",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.authentication.sso",
+  "actor": {
+   "id": "00ualice",
+   "type": "User",
+   "alternateId": "alice@example.com",
+   "displayName": "Alice",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.12",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx63",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "102sessALICE"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.12"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0064",
+  "published": "NOW-12hZ",
+  "eventType": "system.idp.lifecycle.create",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.idp.lifecycle.create",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "0oaIDP",
+    "type": "IdentityProvider",
+    "alternateId": "unknown",
+    "displayName": "Okta Sync"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx64",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0065",
+  "published": "NOW-12hZ",
+  "eventType": "user.account.privilege.grant",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "user.account.privilege.grant",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00umallory",
+    "type": "User",
+    "alternateId": "mallory@example.com",
+    "displayName": "Mallory",
+    "detailEntry": null
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx65",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {
+    "privilegeGranted": "Super administrator"
+   }
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0066",
+  "published": "NOW-12hZ",
+  "eventType": "system.api_token.create",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.api_token.create",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00T1",
+    "type": "Token",
+    "alternateId": "unknown",
+    "displayName": "Backup tool"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx66",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0067",
+  "published": "NOW-11hZ",
+  "eventType": "policy.lifecycle.deactivate",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "policy.lifecycle.deactivate",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "00p1",
+    "type": "PolicyEntity",
+    "alternateId": "unknown",
+    "displayName": "Require MFA"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx67",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0068",
+  "published": "NOW-11hZ",
+  "eventType": "zone.update",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "zone.update",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "nzo1",
+    "type": "Zone",
+    "alternateId": "unknown",
+    "displayName": "Office IPs"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx68",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0069",
+  "published": "NOW-11hZ",
+  "eventType": "policy.rule.delete",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "policy.rule.delete",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "FAILURE",
+   "reason": null
+  },
+  "target": [
+   {
+    "id": "0pr1",
+    "type": "PolicyRule",
+    "alternateId": "unknown",
+    "displayName": "Block legacy"
+   }
+  ],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx69",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ },
+ {
+  "uuid": "evt-0070",
+  "published": "NOW-11hZ",
+  "eventType": "system.email.send",
+  "version": "0",
+  "severity": "INFO",
+  "displayMessage": "system.email.send",
+  "actor": {
+   "id": "00uadmin",
+   "type": "User",
+   "alternateId": "admin@example.com",
+   "displayName": "Admin",
+   "detailEntry": null
+  },
+  "client": {
+   "userAgent": {
+    "rawUserAgent": "Mozilla/5.0 (Windows NT 10.0) Chrome/130.0",
+    "os": "Windows 10",
+    "browser": "CHROME"
+   },
+   "zone": "null",
+   "device": "Computer",
+   "id": null,
+   "ipAddress": "192.0.2.1",
+   "geographicalContext": {
+    "city": "New York",
+    "state": null,
+    "country": "United States",
+    "postalCode": null
+   }
+  },
+  "outcome": {
+   "result": "SUCCESS",
+   "reason": null
+  },
+  "target": [],
+  "transaction": {
+   "type": "WEB",
+   "id": "tx70",
+   "detail": {}
+  },
+  "debugContext": {
+   "debugData": {}
+  },
+  "authenticationContext": {
+   "authenticationProvider": null,
+   "credentialProvider": null,
+   "credentialType": null,
+   "issuer": null,
+   "interface": null,
+   "authenticationStep": 0,
+   "externalSessionId": "unknown"
+  },
+  "securityContext": {
+   "asNumber": 64500,
+   "asOrg": "example transit",
+   "isp": "example isp",
+   "domain": "example.net",
+   "isProxy": false
+  },
+  "request": {
+   "ipChain": [
+    {
+     "ip": "192.0.2.1"
+    }
+   ]
+  }
+ }
+]

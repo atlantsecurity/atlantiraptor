@@ -1,0 +1,40 @@
+[
+ {
+  "id": "0oaSAML",
+  "type": "SAML2",
+  "name": "Corp SAML",
+  "status": "ACTIVE",
+  "created": "NOW-2000hZ",
+  "lastUpdated": "NOW-2000hZ",
+  "protocol": {
+   "type": "SAML2"
+  },
+  "policy": {
+   "provisioning": {
+    "action": "DISABLED"
+   },
+   "accountLink": {
+    "action": "AUTO"
+   }
+  }
+ },
+ {
+  "id": "0oaIDP",
+  "type": "OKTA",
+  "name": "Okta Sync",
+  "status": "ACTIVE",
+  "created": "NOW-12hZ",
+  "lastUpdated": "NOW-12hZ",
+  "protocol": {
+   "type": "OIDC"
+  },
+  "policy": {
+   "provisioning": {
+    "action": "AUTO"
+   },
+   "accountLink": {
+    "action": "AUTO"
+   }
+  }
+ }
+]

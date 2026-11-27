@@ -33,6 +33,7 @@ const USE_HINT: Record<string, string> = {
   'Azure Monitor Creds': "azure_monitor_upload(secret='NAME', ...)",
   'Microsoft 365 Creds': "Cloud.M365.* artifacts: M365Secret='NAME'",
   'Google Workspace Creds': "Cloud.GoogleWorkspace.* artifacts: GWSSecret='NAME'",
+  'Okta Creds': "Cloud.Okta.* artifacts: OktaSecret='NAME'",
   'Execve Secrets': "execve(secret='NAME', ...)",
 };
 
