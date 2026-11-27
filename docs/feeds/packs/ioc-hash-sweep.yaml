@@ -1,0 +1,68 @@
+# Example pack carrying an indicator list: the hashes are the default
+# of an artifact parameter, so each feed update ships the current list
+# and the analyst can still add to it when launching the hunt.
+id: atl-ioc-loader-hashes
+name: Current loader and stealer file hashes
+version: 1
+published: 2026-11-27T00:00:00Z
+updated: 2026-11-27T00:00:00Z
+severity: critical
+category: Indicators
+tags: [ioc, hashes, loaders, infostealers]
+platforms: [windows]
+summary: >-
+  SHA-256 hashes of loader and infostealer samples Atlant Security
+  has seen in incidents, swept across user-writable folders.
+description: |
+  Hashes every executable and script under the user profile,
+  ProgramData and temp folders (up to the size limit) and reports any
+  file whose SHA-256 is on Atlant's current list.
+
+  The list is refreshed with every feed update. Replace the example
+  entries below with real indicators before publishing.
+changes: First release.
+hunt:
+  description: "Atlant feed: loader and stealer hashes"
+  os: windows
+  expires_hours: 48
+  cpu_limit: 30
+artifacts:
+  - |
+    name: Atlant.Feed.Windows.LoaderHashSweep
+    description: |
+      Sweeps user-writable folders for files on Atlant Security's
+      current list of loader and infostealer hashes.
+    author: Atlant Security
+    type: CLIENT
+    precondition: SELECT OS From info() where OS = 'windows'
+    parameters:
+      - name: Indicators
+        type: csv
+        description: SHA-256 hashes to look for, with a label.
+        default: |
+          SHA256,Label
+          0000000000000000000000000000000000000000000000000000000000000000,Example entry (replace)
+      - name: Globs
+        type: csv
+        default: |
+          Glob
+          "C:/Users/*/AppData/**/*.{exe,dll,ps1,js,vbs,hta,bat,cmd,scr}"
+          "C:/Users/*/Downloads/**/*.{exe,dll,ps1,js,vbs,hta,bat,cmd,scr,iso,zip}"
+          "C:/ProgramData/**/*.{exe,dll,ps1,js,vbs,bat,cmd}"
+          "C:/Windows/Temp/**/*.{exe,dll,ps1,js,vbs,bat,cmd}"
+      - name: MaxSize
+        type: int
+        description: Larger files are skipped.
+        default: "52428800"
+    sources:
+      - query: |
+          LET wanted <= to_dict(item={
+            SELECT lowcase(string=SHA256) AS _key, Label AS _value FROM Indicators
+          })
+          LET hits = SELECT OSPath, Size, Mtime,
+                 hash(path=OSPath, hashselect="SHA256").SHA256 AS SHA256
+          FROM glob(globs=Globs.Glob)
+          WHERE NOT IsDir AND Size > 0 AND Size < MaxSize
+          SELECT OSPath, Size, Mtime, SHA256, get(item=wanted, field=SHA256) AS Indicator
+          FROM hits
+          WHERE Indicator

@@ -18,6 +18,7 @@ const IocSweepPage = lazy(() => import('../pages/ioc/IocSweepPage'));
 const IntegrationsPage = lazy(() => import('../pages/integrations/IntegrationsPage'));
 const FleetHealthPage = lazy(() => import('../pages/fleet/FleetHealthPage'));
 const UpdatesPage = lazy(() => import('../pages/updates/UpdatesPage'));
+const FeedsPage = lazy(() => import('../pages/feeds/FeedsPage'));
 const GroupsPage = lazy(() => import('../pages/users/GroupsPage'));
 const ApiKeysPage = lazy(() => import('../pages/apikeys/ApiKeysPage'));
 const NetworkPage = lazy(() => import('../pages/network/NetworkPage'));
@@ -110,6 +111,9 @@ export default function AppShell() {
                 </Route>
                 <Route path="/fleet">
                   <FleetHealthPage />
+                </Route>
+                <Route path="/feeds">
+                  <FeedsPage />
                 </Route>
                 <Route path="/updates">
                   <UpdatesPage />

@@ -620,3 +620,17 @@ func updateTools(
 	}
 	return nil
 }
+
+// ForceDel removes an artifact even if it is marked built in. Hunt
+// feeds (services/huntfeeds) load their artifacts as built in, so
+// users cannot edit them, and remove them this way when a pack is
+// withdrawn or the subscription ends.
+func (self *Repository) ForceDel(name string) {
+	self.mu.Lock()
+	delete(self.Data, name)
+	self.mu.Unlock()
+
+	if self.metadata != nil {
+		self.metadata.Clear(name)
+	}
+}
