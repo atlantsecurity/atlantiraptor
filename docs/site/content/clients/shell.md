@@ -15,6 +15,8 @@ a terminal. Open it from the host page's menu.
 | **bash** | Linux, macOS | `Linux.Sys.BashShell` |
 | **VQL** | all | `Generic.Client.VQL` (a VQL query on the client) |
 
+![Shell page](/images/shell.webp "The Shell page running bash commands on a Linux host, newest first.")
+
 Type a command and press Enter. Commands and their output appear newest
 first. Each command is one urgent collection of the shell artifact, so it
 starts at once if the host is online, and its output, exit status and

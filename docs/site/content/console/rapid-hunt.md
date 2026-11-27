@@ -35,6 +35,8 @@ per machine, rather than seconds.
    until you stop it.
 4. Press Enter.
 
+![Rapid hunt on the dashboard](/images/rapid-hunt.webp "Rapid hunt for a file path: one machine matched, with Respond to this machine and Add to case.")
+
 Results appear as machines answer, with each match's details (which
 browser and when, which process held the connection, which event). The
 list of past Rapid hunts is kept below the box.

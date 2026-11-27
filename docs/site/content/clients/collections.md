@@ -44,6 +44,8 @@ Open one to see:
 - **Notebook**: a notebook for this collection, prefilled with a cell per
   source, for analysis with VQL.
 
+![Collection details, Files tab](/images/collection-files.webp "A collection's Files tab, with each uploaded file, its size and when it was collected.")
+
 **Cancel** stops a running collection; results already sent are kept.
 **Collect again** starts a new collection with the same artifacts and
 parameters, which is handy for comparing before and after.

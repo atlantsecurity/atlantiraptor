@@ -195,6 +195,10 @@ a:hover { text-decoration: underline; }
 .article li { margin: .25em 0; }
 .article li > p { margin: 0 0 .4em; }
 .article img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+.article figure { margin: 1.4em 0 1.6em; }
+.article figure a { display: block; }
+.article figure img { display: block; margin: 0 auto; }
+.article figcaption { margin-top: .5em; font-size: .875rem; color: var(--muted); text-align: center; }
 .article hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
 .article strong { font-weight: 650; }
 

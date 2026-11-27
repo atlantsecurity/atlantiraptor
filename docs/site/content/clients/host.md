@@ -20,6 +20,8 @@ Each tile collects one thing from the host. You stay on the page; a
 notification tells you when the collection finishes, and the result is
 under **Recent collections**.
 
+![Host page with quick triage tiles](/images/host-triage.webp "A Linux host's page: full triage findings, quick triage tiles, system and connectivity.")
+
 | Windows | Linux | macOS |
 |---|---|---|
 | Processes (with hashes and signers) | Processes | Processes (tree) |
@@ -76,6 +78,8 @@ A single timeline of what happened on the host: process starts, program
 executions, logons, network activity and persistence changes, from the
 triage results. Scroll back from the most recent events, filter, and click
 an event for details.
+
+![Activity timeline on the host page](/images/host-timeline.webp "The activity timeline built from the full triage results.")
 
 ## Quarantine
 

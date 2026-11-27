@@ -45,6 +45,8 @@ host, time and the details the detection provided. Alerts have a
 | **Closed** | Handled. |
 | **False positive** | Not a real problem. Consider a suppression rule. |
 
+![Alerts card on the dashboard](/images/alerts.webp "Open alerts on the dashboard, with severity counts, Acknowledge and Close.")
+
 The panel opens on **Open** alerts (new and acknowledged). Filter by
 severity, or show all.
 

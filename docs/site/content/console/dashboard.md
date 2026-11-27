@@ -6,6 +6,8 @@ description: The Atlantiraptor dashboard - clients, hunts, failures, server heal
 The dashboard is the first page after sign in. It answers "is everything
 working, and is anything happening?" at a glance.
 
+![The dashboard](/images/dashboard.webp "The dashboard: Rapid hunt, open alerts, connected clients, running hunts and recently seen hosts.")
+
 ## What it shows
 
 - **Connected clients**: agents seen in the last 15 minutes, out of all

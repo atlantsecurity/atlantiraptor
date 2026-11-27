@@ -31,6 +31,8 @@ folder for the first time, or want fresh data:
 - **List everything below this folder** lists every subfolder recursively
   (up to 10 levels). It can take a while on big folders.
 
+![File browser](/images/file-browser.webp "Browsing /etc on a Linux client with the file accessor.")
+
 Each entry shows size, timestamps (modified, accessed, changed, born) and,
 for NTFS, its MFT entry and attributes. Click a file for its details and
 any previous downloads.

@@ -93,6 +93,8 @@ functions:
 {{ Query "SELECT Hostname, count() AS Processes FROM source() GROUP BY Hostname" | BarChart }}
 ```
 
+![Line chart in a notebook](/images/notebook-chart.webp "A Markdown cell drawing a line chart from a VQL cell's results.")
+
 | Function | Shows |
 |---|---|
 | `Table` | A table |
@@ -114,6 +116,8 @@ SELECT timeline_add(timeline="incident", name="Processes",
     key="CreateTime")
 FROM scope()
 ```
+
+![Timeline in a notebook](/images/notebook-timeline.webp "A notebook timeline with process events and an analyst's note.")
 
 and show it in a Markdown cell with `{{ Timeline "incident" }}`. In the
 timeline view, click a time to jump to it, filter messages, and add notes to

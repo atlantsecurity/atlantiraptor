@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	linkRegex = regexp.MustCompile(`href="([^"]*)"`)
+	linkRegex = regexp.MustCompile(`(?:href|src)="([^"]*)"`)
 	idRegex   = regexp.MustCompile(`id="([^"]+)"`)
 )
 
