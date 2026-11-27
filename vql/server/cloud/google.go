@@ -614,7 +614,7 @@ func init() {
 	vql_subsystem.RegisterPlugin(&GWSAPIPlugin{})
 }
 
-// gwsQualifier is the activity's uniqueQualifier. Google documents it as
+// gwsQualifier is the uniqueQualifier of an activity. Google documents it as
 // a long sent as a string; accept a bare number or any string so one odd
 // value cannot fail the whole page.
 type gwsQualifier string
