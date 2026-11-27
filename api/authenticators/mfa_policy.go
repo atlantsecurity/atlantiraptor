@@ -32,10 +32,14 @@ const (
 )
 
 type MFAPolicy struct {
-	Mode    string   `json:"mode"`
-	Roles   []string `json:"roles,omitempty"`
-	Groups  []string `json:"groups,omitempty"`
-	Updated int64    `json:"updated,omitempty"`
+	Mode   string   `json:"mode"`
+	Roles  []string `json:"roles,omitempty"`
+	Groups []string `json:"groups,omitempty"`
+	// Days a passed second factor is remembered for the address it was
+	// passed from: 0 means the default (30), a negative value turns
+	// remembering off.
+	RememberIPDays int   `json:"remember_ip_days,omitempty"`
+	Updated        int64 `json:"updated,omitempty"`
 }
 
 var defaultMFAPolicy = MFAPolicy{Mode: MFAModeAll}
@@ -102,6 +106,12 @@ func validateMFAPolicy(p *MFAPolicy) error {
 		if !acls.ValidateRole(r) {
 			return fmt.Errorf("unknown role %q", r)
 		}
+	}
+	if p.RememberIPDays > MaxRememberIPDays {
+		return fmt.Errorf("remember_ip_days must be at most %d", MaxRememberIPDays)
+	}
+	if p.RememberIPDays < 0 {
+		p.RememberIPDays = -1
 	}
 	if len(p.Groups) > 200 {
 		return fmt.Errorf("too many groups")
