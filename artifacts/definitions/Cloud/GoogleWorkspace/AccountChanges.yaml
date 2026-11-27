@@ -1,0 +1,39 @@
+name: Cloud.GoogleWorkspace.AccountChanges
+description: |
+  Hunts Google Workspace user account changes that make a takeover
+  last: 2-Step Verification or Advanced Protection turned off, and
+  recovery email, phone or security question changed.
+
+  Needs the `admin.reports.audit.readonly` scope. Google keeps these
+  events for 6 months.
+
+type: SERVER
+
+imports:
+  - Cloud.GoogleWorkspace.Rules
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: LookbackHours
+    type: int
+    default: 720
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      SELECT * FROM foreach(row={
+          SELECT * FROM gws_reports(secret=GWSSecret, application="user_accounts",
+                                    start=now() - LookbackHours * 3600)
+      }, query={
+          SELECT timestamp(string=Time) AS Time, Severity, Detection,
+                 Actor AS User, IPAddress, NetworkInfo.regionCode || "" AS Location,
+                 "" AS Device,
+                 dict(Event=EventName, Parameters=Parameters) AS Details
+          FROM foreach(row=GWSMatches(EvApp="user_accounts", EvName=EventName,
+                                      EvParams=GWSParamText(P=Parameters)))
+          WHERE Category = "account" AND GWSMinRank(Level=Severity) <= GWSMinRank(Level=MinSeverity)
+      })

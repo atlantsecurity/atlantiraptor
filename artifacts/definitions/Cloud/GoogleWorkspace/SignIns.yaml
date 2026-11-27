@@ -1,0 +1,104 @@
+name: Cloud.GoogleWorkspace.SignIns
+description: |
+  Hunts Google Workspace sign-ins for account takeover:
+
+  - Sign-ins Google itself flagged (suspicious, less secure app,
+    programmatic), government-backed attack warnings, and accounts
+    Google disabled as hijacked, leaked or spamming.
+  - **Password spray**: one address failing against many accounts, and
+    critical when an account then signs in from that address.
+  - **New country**: a successful sign-in from a country the user did
+    not sign in from during the baseline (when Google reports the
+    sign-in's region).
+
+  Needs the `admin.reports.audit.readonly` scope. Google keeps sign-in
+  events for 6 months.
+
+type: SERVER
+
+imports:
+  - Cloud.GoogleWorkspace.Rules
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: BaselineDays
+    type: int
+    default: 30
+  - name: MinBaselineSignIns
+    type: int
+    default: 5
+  - name: SprayMinUsers
+    type: int
+    default: 10
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Events <= SELECT timestamp(string=Time) AS Time,
+             timestamp(string=Time).Unix AS Epoch,
+             Actor AS User, IPAddress, EventName, Parameters,
+             NetworkInfo.regionCode || "" AS Country
+      FROM gws_reports(secret=GWSSecret, application="login",
+                       start=now() - (LookbackHours + BaselineDays * 24) * 3600)
+
+      LET Recent <= SELECT * FROM Events WHERE Epoch >= WindowStart
+
+      LET Flagged = SELECT * FROM foreach(row=Recent, query={
+          SELECT Time, Severity, Detection, User, IPAddress, Country AS Location,
+                 "" AS Device, dict(Event=EventName, Parameters=Parameters) AS Details
+          FROM foreach(row=GWSMatches(EvApp="login", EvName=EventName,
+                                      EvParams=GWSParamText(P=Parameters)))
+          WHERE Category = "signin"
+      })
+
+      // Password spray.
+      LET Failures <= SELECT * FROM Recent WHERE EventName = "login_failure"
+      LET PerAddressUser <= SELECT IPAddress, User, min(item=Epoch) AS First
+          FROM Failures GROUP BY IPAddress, User
+      LET Sprayers <= SELECT IPAddress, count() AS Users, enumerate(items=User) AS Targets,
+             min(item=First) AS First
+          FROM PerAddressUser GROUP BY IPAddress
+      LET SprayIPs <= to_dict(item={
+          SELECT IPAddress AS _key, Users AS _value FROM Sprayers WHERE Users >= SprayMinUsers })
+
+      LET Spray = SELECT timestamp(epoch=First) AS Time, "high" AS Severity,
+             "Password spray from this address" AS Detection,
+             format(format="%v accounts", args=Users) AS User, IPAddress, "" AS Location,
+             "" AS Device, dict(Accounts=Targets) AS Details
+      FROM Sprayers WHERE Users >= SprayMinUsers
+
+      LET Successes <= SELECT * FROM Events WHERE EventName = "login_success"
+
+      LET SprayThenSuccess = SELECT Time, "critical" AS Severity,
+             "Successful sign-in from a password-spraying address" AS Detection,
+             User, IPAddress, Country AS Location, "" AS Device,
+             dict(AccountsSprayed=get(item=SprayIPs, field=IPAddress),
+                  Parameters=Parameters) AS Details
+      FROM Successes
+      WHERE Epoch >= WindowStart AND get(item=SprayIPs, field=IPAddress)
+      GROUP BY User, IPAddress
+
+      // New country, when Google reports the region.
+      LET Baseline <= SELECT User, enumerate(items=Country) AS Countries, count() AS Total
+          FROM Successes WHERE Epoch < WindowStart AND Country
+          GROUP BY User
+      LET BaselineByUser <= to_dict(item={
+          SELECT User AS _key, dict(Countries=Countries, Total=Total) AS _value FROM Baseline })
+
+      LET NewCountry = SELECT Time, "medium" AS Severity,
+             "Sign-in from a new country" AS Detection,
+             User, IPAddress, Country AS Location, "" AS Device,
+             dict(KnownCountries=get(item=BaselineByUser, field=User).Countries,
+                  Parameters=Parameters) AS Details
+      FROM Successes
+      WHERE Epoch >= WindowStart AND Country
+        AND get(item=BaselineByUser, field=User).Total >= MinBaselineSignIns
+        AND NOT Country in get(item=BaselineByUser, field=User).Countries
+      GROUP BY User, Country
+
+      SELECT * FROM chain(a=Flagged, b=Spray, c=SprayThenSuccess, d=NewCountry)

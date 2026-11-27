@@ -1,0 +1,42 @@
+name: Cloud.GoogleWorkspace.AdminChanges
+description: |
+  Hunts the Google Workspace Admin console audit log for changes
+  attackers make once they hold an admin account: super admin and admin
+  roles granted, email monitors (silent copies of a user's mail),
+  domain-wide delegation granted to API clients, organisation-wide data
+  exports, single sign-on changes, mail routing and compliance rules,
+  and 2-Step Verification policy weakened.
+
+  Needs the `admin.reports.audit.readonly` scope. Google keeps admin
+  events for 6 months.
+
+type: SERVER
+
+imports:
+  - Cloud.GoogleWorkspace.Rules
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: LookbackHours
+    type: int
+    default: 720
+  - name: MinSeverity
+    type: choices
+    default: medium
+    choices: [critical, high, medium, low]
+
+sources:
+  - query: |
+      SELECT * FROM foreach(row={
+          SELECT * FROM gws_reports(secret=GWSSecret, application="admin",
+                                    start=now() - LookbackHours * 3600)
+      }, query={
+          SELECT timestamp(string=Time) AS Time, Severity, Detection,
+                 Actor AS User, IPAddress, NetworkInfo.regionCode || "" AS Location,
+                 "" AS Device,
+                 dict(Event=EventName, Type=EventType, Parameters=Parameters) AS Details
+          FROM foreach(row=GWSMatches(EvApp="admin", EvName=EventName,
+                                      EvParams=GWSParamText(P=Parameters)))
+          WHERE Category = "admin" AND GWSMinRank(Level=Severity) <= GWSMinRank(Level=MinSeverity)
+      })

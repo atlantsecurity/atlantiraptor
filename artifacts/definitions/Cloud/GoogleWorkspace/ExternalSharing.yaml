@@ -1,0 +1,57 @@
+name: Cloud.GoogleWorkspace.ExternalSharing
+description: |
+  Hunts the Google Drive audit log for data leaving through sharing:
+  accounts that made many files public, shared by link or shared them
+  outside the domain, and files shared with personal mail addresses.
+
+  Needs the `admin.reports.audit.readonly` scope.
+
+type: SERVER
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: SharesThreshold
+    type: int
+    default: 25
+  - name: PersonalMailDomains
+    type: regex
+    default: "(?i)@(gmail\\.com|googlemail\\.com|outlook\\.com|hotmail\\.[a-z.]+|live\\.[a-z.]+|msn\\.com|yahoo\\.[a-z.]+|ymail\\.com|icloud\\.com|me\\.com|aol\\.com|proton\\.me|protonmail\\.com|pm\\.me|gmx\\.[a-z.]+|web\\.de|mail\\.ru|yandex\\.[a-z.]+|abv\\.bg|tutanota\\.com|zoho\\.com)$"
+
+sources:
+  - query: |
+      LET Shares = SELECT timestamp(string=Time).Unix AS Epoch, Actor AS User, IPAddress,
+             EventName, Parameters.doc_title AS Title,
+             Parameters.visibility AS Visibility,
+             lowcase(string=Parameters.target_user || "") AS Recipient,
+             Parameters.visibility_change AS Change
+      FROM gws_reports(secret=GWSSecret, application="drive",
+                       start=now() - LookbackHours * 3600)
+      WHERE EventName =~ "^(change_user_access|change_visibility|change_document_visibility|change_acl_editors)$"
+        AND (Change = "external" OR Visibility =~ "^(people_with_link|public_on_the_web|shared_externally)$"
+             OR Recipient =~ PersonalMailDomains)
+
+      LET PerUser = SELECT User, count() AS Total,
+             enumerate(items=if(condition=Recipient =~ PersonalMailDomains, then=Recipient)) AS PersonalRecipients,
+             enumerate(items=if(condition=Visibility =~ "public_on_the_web|people_with_link", then=Title)) AS PublicItems,
+             enumerate(items=IPAddress) AS IPs, min(item=Epoch) AS First
+      FROM Shares
+      GROUP BY User
+
+      LET Scored = SELECT *, filter(list=PersonalRecipients, condition="x=>x") AS Personal,
+             filter(list=PublicItems, condition="x=>x") AS Public
+      FROM PerUser
+
+      SELECT timestamp(epoch=First) AS Time,
+             if(condition=Total >= SharesThreshold, then="high", else="medium") AS Severity,
+             if(condition=Total >= SharesThreshold, then="Unusual amount of external sharing",
+                else="Files shared with personal mail addresses") AS Detection,
+             User, IPs[0] AS IPAddress, "" AS Location, "" AS Device,
+             dict(Shares=Total, PublicOrLinkShares=len(list=Public),
+                  PersonalRecipients=items(item=to_dict(item={SELECT _value AS _key, 1 AS _value FROM foreach(row=Personal)}))._key,
+                  SampleItems=Public[:20]) AS Details
+      FROM Scored
+      WHERE Total >= SharesThreshold OR Personal

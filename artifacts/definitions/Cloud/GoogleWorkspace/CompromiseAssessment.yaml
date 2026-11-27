@@ -1,0 +1,30 @@
+name: Cloud.GoogleWorkspace.CompromiseAssessment
+description: |
+  Runs every Google Workspace breach hunt against one domain in a
+  single collection. All rows share the columns `Time, Severity,
+  Detection, User, IPAddress, Location, Device, Details`.
+
+  Hunts whose scope the service account lacks log why and return
+  nothing; the others still run. See `docs/cloud/google-workspace.md`.
+
+type: SERVER
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+
+sources:
+  - name: SignIns
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.SignIns(GWSSecret=GWSSecret)
+  - name: AccountChanges
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.AccountChanges(GWSSecret=GWSSecret)
+  - name: AdminChanges
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.AdminChanges(GWSSecret=GWSSecret)
+  - name: OAuthApps
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.OAuthApps(GWSSecret=GWSSecret, ReportAllApps=TRUE)
+  - name: MailForwarding
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.MailForwarding(GWSSecret=GWSSecret)
+  - name: MassDownload
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.MassDownload(GWSSecret=GWSSecret)
+  - name: ExternalSharing
+    query: SELECT * FROM Artifact.Cloud.GoogleWorkspace.ExternalSharing(GWSSecret=GWSSecret)

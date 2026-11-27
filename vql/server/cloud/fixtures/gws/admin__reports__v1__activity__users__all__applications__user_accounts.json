@@ -1,0 +1,70 @@
+{
+ "items": [
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-30hZ",
+    "uniqueQualifier": "1022",
+    "applicationName": "user_accounts",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "erin@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "2sv_disable",
+     "parameters": []
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-29hZ",
+    "uniqueQualifier": "1023",
+    "applicationName": "user_accounts",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "frank@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "recovery_phone_edit",
+     "parameters": []
+    }
+   ]
+  },
+  {
+   "kind": "admin#reports#activity",
+   "id": {
+    "time": "NOW-28hZ",
+    "uniqueQualifier": "1024",
+    "applicationName": "user_accounts",
+    "customerId": "C01"
+   },
+   "actor": {
+    "email": "gina@example.com",
+    "profileId": "1",
+    "callerType": "USER"
+   },
+   "ipAddress": "203.0.113.5",
+   "events": [
+    {
+     "type": "x",
+     "name": "password_edit",
+     "parameters": []
+    }
+   ]
+  }
+ ]
+}

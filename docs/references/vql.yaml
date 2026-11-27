@@ -4229,6 +4229,102 @@
   - linux_amd64_cgo
   - windows_386_cgo
   - windows_amd64_cgo
+- name: gws_api
+  description: Read from Google Workspace's Admin SDK Directory API or Gmail API (GET only),
+    following nextPageToken.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of a 'Google Workspace Creds' secret.
+  - name: service_account_json
+    type: string
+    description: Service account JSON key when no secret is used.
+  - name: admin_email
+    type: string
+    description: Admin user to act as when no secret is used.
+  - name: path
+    type: string
+    description: API path, e.g. /admin/directory/v1/users or /gmail/v1/users/me/settings/filters.
+    required: true
+  - name: params
+    type: ordereddict.Dict
+    description: Query parameters.
+  - name: scope
+    type: string
+    description: OAuth scope to request (default admin.directory.user.readonly). Must be allowed
+      for the service account under domain-wide delegation.
+  - name: impersonate
+    type: string
+    description: Act as this user instead of the admin (needed for Gmail settings).
+  - name: items_field
+    type: string
+    description: 'Response field holding the list (default: the first list in the response).'
+  - name: max_rows
+    type: int64
+    description: Stop after this many rows.
+  - name: ignore_not_found
+    type: bool
+    description: Return no rows instead of logging an error for 404 answers and users without
+      Gmail.
+  metadata:
+    permissions: NETWORK
+  platforms: &id001
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: gws_reports
+  description: Read Google Workspace audit events (Admin SDK Reports API). One row per event,
+    with its parameters as a dict.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of a 'Google Workspace Creds' secret.
+  - name: service_account_json
+    type: string
+    description: Service account JSON key when no secret is used.
+  - name: admin_email
+    type: string
+    description: Admin user to act as when no secret is used.
+  - name: application
+    type: string
+    description: 'Report application: login, admin, token, user_accounts, drive, saml, groups,
+      mobile, ...'
+    required: true
+  - name: event_name
+    type: string
+    description: Only this event name.
+  - name: user_key
+    type: string
+    description: 'A user''s email or ID (default: all users).'
+  - name: filters
+    type: string
+    description: Reports API filters expression, e.g. doc_type==document.
+  - name: start
+    type: Any
+    description: Only events at or after this time (default 24 hours ago).
+  - name: end
+    type: Any
+    description: Only events before this time.
+  - name: max_rows
+    type: int64
+    description: Stop after this many rows.
+  - name: follow
+    type: bool
+    description: Keep polling for new events. Use in event artifacts.
+  - name: poll
+    type: int64
+    description: Seconds between polls in follow mode (default 300).
+  - name: overlap
+    type: int64
+    description: 'Seconds each poll re-reads before the last one (default 21600: Google delivers
+      some logs hours late).'
+  metadata:
+    permissions: NETWORK
+  platforms: *id001
 - name: gzip
   description: |
     Access the content of gzip files.

@@ -75,7 +75,9 @@ type fixtureServer struct {
 	dir      string
 	now      time.Time
 	requests []string
-	extra    func(w http.ResponseWriter, r *http.Request) bool
+	// JWT assertions sent to the token endpoint (Google).
+	assertions []string
+	extra      func(w http.ResponseWriter, r *http.Request) bool
 }
 
 func newFixtureServer(dir string) *fixtureServer {
@@ -87,7 +89,13 @@ func newFixtureServer(dir string) *fixtureServer {
 func (self *fixtureServer) serve(w http.ResponseWriter, r *http.Request) {
 	self.requests = append(self.requests, r.Method+" "+r.URL.String())
 
-	if strings.HasSuffix(r.URL.Path, "/token") {
+	// Token endpoints (Google, Microsoft). Not any path ending in /token:
+	// the Reports API has an application called "token".
+	if r.URL.Path == "/token" || strings.HasSuffix(r.URL.Path, "/oauth2/v2.0/token") {
+		_ = r.ParseForm()
+		if a := r.PostForm.Get("assertion"); a != "" {
+			self.assertions = append(self.assertions, a)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"access_token":"test-token","token_type":"Bearer","expires_in":3600}`)
 		return
@@ -109,6 +117,13 @@ func (self *fixtureServer) serve(w http.ResponseWriter, r *http.Request) {
 	// The Microsoft Graph service principal itself.
 	if strings.Contains(r.URL.Query().Get("$filter"), "00000003-0000-0000-c000-000000000000") {
 		name += ".graph"
+	}
+
+	// A variant for one event name, when there is one.
+	if ev := r.URL.Query().Get("eventName"); ev != "" {
+		if _, err := os.Stat(filepath.Join("fixtures", self.dir, name+"."+ev+".json")); err == nil {
+			name += "." + ev
+		}
 	}
 
 	data, err := os.ReadFile(filepath.Join("fixtures", self.dir, name+".json"))

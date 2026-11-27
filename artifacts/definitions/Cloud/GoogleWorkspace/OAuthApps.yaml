@@ -1,0 +1,71 @@
+name: Cloud.GoogleWorkspace.OAuthApps
+description: |
+  Hunts the Google Workspace OAuth token log for apps users authorised:
+  apps that were granted mail, full Drive or admin access, and apps on
+  a watchlist of tools seen in mailbox takeover. One row per app, with
+  the users who authorised it.
+
+  - **critical**: app name on the watchlist.
+  - **high**: risky scopes (Gmail read/send, full Drive, admin).
+  - **medium**: every other app, only when `ReportAllApps` is set
+    (useful for a full app inventory during an assessment).
+
+  Needs the `admin.reports.audit.readonly` scope. Google keeps token
+  events for 6 months.
+
+type: SERVER
+
+imports:
+  - Cloud.GoogleWorkspace.Rules
+
+parameters:
+  - name: GWSSecret
+    description: Name of the "Google Workspace Creds" secret for the domain.
+  - name: LookbackHours
+    type: int
+    default: 720
+  - name: Watchlist
+    type: regex
+    default: "(?i)^(eM Client|PerfectData Software|Newsletter Software Supermailer|CloudSponge|rclone|SigParser|Mailbird|Spike Email|Email Backup|Got Your Back|GYB)$"
+  - name: ReportAllApps
+    type: bool
+    default: N
+  - name: TrustedApps
+    type: regex
+    default: "^$"
+    description: App names or client IDs never to report.
+
+sources:
+  - query: |
+      LET Grants = SELECT timestamp(string=Time).Unix AS Epoch, Actor AS User, IPAddress,
+             Parameters.app_name AS App, Parameters.client_id AS ClientId,
+             Parameters.client_type AS ClientType,
+             join(array=Parameters.scope, sep=" ") AS Scopes
+      FROM gws_reports(secret=GWSSecret, application="token", event_name="authorize",
+                       start=now() - LookbackHours * 3600)
+
+      LET PerApp = SELECT ClientId, App, ClientType, enumerate(items=User) AS Users,
+             enumerate(items=Scopes) AS ScopeSets, min(item=Epoch) AS First,
+             count() AS Grants
+      FROM Grants
+      GROUP BY ClientId
+
+      LET Scored = SELECT *, join(array=ScopeSets, sep=" ") AS AllScopes,
+             items(item=to_dict(item={
+                 SELECT _value AS _key, 1 AS _value FROM foreach(row=Users)}))._key AS DistinctUsers
+      FROM PerApp
+      WHERE NOT App =~ TrustedApps AND NOT ClientId =~ TrustedApps
+
+      SELECT timestamp(epoch=First) AS Time,
+             if(condition=App =~ Watchlist, then="critical",
+                else=if(condition=AllScopes =~ GWSRiskyScopes, then="high", else="medium")) AS Severity,
+             if(condition=App =~ Watchlist, then="App seen in mailbox takeover cases",
+                else=if(condition=AllScopes =~ GWSRiskyScopes,
+                        then="Users granted risky access to an app",
+                        else="App authorised by users")) AS Detection,
+             App AS User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(ClientId=ClientId, ClientType=ClientType, Users=DistinctUsers,
+                  Grants=Grants, Scopes=split(string=AllScopes, sep=" ")) AS Details
+      FROM Scored
+      WHERE App =~ Watchlist OR AllScopes =~ GWSRiskyScopes
+         OR ReportAllApps
