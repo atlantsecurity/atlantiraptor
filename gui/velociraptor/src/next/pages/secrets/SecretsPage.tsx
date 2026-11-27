@@ -34,6 +34,7 @@ const USE_HINT: Record<string, string> = {
   'Microsoft 365 Creds': "Cloud.M365.* artifacts: M365Secret='NAME'",
   'Google Workspace Creds': "Cloud.GoogleWorkspace.* artifacts: GWSSecret='NAME'",
   'Okta Creds': "Cloud.Okta.* artifacts: OktaSecret='NAME'",
+  'AWS Creds': "Cloud.AWS.* artifacts: AWSSecret='NAME'",
   'Execve Secrets': "execve(secret='NAME', ...)",
 };
 

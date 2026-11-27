@@ -188,6 +188,20 @@ var (
 			"api_token",
 		},
 	}, {
+		TypeName: constants.AWS_CREDS,
+		Description: "Read-only access to an AWS account for cloud breach hunting " +
+			"(aws_cloudtrail(), aws_iam(), aws_regions()): an access key, and " +
+			"optionally a role in the customer account to assume with an external ID.",
+		Verifier: "x=>x.access_key_id AND x.secret_access_key",
+		Fields: []string{
+			"access_key_id",
+			"secret_access_key",
+			"session_token",
+			"role_arn",
+			"external_id",
+			"regions",
+		},
+	}, {
 		TypeName:    constants.SMTP_CREDS,
 		Verifier:    "x=>x.server && x.server_port",
 		Description: "Credentials to be used in mail() plugin.",

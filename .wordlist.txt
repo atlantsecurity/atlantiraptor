@@ -51,3 +51,16 @@ infostealers
 AiTM
 oktapreview
 SSWS
+LLMjacking
+Pacu
+TruffleHog
+CloudTrail
+GuardDuty
+GovCloud
+Bedrock
+SigV4
+cryptomining
+allowlist
+Kali
+OpenID
+amazonaws

@@ -1,0 +1,66 @@
+name: Cloud.AWS.Monitor
+description: |
+  Collects the CloudTrail management events of an AWS account from every
+  region continuously and raises alerts in the shared alert queue:
+  root sign-ins and root changes, admin policies, new access keys and
+  console passwords, CloudTrail and GuardDuty turned off, public
+  buckets, shared snapshots, deleted backups and keys, GPU instances,
+  Bedrock model access (`Cloud.AWS.Rules`).
+
+  CloudTrail lookups only reach back 90 days; this keeps events on the
+  Atlantiraptor server for as long as server event data is kept. For
+  accounts with very high API volume, an organisation trail delivered
+  to S3 is the better source.
+
+  Add it under Server Events and grant the configuring user the secret.
+
+type: SERVER_EVENT
+
+imports:
+  - Cloud.AWS.Rules
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: PollSeconds
+    type: int
+    default: 300
+  - name: BackfillHours
+    type: int
+    default: 24
+  - name: AlertLevel
+    type: choices
+    default: high
+    choices: [critical, high, medium, low]
+
+export: |
+  // The single-event rules, plus any change made as root.
+  LET MonitorDetections(EvSource, EvName, EvText, RootChanged) = SELECT * FROM chain(
+      a=AWSMatches(EvSource=EvSource, EvName=EvName, EvText=EvText),
+      b={ SELECT "root" AS Category, "Root user made changes" AS Detection,
+                 "high" AS Severity FROM scope() WHERE RootChanged })
+
+  LET Raise(Detections, Alertable, User, IP, What, Region, When) = SELECT alert(
+        name=format(format="AWS: %v (%v)", args=[Detection, User]),
+        dedup=86400, level=Severity, source="AWS", rule=Detection,
+        description=format(format="%v: %v by %v from %v in %v",
+            args=[Detection, What, User, IP || "unknown address", Region]),
+        user=User, ip=IP, activity=What, region=Region, time=When, tenant=AWSSecret) AS Raised
+    FROM foreach(row=Detections)
+    WHERE Alertable AND AWSMinRank(Level=Severity) <= AWSMinRank(Level=AlertLevel)
+
+sources:
+  - query: |
+      SELECT * FROM foreach(row={
+          SELECT Region FROM aws_regions(secret=AWSSecret)
+      }, query={
+          SELECT * FROM aws_cloudtrail(secret=AWSSecret, region=Region,
+              start=timestamp(epoch=now() - BackfillHours * 3600),
+              follow=TRUE, poll=PollSeconds)
+          WHERE (Raise(Detections=MonitorDetections(EvSource=EventSource, EvName=EventName,
+                    EvText=AWSText(User=User, UserType=UserType, MFA=MFA, ErrorCode=ErrorCode,
+                                   Request=Request, Response=Response),
+                    RootChanged=UserType = "Root" AND NOT ReadOnly AND EventName != "ConsoleLogin"),
+                 Alertable=NOT ErrorCode,
+                 User=User, IP=SourceIP, What=EventName, Region=Region, When=Time) OR TRUE)
+      }, workers=40)

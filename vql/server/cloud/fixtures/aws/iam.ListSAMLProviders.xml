@@ -1,0 +1,1 @@
+<ListSAMLProvidersResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/"><ListSAMLProvidersResult><SAMLProviderList><member><Arn>arn:aws:iam::123456789012:saml-provider/EvilIdP</Arn><ValidUntil>2099-01-01T00:00:00Z</ValidUntil><CreateDate>NOW-10hZ</CreateDate></member></SAMLProviderList></ListSAMLProvidersResult></ListSAMLProvidersResponse>

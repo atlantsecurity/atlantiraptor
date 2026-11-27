@@ -1,0 +1,90 @@
+name: Cloud.AWS.IAMPosture
+description: |
+  Reads the IAM credential report for the weaknesses breaches start
+  from:
+
+  - **critical**: the root user has access keys, or no MFA.
+  - **high**: an IAM user who can sign in to the console has no MFA.
+  - **medium**: the root user signed in within the lookback.
+  - **low**: an active access key not used for `StaleKeyDays`, or not
+    rotated for `OldKeyDays`.
+
+  Needs `iam:GenerateCredentialReport` and `iam:GetCredentialReport`
+  (both in the `SecurityAudit` policy).
+
+type: SERVER
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 720
+  - name: StaleKeyDays
+    type: int
+    default: 90
+  - name: OldKeyDays
+    type: int
+    default: 365
+
+sources:
+  - query: |
+      LET Report <= SELECT * FROM aws_iam(secret=AWSSecret, action="GetCredentialReport")
+
+      LET Epoch(T) = if(condition=T =~ "^[0-9]{4}-", then=timestamp(string=T).Unix, else=0)
+
+      LET Root = SELECT * FROM Report WHERE user = "<root_account>"
+      LET Users = SELECT * FROM Report WHERE user != "<root_account>"
+
+      LET RootKeys = SELECT timestamp(string=user_creation_time) AS Time, "critical" AS Severity,
+             "Root user has access keys" AS Detection, "root" AS User,
+             "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Key1Active=access_key_1_active, Key1LastUsed=access_key_1_last_used_date,
+                  Key2Active=access_key_2_active, Key2LastUsed=access_key_2_last_used_date) AS Details
+      FROM Root
+      WHERE access_key_1_active = "true" OR access_key_2_active = "true"
+
+      LET RootNoMFA = SELECT timestamp(string=user_creation_time) AS Time, "critical" AS Severity,
+             "Root user has no MFA" AS Detection, "root" AS User,
+             "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(PasswordLastUsed=password_last_used) AS Details
+      FROM Root WHERE mfa_active != "true"
+
+      LET RootUsed = SELECT timestamp(string=password_last_used) AS Time, "medium" AS Severity,
+             "Root user signed in recently" AS Detection, "root" AS User,
+             "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(PasswordLastUsed=password_last_used) AS Details
+      FROM Root
+      WHERE Epoch(T=password_last_used) >= now() - LookbackHours * 3600
+
+      LET ConsoleNoMFA = SELECT timestamp(string=user_creation_time) AS Time, "high" AS Severity,
+             "Console user without MFA" AS Detection, user AS User,
+             "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Arn=arn, PasswordLastUsed=password_last_used) AS Details
+      FROM Users
+      WHERE password_enabled = "true" AND mfa_active != "true"
+
+      LET Keys = SELECT * FROM foreach(row=Users, query={
+          SELECT user AS User, arn AS Arn, 1 AS Slot, access_key_1_active AS Active,
+                 access_key_1_last_rotated AS Rotated, access_key_1_last_used_date AS Used
+          FROM scope()
+          WHERE access_key_1_active = "true"
+      })
+      LET Keys2 = SELECT * FROM foreach(row=Users, query={
+          SELECT user AS User, arn AS Arn, 2 AS Slot, access_key_2_active AS Active,
+                 access_key_2_last_rotated AS Rotated, access_key_2_last_used_date AS Used
+          FROM scope()
+          WHERE access_key_2_active = "true"
+      })
+
+      LET OldKeys = SELECT timestamp(string=Rotated) AS Time, "low" AS Severity,
+             if(condition=Epoch(T=Used) < now() - StaleKeyDays * 86400,
+                then="Active access key unused for a long time",
+                else="Active access key not rotated for a long time") AS Detection,
+             User, "" AS IPAddress, "" AS Location, "" AS Device,
+             dict(Arn=Arn, Key=Slot, LastRotated=Rotated, LastUsed=Used) AS Details
+      FROM chain(a=Keys, b=Keys2)
+      WHERE Epoch(T=Used) < now() - StaleKeyDays * 86400
+         OR Epoch(T=Rotated) < now() - OldKeyDays * 86400
+
+      SELECT * FROM chain(a=RootKeys, b=RootNoMFA, c=RootUsed, d=ConsoleNoMFA, e=OldKeys)

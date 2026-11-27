@@ -1,0 +1,71 @@
+name: Cloud.AWS.AccessKeyAbuse
+description: |
+  Hunts for stolen AWS access keys. Leaked keys are usually tested
+  first with `sts:GetCallerIdentity` ("who am I?"), from a machine
+  the attacker controls.
+
+  - **high**: a key used by a tool attackers use (Pacu, TruffleHog,
+    Kali or Parrot Linux user agents).
+  - **medium**: a long-term key (AKIA...) checked its identity from an
+    address it was not used from during the baseline.
+
+  Needs the `SecurityAudit` policy on the role.
+
+type: SERVER
+
+parameters:
+  - name: AWSSecret
+    description: Name of the "AWS Creds" secret for the account.
+  - name: LookbackHours
+    type: int
+    default: 168
+  - name: BaselineDays
+    type: int
+    default: 30
+  - name: AttackTools
+    type: regex
+    default: "(?i)pacu|trufflehog|kali|parrot|pentoo|cloudfox|scoutsuite|prowler.*attack|weirdAAL|aws_consoler"
+
+sources:
+  - query: |
+      LET WindowStart <= now() - LookbackHours * 3600
+
+      LET Calls <= SELECT * FROM foreach(row={
+          SELECT Region FROM aws_regions(secret=AWSSecret)
+      }, query={
+          SELECT timestamp(string=Time) AS Time, timestamp(string=Time).Unix AS Epoch,
+                 Region, User, UserType, AccessKeyId, SourceIP, UserAgent, ErrorCode
+          FROM aws_cloudtrail(secret=AWSSecret, region=Region, event_name="GetCallerIdentity",
+                              start=now() - (LookbackHours + BaselineDays * 24) * 3600)
+          WHERE EventName = "GetCallerIdentity"
+      }, workers=4)
+
+      LET Recent <= SELECT * FROM Calls WHERE Epoch >= WindowStart
+
+      LET Tools = SELECT Time, "high" AS Severity,
+             "Access key used by an attack tool" AS Detection,
+             User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(AccessKeyId=AccessKeyId, UserType=UserType) AS Details
+      FROM Recent
+      WHERE UserAgent =~ AttackTools
+      GROUP BY AccessKeyId, SourceIP
+
+      LET Baseline <= SELECT AccessKeyId, enumerate(items=SourceIP) AS Addresses
+          FROM Calls WHERE Epoch < WindowStart
+          GROUP BY AccessKeyId
+      LET BaselineByKey <= to_dict(item={
+          SELECT AccessKeyId AS _key, Addresses AS _value FROM Baseline })
+
+      LET NewAddress = SELECT Time, "medium" AS Severity,
+             "Long-term access key used from a new address" AS Detection,
+             User, SourceIP AS IPAddress, Region AS Location, UserAgent AS Device,
+             dict(AccessKeyId=AccessKeyId,
+                  KnownAddresses=get(item=BaselineByKey, field=AccessKeyId)) AS Details
+      FROM Recent
+      WHERE AccessKeyId =~ "^AKIA"
+        AND get(item=BaselineByKey, field=AccessKeyId)
+        AND NOT SourceIP in get(item=BaselineByKey, field=AccessKeyId)
+        AND NOT UserAgent =~ AttackTools
+      GROUP BY AccessKeyId, SourceIP
+
+      SELECT * FROM chain(a=Tools, b=NewAddress)

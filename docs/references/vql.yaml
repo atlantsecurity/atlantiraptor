@@ -529,6 +529,148 @@
   - linux_amd64_cgo
   - windows_386_cgo
   - windows_amd64_cgo
+- name: aws_cloudtrail
+  description: Read AWS CloudTrail management events of one region (LookupEvents, the last
+    90 days). One row per event, with the identity, request and response flattened.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of an ''AWS Creds'' secret.
+  - name: access_key_id
+    type: string
+    description: Access key ID when no secret is used.
+  - name: secret_access_key
+    type: string
+    description: Secret access key when no secret is used.
+  - name: session_token
+    type: string
+    description: Session token for temporary keys.
+  - name: role_arn
+    type: string
+    description: Role to assume in the customer account.
+  - name: external_id
+    type: string
+    description: External ID that the trust policy of the role requires.
+  - name: region
+    type: string
+    description: AWS region to read, e.g. us-east-1 (global services such as IAM and console sign-in log there).
+    required: true
+  - name: event_name
+    type: string
+    description: Only events with this name.
+  - name: event_source
+    type: string
+    description: Only events from this service, e.g. iam.amazonaws.com.
+  - name: username
+    type: string
+    description: Only events by this user name (root for the root user).
+  - name: access_key
+    type: string
+    description: Only events made with this access key ID.
+  - name: read_only
+    type: string
+    description: 'true or false: only read-only or only changing events.'
+  - name: start
+    type: Any
+    description: Only events at or after this time (default 24 hours ago, at most 90 days).
+  - name: end
+    type: Any
+    description: Only events before this time.
+  - name: max_rows
+    type: int64
+    description: Stop after this many rows.
+  - name: follow
+    type: bool
+    description: Keep polling for new events. Use in event artifacts.
+  - name: poll
+    type: int64
+    description: Seconds between polls in follow mode (default 300).
+  - name: overlap
+    type: int64
+    description: 'Seconds each poll re-reads before the last one (default 1800: CloudTrail delivers events up to 15 minutes late).'
+  metadata:
+    permissions: NETWORK
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: aws_iam
+  description: Call a read-only AWS IAM action, following paging. Rows are the items of
+    the list in the answer; GetCredentialReport returns one row per user. Policy documents
+    are decoded.
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of an ''AWS Creds'' secret.
+  - name: access_key_id
+    type: string
+    description: Access key ID when no secret is used.
+  - name: secret_access_key
+    type: string
+    description: Secret access key when no secret is used.
+  - name: session_token
+    type: string
+    description: Session token for temporary keys.
+  - name: role_arn
+    type: string
+    description: Role to assume in the customer account.
+  - name: external_id
+    type: string
+    description: External ID that the trust policy of the role requires.
+  - name: action
+    type: string
+    description: 'A read-only IAM action: ListUsers, ListRoles, ListAccessKeys, GetCredentialReport, GetAccountSummary, ...'
+    required: true
+  - name: params
+    type: ordereddict.Dict
+    description: Action parameters, e.g. dict(UserName=''alice'').
+  - name: ignore_not_found
+    type: bool
+    description: Return no rows instead of logging an error when the entity does not exist.
+  metadata:
+    permissions: NETWORK
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
+- name: aws_regions
+  description: 'List the AWS regions to hunt: the regions field of the secret if set,
+    otherwise the regions enabled for the account (ec2:DescribeRegions), otherwise the
+    default commercial regions.'
+  type: Plugin
+  args:
+  - name: secret
+    type: string
+    description: Name of an ''AWS Creds'' secret.
+  - name: access_key_id
+    type: string
+    description: Access key ID when no secret is used.
+  - name: secret_access_key
+    type: string
+    description: Secret access key when no secret is used.
+  - name: session_token
+    type: string
+    description: Session token for temporary keys.
+  - name: role_arn
+    type: string
+    description: Role to assume in the customer account.
+  - name: external_id
+    type: string
+    description: External ID that the trust policy of the role requires.
+  metadata:
+    permissions: NETWORK
+  platforms:
+  - darwin_amd64_cgo
+  - darwin_arm64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
 - name: azure_monitor_upload
   description: Upload rows to Azure Monitor / Log Analytics via the Logs Ingestion
     API (Data Collection Rule).
