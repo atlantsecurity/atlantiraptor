@@ -53,6 +53,11 @@ type FlowContext struct {
 	// queries.
 	cancel func()
 
+	// The context the FlowContext was created with. It outlives
+	// ctx, so messages sent while closing the flow are not dropped
+	// when ctx is cancelled.
+	parent_ctx context.Context
+
 	// A single flow can have multiple queries, each is tracked by its
 	// own responder. We track the life of each responder with this wg.
 	wg         *sync.WaitGroup
@@ -126,6 +131,7 @@ func newFlowContext(ctx context.Context,
 	self := &FlowContext{
 		ctx:               sub_ctx,
 		cancel:            cancel,
+		parent_ctx:        ctx,
 		wg:                &sync.WaitGroup{},
 		output:            output,
 		req:               req.FlowRequest,
@@ -294,7 +300,10 @@ func (self *FlowContext) _Close() {
 		self.checkpoint = ""
 	}
 
-	self.flushLogMessages(self.ctx)
+	// Flush with the parent context: the flush sends in the
+	// background and self.ctx is cancelled right below, which would
+	// drop the final log messages (e.g. the cancellation message).
+	self.flushLogMessages(self.parent_ctx)
 	self.sendStats()
 	self.cancel()
 }
