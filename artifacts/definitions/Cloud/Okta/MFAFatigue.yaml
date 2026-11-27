@@ -65,14 +65,21 @@ sources:
       WHERE len(list=D.Epoch) >= MinDenies OR len(list=P.Epoch) >= MinPushes
       GROUP BY User
 
-      // Bursts: pushes per user per clock hour.
-      LET Hourly = SELECT User, int(int=Epoch / 3600) AS Hour, count() AS N,
-             min(item=Epoch) AS First
-          FROM Pushes GROUP BY User, Hour
-      LET Burst = SELECT timestamp(epoch=First) AS Time, "medium" AS Severity,
+      // Bursts: pushes to one user within an hour of each push. A
+      // sliding window, so a burst that crosses a clock hour still counts.
+      LET PushStarts = SELECT User AS PUser, Epoch AS PEpoch FROM Pushes
+      LET Windows = SELECT * FROM foreach(row=PushStarts, query={
+          SELECT PUser AS User, PEpoch AS First,
+                 { SELECT * FROM Pushes WHERE User = PUser
+                     AND Epoch >= PEpoch AND Epoch < PEpoch + 3600 } AS W
+          FROM scope()
+      })
+      LET Bursts = SELECT User, First, len(list=W.Epoch) AS N FROM Windows
+          WHERE len(list=W.Epoch) >= MinPushes
+      LET Burst = SELECT timestamp(epoch=min(item=First)) AS Time, "medium" AS Severity,
              "Burst of MFA push prompts" AS Detection,
              User, "" AS IPAddress, "" AS Location, "" AS Device,
-             dict(Pushes=N) AS Details
-      FROM Hourly WHERE N >= MinPushes
+             dict(Pushes=max(item=N)) AS Details
+      FROM Bursts GROUP BY User
 
       SELECT * FROM chain(a=Fatigue, b=Burst)
