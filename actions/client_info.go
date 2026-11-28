@@ -5,6 +5,7 @@ import (
 
 	"github.com/Showmax/go-fqdn"
 	actions_proto "www.velocidex.com/golang/velociraptor/actions/proto"
+	"www.velocidex.com/golang/velociraptor/config"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	"www.velocidex.com/golang/velociraptor/utils"
 	"www.velocidex.com/golang/velociraptor/vql/psutils"
@@ -26,6 +27,14 @@ func GetClientInfo(
 		result.BuildUrl = config_obj.Version.CiBuildUrl
 		result.BuildTime = config_obj.Version.BuildTime
 		result.InstallTime = config_obj.Version.InstallTime
+	}
+
+	// Release builds report the Atlantiraptor release they were built
+	// as, so the console can show it and the server can tell which
+	// agents need upgrading (services/agentupdate).
+	if v := config.ReleaseVersion(); v != "" {
+		result.ClientName = config.AgentName
+		result.ClientVersion = v
 	}
 
 	for _, remapping := range config_obj.Remappings {

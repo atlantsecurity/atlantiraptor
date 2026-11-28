@@ -24,6 +24,15 @@ var (
 		"restart-service", "Start the server service again after an update.")
 	selfupdate_restart_service_name = selfupdate_restart_service_command.Flag(
 		"name", "Service name.").Required().String()
+
+	selfupdate_agent_upgrade_command = selfupdate_command.Command(
+		"agent-upgrade", "Replace the installed agent with this binary (run by Admin.Client.Upgrade.Atlantiraptor).")
+	selfupdate_agent_upgrade_version = selfupdate_agent_upgrade_command.Flag(
+		"version", "The release version this binary must be.").Required().String()
+	selfupdate_agent_upgrade_service = selfupdate_agent_upgrade_command.Flag(
+		"service", "The agent's Windows service.").Default(selfupdate.DefaultAgentService).String()
+	selfupdate_agent_upgrade_apply = selfupdate_agent_upgrade_command.Flag(
+		"apply", "Do the swap now (the detached second step).").Bool()
 )
 
 func init() {
@@ -41,6 +50,18 @@ func init() {
 		case selfupdate_restart_service_command.FullCommand():
 			err := selfupdate.RestartService(*selfupdate_restart_service_name)
 			kingpin.FatalIfError(err, "Restarting service %v", *selfupdate_restart_service_name)
+
+		case selfupdate_agent_upgrade_command.FullCommand():
+			if *selfupdate_agent_upgrade_apply {
+				err := selfupdate.AgentApply(*selfupdate_agent_upgrade_version,
+					*selfupdate_agent_upgrade_service)
+				kingpin.FatalIfError(err, "Agent upgrade")
+				return true
+			}
+			msg, err := selfupdate.AgentUpgrade(*selfupdate_agent_upgrade_version,
+				*selfupdate_agent_upgrade_service)
+			kingpin.FatalIfError(err, "Agent upgrade")
+			fmt.Println(msg)
 
 		default:
 			return false

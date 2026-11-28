@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CloudDownload, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useUpdateAction, useUpdateStatus, type UpdateStatus } from '../../lib/updates';
+import AgentUpdates from './AgentUpdates';
 import { Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, Mono, Select, Skeleton, Switch } from '../../ui/primitives';
 
 const HOURS = [6, 24, 72, 168, 336, 720];
@@ -133,6 +134,8 @@ function Updates({ status }: { status: UpdateStatus }) {
             {status.settings.updated ? <p className="tw:text-2xs tw:text-faint">Last changed by {status.settings.updated_by} {when(status.settings.updated)}</p> : null}
           </div>
         </Card>
+
+        <AgentUpdates />
 
         <Card>
           <CardHeader icon={<ShieldCheck className="tw:size-4" />} title="What is checked before an install" />

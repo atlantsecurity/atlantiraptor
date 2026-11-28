@@ -73,4 +73,5 @@ metafiles
 plists
 intunewin
 usermessages
+agentupdate
 consolehttps

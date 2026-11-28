@@ -24,9 +24,14 @@ sources:
         FROM interfaces()
         WHERE HardwareAddr
 
-        SELECT config.Version.Name AS Name,
+        // Release builds of Atlantiraptor report their release
+        // version (AtlantiraptorVersion); older and development
+        // builds report the upstream Velociraptor version.
+        SELECT if(condition=AtlantiraptorVersion, then="Atlantiraptor",
+                  else=config.Version.Name) AS Name,
                config.Version.BuildTime as BuildTime,
-               config.Version.Version as Version,
+               if(condition=AtlantiraptorVersion, then=AtlantiraptorVersion,
+                  else=config.Version.Version) AS Version,
                config.Version.ci_build_url AS build_url,
                config.Version.install_time as install_time,
                config.Labels AS Labels,

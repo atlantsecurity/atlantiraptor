@@ -14,3 +14,8 @@ var release_version string
 func ReleaseVersion() string {
 	return release_version
 }
+
+// AgentName is the client name a release build reports with its
+// release version (instead of "velociraptor" and the upstream
+// version it is based on).
+const AgentName = "Atlantiraptor"
