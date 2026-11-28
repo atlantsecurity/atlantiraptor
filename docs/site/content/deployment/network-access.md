@@ -65,6 +65,8 @@ turns every list off until it is removed.
 
 Network access lists are one layer. Also consider:
 
+- [agent certificates](/deployment/internet-facing/) on the agent port,
+  so that only your own agents get past its TLS handshake,
 - binding the console to an internal interface or localhost
   (`GUI.bind_address`) and reaching it over VPN or a reverse proxy,
 - cloud firewall rules (security groups) for the console port,

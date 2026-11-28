@@ -39,6 +39,7 @@ const EventsPage = lazy(() => import('../pages/events/EventsPage'));
 const NotebooksPage = lazy(() => import('../pages/notebooks/NotebooksPage'));
 const SettingsHome = lazy(() => import('../pages/settings/SettingsHome'));
 const DeployPage = lazy(() => import('../pages/settings/DeployPage'));
+const AgentConnectionsPage = lazy(() => import('../pages/settings/AgentConnectionsPage'));
 const HttpsPage = lazy(() => import('../pages/settings/HttpsPage'));
 const AuditPage = lazy(() => import('../pages/settings/AuditPage'));
 
@@ -115,6 +116,7 @@ export default function AppShell() {
                         <Route path="/groups"><GroupsPage /></Route>
                         <Route path="/orgs"><OrgsPage /></Route>
                         <Route path="/settings/deploy"><DeployPage /></Route>
+                        <Route path="/settings/agents"><AgentConnectionsPage /></Route>
                         <Route path="/account/security"><SecurityPage /></Route>
                         <Route path="/network"><NetworkPage /></Route>
                         <Route path="/updates"><UpdatesPage /></Route>

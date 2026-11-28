@@ -39,6 +39,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/file_store/api"
 	"www.velocidex.com/golang/velociraptor/file_store/path_specs"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/utils"
 
 	"github.com/Velocidex/ordereddict"
@@ -370,6 +371,14 @@ func receive_client_messages(
 				return
 			}
 
+			// Blocked agents and certificates of other agents.
+			if err := agentmtls.Get().CheckAgent(
+				req, message_info.Source, message_info.OrgId); err != nil {
+				server_obj.Debug("Refusing %v: %v", message_info.Source, err)
+				http.Error(w, "", http.StatusForbidden)
+				return
+			}
+
 			// Very few Unauthenticated client messages are valid
 			// - currently only enrollment requests.
 			if !message_info.Authenticated {
@@ -533,6 +542,13 @@ func send_client_messages(
 			// connections open.
 			if !message_info.Authenticated {
 				http.Error(w, "Please Enrol", http.StatusNotAcceptable)
+				return
+			}
+
+			if err := agentmtls.Get().CheckAgent(
+				req, message_info.Source, message_info.OrgId); err != nil {
+				server_obj.Debug("Refusing %v: %v", message_info.Source, err)
+				http.Error(w, "", http.StatusForbidden)
 				return
 			}
 

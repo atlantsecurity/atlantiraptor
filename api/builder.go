@@ -19,6 +19,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/server"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/utils"
 
 	_ "www.velocidex.com/golang/velociraptor/result_sets/timed"
@@ -346,6 +347,7 @@ func StartFrontendHttps(
 		}
 		server_obj.Info("Frontend will require mTLS client side certificates!")
 	}
+	tls_config = withAgentMTLS(config_obj, server_obj, tls_config)
 
 	listenAddr := fmt.Sprintf(
 		"%s:%d",
@@ -425,6 +427,9 @@ func StartFrontendPlainHttp(
 	if config_obj.Frontend == nil {
 		return errors.New("Frontend server not configured")
 	}
+
+	// Blocking agents still works over plain HTTP; certificates don't.
+	agentmtls.Setup(config_obj).SetFrontendInfo("the agent port uses plain HTTP")
 
 	listenAddr := fmt.Sprintf(
 		"%s:%d",
@@ -539,6 +544,7 @@ func StartFrontendWithAutocert(
 	tls_config.GetCertificate = cert_manager_config.GetCertificate
 	tls_config.NextProtos = cert_manager_config.NextProtos
 	tls_config.Certificates = nil
+	tls_config = withAgentMTLS(config_obj, server_obj, tls_config)
 
 	server := &http.Server{
 		// ACME protocol requires TLS be served over port 443.
@@ -753,6 +759,32 @@ func StartSelfSignedGUI(
 	}()
 
 	return nil
+}
+
+// withAgentMTLS lets the frontend check agent certificates in the
+// mode set under Server settings > Agent connections (see
+// services/agentmtls). It needs the frontend on a port of its own:
+// browsers on a shared console port would be asked for certificates.
+func withAgentMTLS(config_obj *config_proto.Config,
+	server_obj *server.Server, tls_config *tls.Config) *tls.Config {
+	service := agentmtls.Setup(config_obj)
+
+	unavailable := ""
+	switch {
+	case config_obj.Frontend.RequireClientCertificates:
+		unavailable = "Frontend.require_client_certificates is set in the server configuration"
+	case config_obj.GUI != nil && config_obj.Services != nil &&
+		config_obj.Services.GuiServer &&
+		config_obj.GUI.BindPort == config_obj.Frontend.BindPort:
+		unavailable = "the console shares the agent port; give the console its own port (GUI.bind_port)"
+	}
+	service.SetFrontendInfo(unavailable)
+	if unavailable != "" {
+		server_obj.Info("Agent mTLS is off: %v", unavailable)
+		return tls_config
+	}
+	server_obj.Info("Agent mTLS mode: %v", service.EffectiveMode())
+	return service.WrapTLSConfig(tls_config)
 }
 
 func get_hostname(fe_hostname, bind_addr string) string {

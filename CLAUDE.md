@@ -91,3 +91,10 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   checkpoints (key derived from the secrets key) and the head recorded in the datastore. Never rewrite
   or delete those files from code, and do not reorder `auditlog.Entry` fields (they are hashed). New
   admin or response features must call `services.LogAudit`.
+- Agent mutual TLS (`services/agentmtls`, agent side `vql/networking/agent_identity.go`, console Server settings >
+  Agent connections, API `/api/v1/atl/agent-mtls`, docs `docs/site/content/deployment/internet-facing.md`): the
+  frontend asks agents for a certificate for their own communication key (off / warn / enforce, switched per handshake).
+  Enrolled keys are accepted; new agents sign theirs with the deployment certificate that every client configuration
+  handed out carries (`agentmtls.WithDeploymentCert`), so GPO/Intune installs enroll unattended. Blocked agents are
+  refused in the handshake and per message. Never accept a certificate in the handshake without tying it to an enrolled
+  key or the current deployment certificate, and keep client configurations going through `WithDeploymentCert`.

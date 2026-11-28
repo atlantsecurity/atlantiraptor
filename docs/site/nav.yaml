@@ -78,6 +78,7 @@ sections:
       - path: deployment/clients
       - path: deployment/intune
       - path: deployment/network-access
+      - path: deployment/internet-facing
       - path: deployment/orgs
       - path: deployment/scaling
       - path: deployment/updates

@@ -8,10 +8,12 @@ import (
 	"github.com/Velocidex/ordereddict"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	crypto_client "www.velocidex.com/golang/velociraptor/crypto/client"
+	crypto_utils "www.velocidex.com/golang/velociraptor/crypto/utils"
 	"www.velocidex.com/golang/velociraptor/executor"
 	"www.velocidex.com/golang/velociraptor/services"
 	"www.velocidex.com/golang/velociraptor/services/writeback"
 	"www.velocidex.com/golang/velociraptor/utils"
+	"www.velocidex.com/golang/velociraptor/vql/networking"
 )
 
 func StartHttpCommunicatorService(
@@ -36,6 +38,13 @@ func StartHttpCommunicatorService(
 		config_obj, []byte(writeback.PrivateKey))
 	if err != nil {
 		return nil, err
+	}
+
+	// Present a certificate for this key when the server asks for
+	// one (agent mutual TLS, see vql/networking/agent_identity.go).
+	if key, err := crypto_utils.ParseRsaPrivateKeyFromPemStr(
+		[]byte(writeback.PrivateKey)); err == nil {
+		networking.SetAgentKey(key, crypto_utils.ClientIDFromPublicKey(&key.PublicKey))
 	}
 
 	err = services.LogAudit(ctx, config_obj,

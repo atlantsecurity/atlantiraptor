@@ -6,8 +6,10 @@ import { toast } from 'sonner';
 import {
   Activity, Cpu, FolderTree, History, Info, Monitor, MoreHorizontal, Network, Plus, RefreshCw,
   ShieldAlert, ShieldCheck, Tags, Trash2, Users, Zap, Clock, Globe, KeyRound, ListTree, Terminal, Save,
-  Download, HardDrive, PlayCircle,
+  Download, HardDrive, PlayCircle, Ban, Unlock,
 } from 'lucide-react';
+import { isBlocked, useAgentMtlsAction, useAgentMtlsStatus } from '../../lib/agentmtls';
+import { currentOrgId } from '../../lib/api';
 import {
   useClient, useClientFlowList, useClientMetadata, useExistingArtifacts, useLabelClients, useSetClientMetadata,
   runArtifact, runArtifacts, usePermission,
@@ -108,6 +110,10 @@ export default function ClientOverview() {
   const [mftOpen, setMftOpen] = useState(false);
   const label = useLabelClients();
   const canCollect = usePermission('collect_client');
+  const isServerAdmin = usePermission('server_admin');
+  const { data: mtls } = useAgentMtlsStatus(isServerAdmin);
+  const mtlsAct = useAgentMtlsAction();
+  const [blockOpen, setBlockOpen] = useState(false);
 
   useEffect(() => {
     if (client?.client_id && selected?.client_id !== client.client_id) setClient(client);
@@ -130,6 +136,11 @@ export default function ClientOverview() {
   const labels = client.labels ?? [];
   const quarantined = labels.includes('Quarantine');
   const qArtifact = QUARANTINE[os];
+  const blocked = isBlocked(mtls, clientId);
+  const unblock = () => mtlsAct.mutate({ action: 'unblock', client_id: clientId }, {
+    onSuccess: () => toast.success(`${hostname} can connect again`),
+    onError: e => toast.error((e as Error).message),
+  });
   const canQuarantine = !!qArtifact && !!existing?.has(qArtifact);
 
   const collect = async (artifact: string, params?: Record<string, string>, quiet = false) => {
@@ -198,6 +209,7 @@ export default function ClientOverview() {
                 {status === 'online' ? 'Online' : `Seen ${timeAgo(client.last_seen_at)}`}
               </Badge>
               {quarantined && <Badge tone="bad"><ShieldAlert className="tw:size-3" /> Quarantined</Badge>}
+              {blocked && <Badge tone="bad"><Ban className="tw:size-3" /> Blocked</Badge>}
             </div>
             <div className="tw:mt-1 tw:flex tw:items-center tw:gap-2 tw:text-xs tw:text-muted tw:flex-wrap">
               <Mono>{clientId}</Mono><CopyButton text={clientId} />
@@ -225,6 +237,8 @@ export default function ClientOverview() {
                 <MenuItem icon={<RefreshCw />} onSelect={() => collect('Generic.Client.Info')}>Interrogate</MenuItem>
                 {canQuarantine && !quarantined && <MenuItem icon={<ShieldAlert />} danger onSelect={() => setQuarantineOpen(true)}>Quarantine host…</MenuItem>}
                 {canQuarantine && quarantined && <MenuItem icon={<ShieldCheck />} onSelect={unquarantine}>Lift quarantine</MenuItem>}
+                {isServerAdmin && mtls && !blocked && <MenuItem icon={<Ban />} danger onSelect={() => setBlockOpen(true)}>Block agent…</MenuItem>}
+                {isServerAdmin && mtls && blocked && <MenuItem icon={<Unlock />} onSelect={unblock}>Unblock agent</MenuItem>}
                 <MenuSeparator />
                 <MenuItem icon={<Terminal />} onSelect={() => history.push(`/host/${clientId}/shell`)}>Shell</MenuItem>
               </MenuContent>
@@ -299,6 +313,18 @@ export default function ClientOverview() {
             const mft = quick.find(q => q.askWindow);
             if (mft) await runQuick(mft, { [mft.artifact]: { ...w } });
             setMftOpen(false);
+          }} />
+      )}
+      {blockOpen && (
+        <BlockDialog hostname={hostname} onClose={() => setBlockOpen(false)}
+          onConfirm={async reason => {
+            try {
+              await mtlsAct.mutateAsync({ action: 'block', client_id: clientId, org_id: currentOrgId(), reason });
+              toast.success(`${hostname} is blocked`);
+              setBlockOpen(false);
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
           }} />
       )}
       {quarantineOpen && (
@@ -402,6 +428,29 @@ function QuarantineDialog({ hostname, onClose, onConfirm }: {
       </>}>
       <label className="tw:block tw:text-xs tw:font-medium tw:mb-1.5">Message shown to the user (optional)</label>
       <Textarea rows={3} value={msg} onChange={e => setMsg(e.target.value)} placeholder="This computer has been isolated by the security team." />
+    </Dialog>
+  );
+}
+
+function BlockDialog({ hostname, onClose, onConfirm }: {
+  hostname: string; onClose: () => void; onConfirm: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog open onOpenChange={v => !v && onClose()} title={`Block ${hostname}?`}
+      description="For a lost or stolen computer, or an agent you no longer trust. The server refuses this agent from now on and closes its open connections. Its data stays; you can unblock it under Server settings > Agent connections."
+      footer={<>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="danger" icon={<Ban className="tw:size-3.5" />} loading={busy}
+          onClick={async () => { setBusy(true); try { await onConfirm(reason); } finally { setBusy(false); } }}>Block agent</Button>
+      </>}>
+      <label className="tw:block tw:text-xs tw:font-medium tw:mb-1.5">Reason (optional, kept in the audit log)</label>
+      <Textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="Laptop reported stolen" />
+      <p className="tw:text-2xs tw:text-muted tw:mt-2">
+        A thief with administrator rights could reinstall the agent as a new computer while new enrollments are allowed.
+        To stop that, turn off New agents can enroll or rotate the deployment certificate under Agent connections.
+      </p>
     </Dialog>
   );
 }
