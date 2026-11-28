@@ -1,7 +1,7 @@
 Parameters:
   FeedURLs: |
     URL
-    http://docs.velociraptor.app/announcements/advisories/index.xml
+    https://atlantsecurity.github.io/atlantiraptor/security/advisories/index.xml
 
   FirstRSS: |
     <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
@@ -49,15 +49,36 @@ Queries:
      (dict(Content= SecondRSS, Response=200),)]),
      mock(plugin='clock', results=[
      dict(Unix=1), dict(Unix=2)
-   ]), user_create(user="Fred", roles="investigator")
+   ]), org_create(name="RSSOrg", org_id="RSSORG")
   FROM scope()
 
-# Check for RSS feeds - should emit the new item (2.txt)
-- SELECT *, Users =~ "Fred" AS Users
+# Fred is in the root org and a child org, Barney only in the child org.
+- LET _ <= SELECT user_create(user="Fred", roles="investigator",
+                              orgs=["root", "RSSORG"]),
+                  user_create(user="Barney", roles="reader",
+                              orgs=["RSSORG"])
+  FROM scope()
+
+# In a child org the artifact does nothing: the root org notifies
+# everyone, so running in every org would send duplicate notices.
+- SELECT * FROM query(org_id="RSSORG", env=dict(FeedURLs=FeedURLs), query={
+    SELECT * FROM Artifact.Server.Monitoring.RSSFeeds(
+       FeedURLs=FeedURLs, AgeDays=999999999)
+  })
+
+- SELECT count() AS Skipped FROM test_read_logs()
+  WHERE Log =~ "polled by the root org only" AND NOT Log =~ "SELECT"
+  GROUP BY 1
+
+# Check for RSS feeds - should emit the new item (2.txt), sent once to
+# each user of every org.
+- SELECT guid, title, link, pubDate, Users =~ "Fred" AS FredNotified,
+         Users =~ "Barney" AS BarneyNotified
   FROM Artifact.Server.Monitoring.RSSFeeds(FeedURLs=FeedURLs, AgeDays=999999999)
 
-# Now check that the user message was sent
+# Now check that each user got the message exactly once
 - SELECT * FROM user_messages(clear=TRUE, user="Fred")
+- SELECT * FROM user_messages(clear=TRUE, user="Barney")
 
 # Clean up
-- SELECT user_delete(user="Fred") FROM scope()
+- SELECT user_delete(user="Fred"), user_delete(user="Barney") FROM scope()

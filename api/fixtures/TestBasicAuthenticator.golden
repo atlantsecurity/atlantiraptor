@@ -73,6 +73,13 @@
    " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
    " http.HandlerFunc"
   ],
+  "/velociraptor/api/v1/atl/messages": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.(*BasicAuthenticator).AuthenticateUserHandler",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/atl/mfa/": [
    "authenticators.IpFilter",
    " api.csrfProtect",

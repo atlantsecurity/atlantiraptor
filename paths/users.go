@@ -59,3 +59,11 @@ func (self UserPathManager) FavoriteDir(type_name string) api.DSPathSpec {
 func NewUserPathManager(username string) *UserPathManager {
 	return &UserPathManager{username}
 }
+
+// Read and dismissed marks for the user's Notifications (an append-only
+// log of actions, see services/usermessages).
+func (self UserPathManager) NotificationState() api.FSPathSpec {
+	return USERS_ROOT.AddChild(self.Name, "NotificationState").
+		AsFilestorePath().
+		SetType(api.PATH_TYPE_FILESTORE_JSON)
+}
