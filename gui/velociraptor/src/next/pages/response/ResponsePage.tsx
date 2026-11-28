@@ -21,12 +21,14 @@ import {
 import { TagInput } from '../hunts/TagInput';
 import { ACTIONS, GROUPS, RESPONSE_TAG, type ResponseAction } from './actions';
 import { ConfirmResponseDialog } from './ConfirmResponseDialog';
-import { ClientPicker, MAX_PICKED_CLIENTS, type PickedClient } from './ClientPicker';
+import { ClientPicker, MAX_PICKED_CLIENTS, MAX_URL_CLIENTS, type PickedClient } from './ClientPicker';
+import { huntMatchedHosts } from './huntTargets';
 import { ResponseHistory } from './ResponseHistory';
 
 type TargetMode = 'clients' | 'labels' | 'os' | 'all';
 const OS_LABEL: Record<string, string> = { WINDOWS: 'Windows', LINUX: 'Linux', OSX: 'macOS' };
 const CLIENT_ID_RE = /^C\.[0-9a-f]+(-[A-Za-z0-9]+)?$/;
+const HUNT_ID_RE = /^H\.[A-Za-z0-9]+$/;
 
 // Field values may be prefilled from the URL (for example by an alert's
 // "Delete file" action). They are only ever placed into the form, so the
@@ -42,9 +44,12 @@ export default function ResponsePage() {
   const query = useMemo(() => new URLSearchParams(search), [search]);
   // ?client= takes one client ID or several, comma separated.
   const urlClients = useMemo(() => [...new Set((query.get('client') ?? '').split(','))]
-    .filter(id => CLIENT_ID_RE.test(id)).slice(0, MAX_PICKED_CLIENTS), [query]);
+    .filter(id => CLIENT_ID_RE.test(id)).slice(0, MAX_URL_CLIENTS), [query]);
+  // ?hunt= picks every host where that hunt found something ("Respond to all").
+  const huntId = HUNT_ID_RE.test(query.get('hunt') ?? '') ? query.get('hunt')! : '';
   // The picked clients live here so they survive switching actions.
   const [picked, setPicked] = useState<PickedClient[]>(() => urlClients.map(id => ({ id, hostname: id })));
+  const loadingHunt = useHuntTargets(huntId, setPicked);
   useClientNames(picked, setPicked);
   const action = ACTIONS.find(a => a.id === actionId) ?? ACTIONS[0];
   const canHunt = usePermission('start_hunt');
@@ -73,10 +78,11 @@ export default function ResponsePage() {
         {tab === 'actions' && <>
           <div className="tw:grid tw:grid-cols-1 tw:lg:grid-cols-[280px_1fr] tw:gap-4 tw:items-start">
             <ActionList selected={action.id}
-              onSelect={id => history.push(`/response/${id}${picked.length ? `?client=${picked.map(p => p.id).join(',')}` : ''}`)} />
-            <ActionForm key={action.id} action={action} canRun={canRun} startWithClients={urlClients.length > 0}
+              onSelect={id => history.push(`/response/${id}${picked.length && picked.length <= MAX_URL_CLIENTS ? `?client=${picked.map(p => p.id).join(',')}` : ''}`)} />
+            <ActionForm key={action.id} action={action} canRun={canRun} startWithClients={urlClients.length > 0 || !!huntId}
               picked={picked} setPicked={setPicked} prefill={query} />
           </div>
+          {loadingHunt && <div className="tw:text-xs tw:text-muted">Loading the hosts the hunt matched…</div>}
           <ResponseHistory />
         </>}
         {tab === 'approvals' && <ApprovalsPanel />}
@@ -115,9 +121,31 @@ interface ActionFormProps {
   prefill: URLSearchParams;
 }
 
+// Picks every host where the hunt returned rows, read page by page from
+// the server. Returns true while loading.
+function useHuntTargets(huntId: string, setPicked: (ps: PickedClient[]) => void): boolean {
+  const [loading, setLoading] = useState(!!huntId);
+  useEffect(() => {
+    if (!huntId) return;
+    let live = true;
+    setLoading(true);
+    huntMatchedHosts(huntId, MAX_PICKED_CLIENTS)
+      .then(({ hosts, truncated }) => {
+        if (!live) return;
+        setPicked(hosts);
+        if (truncated) toast.warning(`The hunt matched more than ${MAX_PICKED_CLIENTS.toLocaleString()} hosts; the first ${MAX_PICKED_CLIENTS.toLocaleString()} are selected. Use a label to reach the rest.`);
+        else if (hosts.length === 0) toast.info('The hunt has not matched any host yet.');
+      })
+      .catch(e => live && toast.error(`Could not load the hunt's hosts: ${(e as Error).message}`))
+      .finally(() => live && setLoading(false));
+    return () => { live = false; };
+  }, [huntId, setPicked]);
+  return loading;
+}
+
 // Fills in hostnames for clients that arrived as bare IDs (from a link).
 function useClientNames(picked: PickedClient[], setPicked: (f: (ps: PickedClient[]) => PickedClient[]) => void) {
-  const unnamed = picked.filter(p => p.hostname === p.id).map(p => p.id);
+  const unnamed = picked.filter(p => p.hostname === p.id).map(p => p.id).slice(0, MAX_URL_CLIENTS);
   const key = unnamed.join(',');
   useEffect(() => {
     if (!key) return;

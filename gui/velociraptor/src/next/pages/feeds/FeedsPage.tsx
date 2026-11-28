@@ -12,7 +12,7 @@ import {
   FEED_HUNT_TAG, feedHuntRequest, useFeedAction, useFeedStatus,
   type FeedHuntOptions, type FeedPack, type FeedStatus,
 } from '../../lib/feeds';
-import { useArtifactDefinitions, useCreateHunt, useHunts, usePermission } from '../../lib/queries';
+import { useArtifactDefinitions, useCreateHunt, useRecentHunts, usePermission } from '../../lib/queries';
 import { timeAgo, toDate } from '../../lib/format';
 import type { Hunt } from '../../lib/types';
 import Markdown from '../../ui/Markdown';
@@ -193,7 +193,7 @@ function Packs({ status }: { status: FeedStatus }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>(status.new_count + status.updated_count > 0 ? 'fresh' : 'all');
   const [launch, setLaunch] = useState<FeedPack | null>(null);
-  const { data: hunts } = useHunts(false);
+  const { data: hunts } = useRecentHunts();
 
   // The latest hunt started from each pack (tagged with its id).
   const lastHunt = useMemo(() => {

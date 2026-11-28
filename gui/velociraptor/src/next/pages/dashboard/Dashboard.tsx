@@ -9,7 +9,7 @@ import {
 import { useAlerts, useAlertTriage } from './alerts/hooks';
 import { isOpen } from './alerts/triage';
 import {
-  useClientCounts, useClientFlows, useHunts, useRecentClients, useServerHealth, usePermission,
+  useClientCounts, useClientFlows, useRecentHunts, useRecentClients, useServerHealth, usePermission,
 } from '../../lib/queries';
 import { clientStatus, fmtBytes, fmtNum, pct, timeAgo, toDate, toNum } from '../../lib/format';
 import {
@@ -33,7 +33,7 @@ export default function Dashboard() {
   const history = useHistory();
   const canHunt = usePermission('start_hunt');
   const counts = useClientCounts();
-  const { data: hunts = [], isLoading: huntsLoading } = useHunts(false);
+  const { data: hunts = [], isLoading: huntsLoading } = useRecentHunts();
 
   const running = useMemo(() => hunts.filter(h => effectiveState(h) === 'running'), [hunts]);
   const recentHunts = useMemo(() => {

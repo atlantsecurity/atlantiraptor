@@ -9,7 +9,7 @@ import { ChevronDown, ChevronRight, Cpu, FileText, Fingerprint, Globe, Radar, Se
 
 const KIND_ICON = { web: Globe, hash: Fingerprint, file: FileText, process: Cpu, user: User } as const;
 import * as api from '../../../lib/api';
-import { useCreateHunt, useHunt, useHunts, useStopHunts } from '../../../lib/queries';
+import { useCreateHunt, useHunt, useRecentHunts, useStopHunts } from '../../../lib/queries';
 import { parseTable, type Row } from '../../../lib/table';
 import type { TableResponse } from '../../../lib/types';
 import { timeAgo, toDate, toNum } from '../../../lib/format';
@@ -69,7 +69,7 @@ export function RapidHuntPanel({ canHunt }: { canHunt: boolean }) {
 
   // History comes from the server (hunts tagged rapid-hunt), so the whole
   // team sees it, on any computer.
-  const { data: hunts = [] } = useHunts(false);
+  const { data: hunts = [] } = useRecentHunts();
   const recent: Recent[] = useMemo(() => hunts
     .filter(h => (h.tags ?? []).includes(RAPID_TAG))
     .map(h => {
@@ -209,10 +209,10 @@ function RapidResults({ entry, onClose }: { entry: Recent; onClose: () => void }
         </span>
         <span className="tw:ml-auto tw:flex tw:items-center tw:gap-2">
           {hosts.length > 0 && (
-            <Link to={`/response/quarantine?client=${hosts.slice(0, 100).map(h => h.clientId).join(",")}`}
+            <Link to={hosts.length === 1 ? `/response/quarantine?client=${hosts[0].clientId}` : `/response/quarantine?hunt=${entry.huntId}`}
               className="tw:text-xs tw:font-medium tw:text-bad tw:hover:underline"
-              title="Opens Response with these machines selected; pick any action there">
-              {hosts.length > 100 ? `Respond to the first 100 of ${hosts.length}` : `Respond to ${hosts.length > 1 ? `all ${hosts.length}` : 'this machine'}`}
+              title="Opens Response with every matching machine selected; pick any action there">
+              {hosts.length > 1 ? `Respond to all ${hosts.length}` : 'Respond to this machine'}
             </Link>
           )}
                     <AddToCaseButton size="sm" label="Add to case" suggestedTitle={`Rapid hunt: ${entry.indicator}`}

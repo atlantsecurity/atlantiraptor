@@ -62,19 +62,35 @@ export function usePermission(name: string): boolean {
 
 // --------------------------------------------------------------- Hunts
 
-export function useHunts(includeArchived: boolean, enabled = true) {
-  return useQuery({
-    queryKey: ['hunts', { includeArchived }],
+// The server returns at most 1,000 hunts, newest first.
+const MAX_HUNTS = 1000;
+// Dashboards and side panels only look at recent hunts.
+export const RECENT_HUNTS = 200;
+
+function huntsQuery(includeArchived: boolean, count: number, enabled: boolean) {
+  return {
+    queryKey: ['hunts', { includeArchived, count }],
     enabled,
-    queryFn: ({ signal }) => api.get<ListHuntsResponse>('v1/ListHunts', {
-      count: 2000,
+    queryFn: ({ signal }: { signal: AbortSignal }) => api.get<ListHuntsResponse>('v1/ListHunts', {
+      count,
       offset: 0,
       include_archived: includeArchived,
     }, signal),
-    select: d => d.items ?? [],
-    refetchInterval: POLL.normal,
+    select: (d: ListHuntsResponse) => d.items ?? [],
+    // Pages that show one hunt poll it on their own; the list can be slower.
+    refetchInterval: POLL.slow,
     placeholderData: keepPreviousData,
-  });
+  };
+}
+
+/** Every hunt the server lists (up to 1,000): the Hunts page and search. */
+export function useHunts(includeArchived: boolean, enabled = true) {
+  return useQuery(huntsQuery(includeArchived, MAX_HUNTS, enabled));
+}
+
+/** The newest 200 non-archived hunts, shared by dashboards and panels. */
+export function useRecentHunts(enabled = true) {
+  return useQuery(huntsQuery(false, RECENT_HUNTS, enabled));
 }
 
 export function useHunt(huntId: string | undefined) {

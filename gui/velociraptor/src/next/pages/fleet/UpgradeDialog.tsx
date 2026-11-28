@@ -8,19 +8,29 @@ import { toast } from 'sonner';
 import { AlertTriangle, ArrowUpCircle } from 'lucide-react';
 import * as api from '../../lib/api';
 import { useCreateHunt } from '../../lib/queries';
-import type { ApiClient } from '../../lib/types';
 import { Button, Dialog, Input, Mono, Skeleton, Textarea } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
 import { newId } from '../cases/model';
 import { encodeUserData } from '../response/approval';
-import { UPGRADE } from './model';
+import { UPGRADE, type UpgradeOs } from './model';
 
 interface ToolInfo { name?: string; url?: string; filename?: string; hash?: string; version?: string; admin_override?: boolean; serve_locally?: boolean }
 
 const CONFIRM = 'UPGRADE';
 
-export function UpgradeDialog({ os, clients, onClose }: {
-  os: keyof typeof UPGRADE; clients: ApiClient[]; onClose: () => void;
+// The hosts to upgrade are looked up when the dialog opens: every client
+// of this OS running one of the outdated versions.
+function useOutdatedClients(os: UpgradeOs, versions: string[]) {
+  return useQuery({
+    queryKey: ['fleet-outdated', os, versions.join(',')],
+    enabled: versions.length > 0,
+    queryFn: ({ signal }) => api.get<{ client_ids?: string[] }>('v1/atl/fleet', { os, versions: versions.join(',') }, signal),
+    select: d => d.client_ids ?? [],
+  });
+}
+
+export function UpgradeDialog({ os, versions, expected, onClose }: {
+  os: UpgradeOs; versions: string[]; expected: number; onClose: () => void;
 }) {
   const history = useHistory();
   const create = useCreateHunt();
@@ -35,18 +45,20 @@ export function UpgradeDialog({ os, clients, onClose }: {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const outdated = useOutdatedClients(os, versions);
+  const clientIds = outdated.data ?? [];
   const t = tool.data;
   const hasPackage = !!(t?.filename || t?.url || t?.hash);
   const upstream = /velocidex/i.test(`${t?.url ?? ''} ${t?.filename ?? ''}`);
-  const ready = hasPackage && typed.trim().toUpperCase() === CONFIRM && !!reason.trim() && clients.length > 0;
+  const ready = hasPackage && typed.trim().toUpperCase() === CONFIRM && !!reason.trim() && clientIds.length > 0;
 
   const run = async () => {
     setBusy(true);
     const label = `upgrade-${newId()}`;
     try {
-      await api.post('v1/LabelClients', { client_ids: clients.map(c => c.client_id), labels: [label], operation: 'set' });
+      await api.post('v1/LabelClients', { client_ids: clientIds, labels: [label], operation: 'set' });
       const r = await create.mutateAsync({
-        hunt_description: `Agent upgrade (${spec.label}, ${clients.length} hosts)`,
+        hunt_description: `Agent upgrade (${spec.label}, ${clientIds.length} hosts)`,
         tags: ['fleet-upgrade'],
         start_request: {
           artifacts: [spec.artifact],
@@ -60,7 +72,7 @@ export function UpgradeDialog({ os, clients, onClose }: {
       onClose();
       if (r.flow_id) history.push(`/hunts/${r.flow_id}`);
     } catch (e) {
-      await api.post('v1/LabelClients', { client_ids: clients.map(c => c.client_id), labels: [label], operation: 'remove' }).catch(() => undefined);
+      await api.post('v1/LabelClients', { client_ids: clientIds, labels: [label], operation: 'remove' }).catch(() => undefined);
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
@@ -68,7 +80,7 @@ export function UpgradeDialog({ os, clients, onClose }: {
   };
 
   return (
-    <Dialog open onOpenChange={v => !v && onClose()} width={620} title={`Upgrade ${clients.length} ${spec.label} agents`}
+    <Dialog open onOpenChange={v => !v && onClose()} width={620} title={`Upgrade ${outdated.isLoading ? expected : clientIds.length} ${spec.label} agents`}
       description="Each host downloads and installs the package below, then restarts its agent."
       footer={<>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>

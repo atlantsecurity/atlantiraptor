@@ -13,6 +13,7 @@ import type { Hunt } from '../../lib/types';
 import { timeAgo } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Mono, Switch } from '../../ui/primitives';
 import { useMe } from '../cases/hooks';
+import { MAX_PICKED_CLIENTS } from './ClientPicker';
 import {
   ONE_OFF_LABEL_PREFIX, oneOffClientsOf, oneOffLabelOf, oneOffMismatch, requestOf, requestView, selfApprovalReason, useApprovalActions, useApprovalPolicy, usePendingApprovals,
 } from './approval';
@@ -58,7 +59,7 @@ function useOneOffHost(label: string | null, expected: number) {
     queryKey: ['one-off-host', label, expected],
     enabled: !!label,
     queryFn: () => api.get<{ items?: { client_id: string; os_info?: { hostname?: string } }[] }>('v1/SearchClients',
-      { query: `label:${label}`, limit: Math.min(expected + 5, 200) }),
+      { query: `label:${label}`, limit: Math.min(expected + 5, MAX_PICKED_CLIENTS + 5) }),
     select: d => (d.items ?? []).map(c => ({ id: c.client_id, text: `${c.os_info?.hostname || c.client_id} (${c.client_id})` })),
   });
 }
