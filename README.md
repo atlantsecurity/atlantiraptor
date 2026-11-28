@@ -34,6 +34,44 @@ opens the console in your browser. See the
 and, for a real deployment,
 [Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/).
 
+## Deploy a client
+
+An agent connects to your server with the server's **client
+configuration**: the server address, the certificate authority it trusts,
+and the org's enrollment nonce (the shared secret that lets it enroll).
+The configuration is created together with the server; each agent then
+makes its own key the first time it starts.
+
+1. Set up a server that other computers can reach (see
+   [Set up a test lab, part B](https://atlantsecurity.github.io/atlantiraptor/quickstart/#b-a-server-and-a-second-computer)
+   or [Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/)).
+   The one-computer `gui` lab only listens on `localhost`.
+2. In the console, open **Clients** and expand **Deploy a client** at the
+   bottom of the page (server administrators only).
+3. Pick **Windows**, **Linux**, **macOS** or **Microsoft Intune**, and copy
+   the command into the computer you want to add:
+   - **Windows**: paste it into PowerShell run as administrator. It
+     downloads the signed `Atlantiraptor-windows-amd64.exe` for your
+     server's version from the GitHub release, refuses it unless it is
+     signed by Atlant Security EOOD, and installs the `Atlantiraptor`
+     service. The same installer is available as `Install-Atlantiraptor.ps1`
+     for Group Policy, SCCM or RMM tools.
+   - **Linux / macOS**: put the `atlantiraptor` program for that system in
+     a folder and paste the command into a terminal there (uses `sudo`);
+     it installs a systemd service or a launchd daemon.
+   - **Microsoft Intune**: download `Atlantiraptor-Intune.intunewin` and
+     `Detect-Atlantiraptor.ps1` and add them as a Win32 app; the tab lists
+     the install and uninstall commands and settings. See
+     [Deploying with Intune](https://atlantsecurity.github.io/atlantiraptor/deployment/intune/).
+4. Within a minute the computer appears under **Clients**.
+
+Without the console, get the configuration with
+`Atlantiraptor.exe --config server.config.yaml config client > client.config.yaml`
+and install with the [MSI](https://atlantsecurity.github.io/atlantiraptor/deployment/clients/#the-msi-installer-recommended)
+or `Atlantiraptor.exe --config client.config.yaml service install`.
+Treat the client configuration like a password: anyone who has it can
+enroll a computer to your server.
+
 ## Building from source
 
 You need Go (see `go.mod`), Node.js LTS, `make`, and `gcc` for CGO

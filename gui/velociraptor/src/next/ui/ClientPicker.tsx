@@ -28,7 +28,7 @@ export default function ClientPicker({ open, onOpenChange, onPick, allowServer, 
       </div>
       <div className="tw:max-h-[360px] tw:overflow-y-auto tw:-mx-1">
         {allowServer && (
-          <Item onClick={() => onPick('server', 'the server')} icon={<Server className="tw:size-4" />} title="Server" sub="Run on the Velociraptor server itself" />
+          <Item onClick={() => onPick('server', 'the server')} icon={<Server className="tw:size-4" />} title="Server" sub="Run on the Atlantiraptor server itself" />
         )}
         {items.map(c => (
           <Item key={c.client_id} onClick={() => onPick(c.client_id, c.os_info?.hostname || c.client_id)}

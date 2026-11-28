@@ -56,6 +56,13 @@
    " authenticators.authenticateUserHandle",
    " http.HandlerFunc"
   ],
+  "/velociraptor/api/v1/atl/deploy": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/atl/feeds": [
    "authenticators.IpFilter",
    " api.csrfProtect",
@@ -85,6 +92,13 @@
    " http.HandlerFunc"
   ],
   "/velociraptor/api/v1/atl/network": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
+  "/velociraptor/api/v1/atl/orgs": [
    "authenticators.IpFilter",
    " api.csrfProtect",
    " GetLoggingHandler",

@@ -5,7 +5,7 @@ import { SETTINGS_PAGES, activeSettingsPage, isSettingsPath } from './nav.ts';
 describe('settings navigation', () => {
   it('covers the admin pages under their existing addresses', () => {
     for (const p of ['/users', '/users/alice', '/groups', '/account/security', '/secrets/AWS', '/integrations',
-      '/apikeys', '/network', '/updates', '/settings', '/settings/https']) {
+      '/apikeys', '/network', '/updates', '/orgs', '/settings', '/settings/https', '/settings/deploy']) {
       assert.ok(isSettingsPath(p), p);
     }
   });

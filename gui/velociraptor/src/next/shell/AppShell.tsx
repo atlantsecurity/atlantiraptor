@@ -22,6 +22,7 @@ const UpdatesPage = lazy(() => import('../pages/updates/UpdatesPage'));
 const MessagesPage = lazy(() => import('../pages/messages/MessagesPage'));
 const FeedsPage = lazy(() => import('../pages/feeds/FeedsPage'));
 const GroupsPage = lazy(() => import('../pages/users/GroupsPage'));
+const OrgsPage = lazy(() => import('../pages/orgs/OrgsPage'));
 const ApiKeysPage = lazy(() => import('../pages/apikeys/ApiKeysPage'));
 const NetworkPage = lazy(() => import('../pages/network/NetworkPage'));
 const SecurityPage = lazy(() => import('../pages/account/SecurityPage'));
@@ -36,12 +37,13 @@ const SecretsPage = lazy(() => import('../pages/secrets/SecretsPage'));
 const EventsPage = lazy(() => import('../pages/events/EventsPage'));
 const NotebooksPage = lazy(() => import('../pages/notebooks/NotebooksPage'));
 const SettingsHome = lazy(() => import('../pages/settings/SettingsHome'));
+const DeployPage = lazy(() => import('../pages/settings/DeployPage'));
 const HttpsPage = lazy(() => import('../pages/settings/HttpsPage'));
 const LegacyRoutes = lazy(() => import('./LegacyRoutes.jsx'));
 
 // The settings pages share the Server settings frame. They keep their
 // own addresses so existing links keep working.
-const SETTINGS_ROUTES = ['/settings', '/users', '/groups', '/account/security', '/network', '/updates', '/integrations', '/apikeys', '/secrets'];
+const SETTINGS_ROUTES = ['/settings', '/users', '/groups', '/orgs', '/account/security', '/network', '/updates', '/integrations', '/apikeys', '/secrets'];
 
 function PageFallback() {
   return (
@@ -110,6 +112,8 @@ export default function AppShell() {
                         <Route path="/settings/https"><HttpsPage /></Route>
                         <Route path="/users/:user?"><UsersPage /></Route>
                         <Route path="/groups"><GroupsPage /></Route>
+                        <Route path="/orgs"><OrgsPage /></Route>
+                        <Route path="/settings/deploy"><DeployPage /></Route>
                         <Route path="/account/security"><SecurityPage /></Route>
                         <Route path="/network"><NetworkPage /></Route>
                         <Route path="/updates"><UpdatesPage /></Route>

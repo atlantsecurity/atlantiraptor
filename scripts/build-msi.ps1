@@ -81,6 +81,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $stage 'client.config.yaml'), $config, (New-Object System.Text.UTF8Encoding $false))
     Copy-Item -LiteralPath (Join-Path $repo 'LICENSE') -Destination (Join-Path $stage 'LICENSE.txt')
     Copy-Item -LiteralPath (Join-Path $repo 'docs/wix/atlantiraptor_amd64.wxs') -Destination $stage
+    Copy-Item -LiteralPath (Join-Path $repo 'docs/wix/icon.ico') -Destination $stage
 
     New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
     $out = Join-Path (Resolve-Path $OutDir) "Atlantiraptor-$Version-amd64.msi"

@@ -126,7 +126,7 @@ func GetDefaultConfig() *config_proto.Config {
 					Url:     "https://atlantsecurity.github.io/atlantiraptor/",
 					NewTab:  true,
 					Type:    "sidebar",
-					IconUrl: VeloIconDataURL,
+					IconUrl: AtlantiraptorIconDataURL,
 				},
 			},
 		},

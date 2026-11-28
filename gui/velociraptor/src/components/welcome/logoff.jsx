@@ -4,7 +4,7 @@ import Card from 'react-bootstrap/Card';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
-import logo from  "../sidebar/velo.svg";
+import logo from  "../sidebar/atlantiraptor.svg";
 import "./login.css";
 import api from '../core/api-service.jsx';
 
@@ -23,7 +23,7 @@ export default class LogoffPage extends Component {
                        window.location = api.href("/app/index.html");
                    }}>
               <Modal.Header closeButton>
-                <Modal.Title>Velociraptor Login</Modal.Title>
+                <Modal.Title>Atlantiraptor Login</Modal.Title>
               </Modal.Header>
               <Modal.Body className="tool-viewer">
 
@@ -33,7 +33,7 @@ export default class LogoffPage extends Component {
                       User {username} has now logged off.
                     </Card.Header>
                     <Card.Body>
-                      Thank you for using Velociraptor... Digging Deeper!
+                      Thank you for using Atlantiraptor.
                     </Card.Body>
                   </Card>
                 }

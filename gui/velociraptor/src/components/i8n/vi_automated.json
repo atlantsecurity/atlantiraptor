@@ -229,7 +229,7 @@
     "Update the table column types in this cell.": "C\u1eadp nh\u1eadt c\u00e1c lo\u1ea1i c\u1ed9t c\u1ee7a b\u1ea3ng trong \u00f4 n\u00e0y.",
     "Used before contains to match base64 encoded strings (e.g. fieldname|base64offset|contains: )": "\u0110\u01b0\u1ee3c s\u1eed d\u1ee5ng tr\u01b0\u1edbc contains \u0111\u1ec3 kh\u1edbp v\u1edbi c\u00e1c chu\u1ed7i \u0111\u01b0\u1ee3c m\u00e3 h\u00f3a base64 (v\u00ed d\u1ee5: fieldname|base64offset|contains: )",
     "Value form new metadata": "Gi\u00e1 tr\u1ecb bi\u1ec3u m\u1eabu si\u00eau d\u1eef li\u1ec7u m\u1edbi",
-    "Velociraptor Login": "\u0110\u0103ng nh\u1eadp Velociraptor",
+    "Atlantiraptor Login": "\u0110\u0103ng nh\u1eadp Atlantiraptor",
     "Verify Expression": "X\u00e1c minh bi\u1ec3u th\u1ee9c",
     "View Cell Logs": "Xem nh\u1eadt k\u00fd di \u0111\u1ed9ng",
     "Year": "N\u0103m",

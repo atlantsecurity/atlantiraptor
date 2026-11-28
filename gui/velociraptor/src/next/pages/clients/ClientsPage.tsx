@@ -12,6 +12,7 @@ import {
 import { DataTable } from '../../ui/DataTable';
 import { TagInput } from '../hunts/TagInput';
 import { useSelectedClient } from '../../shell/client-context';
+import DeploySection from './DeploySection';
 
 const OS_LABEL: Record<string, string> = { windows: 'Windows', linux: 'Linux', darwin: 'macOS' };
 
@@ -31,6 +32,8 @@ export default function ClientsPage() {
   const history = useHistory();
   const { setClient } = useSelectedClient();
   const canLabel = usePermission('label_clients');
+  // The client configuration is for server administrators only.
+  const canDeploy = usePermission('server_admin');
 
   const initial = decodeURIComponent(routeQuery || 'all');
   const [input, setInput] = useState(initial === 'all' ? '' : initial);
@@ -195,11 +198,15 @@ export default function ClientsPage() {
               Version: v => <span className="tw:text-muted">{String(v)}</span>,
             }}
             empty={<EmptyState icon={<Monitor />} title={query === 'all' ? 'No clients enrolled yet' : 'No clients match'}>
-              {query === 'all' ? 'Deploy the client to endpoints to see them here.' : `Nothing matched “${query}”.`}
+              {query === 'all'
+                ? (canDeploy ? 'Install the agent on your computers: see Deploy a client below.' : 'Deploy the client to endpoints to see them here.')
+                : `Nothing matched “${query}”.`}
             </EmptyState>}
           />
         )}
       </div>
+
+      {canDeploy && <DeploySection noClients={!isLoading && !error && query === 'all' && total === 0} />}
 
       {labelDialog && (
         <LabelDialog mode={labelDialog} clientIds={[...checked]}

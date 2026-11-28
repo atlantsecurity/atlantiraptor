@@ -9,11 +9,23 @@ the server is and which CA to trust. Each agent creates its own key the
 first time it starts and stores it in its *writeback file*; the server then
 lists it as a new client.
 
+The quickest way to get both is the console: **Clients > Deploy a
+client** (server administrators only) shows the client configuration and a
+ready-to-copy install command for Windows, Linux and macOS, install
+scripts, and a [Microsoft Intune package](/deployment/intune/). Each
+view and download is recorded in the audit log. The rest of this page
+describes the same steps by hand.
+
 Get the client configuration with:
 
 ```sh
 atlantiraptor --config server.config.yaml config client > client.config.yaml
 ```
+
+The configuration holds no private key, but its *nonce* is the org's
+enrollment secret: anyone who has the file can enroll a computer to your
+server. The nonce is created with the server (or org); it can't be changed
+without re-deploying every agent.
 
 ## Windows
 
@@ -51,14 +63,25 @@ msiexec /i Atlantiraptor-1.0.3-amd64.msi /qn
 ```
 
 - **Intune**: add it as a *Line-of-business app* and assign it to a device
-  group.
+  group, or use the Win32 app package from the console (see
+  [Deploying with Intune](/deployment/intune/)).
 - **Group Policy**: assign it under *Computer Configuration > Policies >
   Software Settings > Software installation*.
 - **SCCM / other tools**: use the silent command above.
 
 ### Without the MSI
 
-On a single machine, the program can install itself as a service:
+The console's `Install-Atlantiraptor.ps1` (**Clients > Deploy a client >
+Windows**) installs the agent the same way as the MSI, after checking the
+program's signature. Run it as an administrator:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Atlantiraptor.ps1
+```
+
+`-Uninstall` removes the agent again (also one installed by the MSI).
+
+On a single machine, the program can also install itself as a service:
 
 ```powershell
 .\Atlantiraptor.exe --config client.config.yaml service install
@@ -79,7 +102,16 @@ and under **Clients**. If not, see [Agent problems](/troubleshooting/clients/).
 
 ## Linux
 
-Build a package that contains the program, the client configuration and a
+The **Linux** tab of **Clients > Deploy a client** gives a command (and
+the script `install-atlantiraptor-linux.sh`) that installs the program
+from the current folder as the systemd service `atlantiraptor`, under
+`/opt/atlantiraptor`:
+
+```sh
+sudo sh install-atlantiraptor-linux.sh --binary ./atlantiraptor
+```
+
+Or build a package that contains the program, the client configuration and a
 systemd unit, then install it with your usual tools (Ansible, Puppet, an
 RMM, or by hand):
 
@@ -105,6 +137,10 @@ The agent binary is static and runs on most distributions. On very old
 systems (for example with an old glibc), use a binary built with musl.
 
 ## macOS
+
+The **macOS** tab of **Clients > Deploy a client** works like the Linux one
+and installs the launchd daemon `com.atlantsecurity.atlantiraptor` under
+`/usr/local/atlantiraptor`. Or let the program install itself:
 
 ```sh
 sudo ./atlantiraptor --config client.config.yaml service install

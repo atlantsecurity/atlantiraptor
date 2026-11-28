@@ -74,6 +74,7 @@ sections:
       - path: deployment/tls
       - path: deployment/authentication
       - path: deployment/clients
+      - path: deployment/intune
       - path: deployment/network-access
       - path: deployment/orgs
       - path: deployment/scaling
