@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Velocidex/ordereddict"
@@ -74,6 +75,7 @@ type fixtureServer struct {
 	*httptest.Server
 	dir      string
 	now      time.Time
+	mu       sync.Mutex // the server handles requests concurrently
 	requests []string
 	// JWT assertions sent to the token endpoint (Google).
 	assertions []string
@@ -87,7 +89,9 @@ func newFixtureServer(dir string) *fixtureServer {
 }
 
 func (self *fixtureServer) serve(w http.ResponseWriter, r *http.Request) {
+	self.mu.Lock()
 	self.requests = append(self.requests, r.Method+" "+r.URL.String())
+	self.mu.Unlock()
 
 	// Token endpoints (Google, Microsoft). Not any path ending in /token:
 	// the Reports API has an application called "token".

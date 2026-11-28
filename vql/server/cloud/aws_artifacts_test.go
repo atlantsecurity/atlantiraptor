@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,7 +29,9 @@ var awsScope = regexp.MustCompile(`Credential=([^/]+)/\d+/([^/]+)/([^/]+)/aws4_r
 type AWSArtifactsTestSuite struct {
 	cloudSuite
 	server *fixtureServer
-	// "key region service" of every signed request.
+	// "key region service" of every signed request. Regions are read
+	// in parallel, so the handler runs concurrently.
+	mu     sync.Mutex
 	signed []string
 }
 
@@ -78,7 +81,9 @@ func (self *AWSArtifactsTestSuite) handle(w http.ResponseWriter, r *http.Request
 		return true
 	}
 	key, region, service := m[1], m[2], m[3]
+	self.mu.Lock()
 	self.signed = append(self.signed, key+" "+region+" "+service)
+	self.mu.Unlock()
 
 	if strings.HasSuffix(r.Header.Get("X-Amz-Target"), ".LookupEvents") {
 		self.lookupEvents(w, region, body)
@@ -213,6 +218,8 @@ func (self *AWSArtifactsTestSuite) TestConsoleLogins() {
 		"critical|Successful console sign-in from a password-guessing address|carol",
 	)
 	// Every region was read, each request signed for its own region.
+	self.mu.Lock()
+	defer self.mu.Unlock()
 	assert.Contains(self.T(), self.signed, "AKIAATLANT eu-west-1 cloudtrail")
 	assert.Contains(self.T(), self.signed, "AKIAATLANT ap-southeast-1 cloudtrail")
 }
@@ -311,6 +318,8 @@ func (self *AWSArtifactsTestSuite) TestAssumeRole() {
         query={ SELECT * FROM aws_cloudtrail(secret="assume", region=Region,
                                              start=now() - 30 * 86400) })`, nil)
 	assert.Equal(self.T(), 6, len(rows), self.logs())
+	self.mu.Lock()
+	defer self.mu.Unlock()
 	assert.Contains(self.T(), self.signed, "AKIAATLANT us-east-1 sts")
 	assert.Contains(self.T(), self.signed, "ASIATEMP eu-west-1 cloudtrail")
 	for _, s := range self.signed {
