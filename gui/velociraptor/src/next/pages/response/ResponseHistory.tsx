@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { History } from 'lucide-react';
-import { useHunts } from '../../lib/queries';
+import { useRecentHunts } from '../../lib/queries';
 import { toNum, timeAgo } from '../../lib/format';
 import { Badge, Card, CardHeader, Skeleton } from '../../ui/primitives';
 import { HuntProgress, HuntStateBadge, huntTitle } from '../hunts/HuntBits';
@@ -12,7 +12,7 @@ import { RESPONSE_TAG } from './actions';
 const MAX_ROWS = 25;
 
 export function ResponseHistory() {
-  const { data: hunts = [], isLoading } = useHunts(false);
+  const { data: hunts = [], isLoading } = useRecentHunts();
   const rows = useMemo(() => hunts
     .filter(h => (h.tags ?? []).includes(RESPONSE_TAG))
     .sort((a, b) => toNum(b.create_time) - toNum(a.create_time))

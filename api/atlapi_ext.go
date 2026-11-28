@@ -353,6 +353,23 @@ func decideApproval(c *apiCtx, id string, approve bool) {
 		"hunt_id": id, "approved": approve, "state": state.String()}})
 }
 
+// maxOneOffClients matches the console's limit on named clients for one
+// response hunt (MAX_PICKED_CLIENTS in ClientPicker.tsx).
+const maxOneOffClients = 10000
+
+// oneOffLookupLimit is how many label members to read when checking a
+// one-off target: a few more than the request named, so extra hosts on
+// the label are noticed.
+func oneOffLookupLimit(named int) int {
+	if named < 1 {
+		named = 1
+	}
+	if named > maxOneOffClients {
+		named = maxOneOffClients
+	}
+	return named + 5
+}
+
 // checkOneOffTarget makes sure a one-off label hunt is aimed at exactly
 // the recorded clients before it is approved.
 func (c *apiCtx) checkOneOffTarget(hunt *api_proto.Hunt, req pendingRequest) string {
@@ -374,7 +391,7 @@ func (c *apiCtx) checkOneOffTarget(hunt *api_proto.Hunt, req pendingRequest) str
 	}
 	rows, err := runAPIQuery(c.r.Context(), c.org, c.key.Principal(),
 		ordereddict.NewDict().Set("Q", "label:"+req.OneOffLabel),
-		`SELECT client_id FROM clients(search=Q)`, maxTargetClients+5)
+		`SELECT client_id FROM clients(search=Q)`, oneOffLookupLimit(len(req.OneOff)))
 	if err != nil {
 		return "Could not check the target clients."
 	}

@@ -13,6 +13,7 @@ import * as api from '../../lib/api';
 import { setServerMetadata, useHunts, useServerMetadata } from '../../lib/queries';
 import type { Hunt } from '../../lib/types';
 import { RESPONSE_TAG } from './actions';
+import { MAX_PICKED_CLIENTS } from './ClientPicker';
 import {
   APPROVED_PREFIX, isPaused, oneOffClientsOf, oneOffLabelOf, PENDING_TAG, POLICY_KEY, REJECTED_PREFIX, selfApprovalReason,
 } from './approvalModel';
@@ -84,7 +85,7 @@ export async function removeOneOffLabels(h: Hunt) {
   if (!label) return;
   const expected = oneOffClientsOf(h);
   const found = await api.get<{ items?: { client_id: string }[] }>('v1/SearchClients',
-    { query: `label:${label}`, limit: Math.min((expected?.length ?? 1) + 5, 200) });
+    { query: `label:${label}`, limit: Math.min((expected?.length ?? 1) + 5, MAX_PICKED_CLIENTS + 5) });
   const ids = (found.items ?? []).map(c => c.client_id);
   // Only from the hosts the request named (or the one host of a
   // single-host request).

@@ -1,13 +1,18 @@
 // Search for clients by hostname, client ID or label and select one or
 // more. Selected clients show as chips.
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Plus, Search, X } from 'lucide-react';
 import * as api from '../../lib/api';
 import type { SearchClientsResponse } from '../../lib/types';
 import { cn, Input } from '../../ui/primitives';
 
-export const MAX_PICKED_CLIENTS = 100;
+// One response hunt can target this many named clients (they get one
+// one-off label). Links carry at most MAX_URL_CLIENTS IDs in the address.
+export const MAX_PICKED_CLIENTS = 10_000;
+export const MAX_URL_CLIENTS = 100;
+// Chips shown before the rest collapse into "and N more".
+const SHOWN_CHIPS = 40;
 
 export interface PickedClient { id: string; hostname: string; online?: boolean }
 
@@ -46,7 +51,7 @@ interface Props { value: PickedClient[]; onChange: (v: PickedClient[]) => void }
 export function ClientPicker({ value, onChange }: Props) {
   const [q, setQ] = useState('');
   const { data, isFetching } = useClientMatches(q);
-  const picked = new Set(value.map(c => c.id));
+  const picked = useMemo(() => new Set(value.map(c => c.id)), [value]);
   const add = (cs: PickedClient[]) => {
     const next = [...value];
     for (const c of cs) {
@@ -61,7 +66,7 @@ export function ClientPicker({ value, onChange }: Props) {
     <div className="tw:space-y-2">
       {value.length > 0 && (
         <div className="tw:flex tw:flex-wrap tw:gap-1.5">
-          {value.map(c => (
+          {value.slice(0, SHOWN_CHIPS).map(c => (
             <span key={c.id} className="tw:inline-flex tw:items-center tw:gap-1 tw:rounded-md tw:border tw:border-accent tw:bg-accent-soft tw:px-2 tw:py-0.5 tw:text-xs">
               <span className="tw:font-medium">{c.hostname}</span>
               <span className="tw:font-mono tw:text-[10px] tw:text-faint">{c.id}</span>
@@ -70,6 +75,9 @@ export function ClientPicker({ value, onChange }: Props) {
               </button>
             </span>
           ))}
+          {value.length > SHOWN_CHIPS && (
+            <span className="tw:self-center tw:text-xs tw:text-muted">and {(value.length - SHOWN_CHIPS).toLocaleString()} more</span>
+          )}
           <button type="button" className="tw:text-2xs tw:text-muted tw:hover:text-fg tw:underline" onClick={() => onChange([])}>Clear</button>
         </div>
       )}

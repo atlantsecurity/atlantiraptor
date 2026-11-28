@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Play, ScanSearch } from 'lucide-react';
-import { useCreateHunt, useEstimateHunt, useHunts, usePermission } from '../../lib/queries';
+import { useCreateHunt, useEstimateHunt, useRecentHunts, usePermission } from '../../lib/queries';
 import type { HuntCondition } from '../../lib/types';
 import { timeAgo, toNum } from '../../lib/format';
 import { Badge, Button, Card, CardHeader, Input, Select, Switch, Textarea, cn } from '../../ui/primitives';
@@ -152,7 +152,7 @@ export default function IocSweepPage() {
 }
 
 function RecentSweeps() {
-  const { data: hunts = [] } = useHunts(false);
+  const { data: hunts = [] } = useRecentHunts();
   const rows = useMemo(() => hunts.filter(h => (h.tags ?? []).includes(IOC_TAG))
     .sort((a, b) => toNum(b.create_time) - toNum(a.create_time)).slice(0, 15), [hunts]);
   return (
