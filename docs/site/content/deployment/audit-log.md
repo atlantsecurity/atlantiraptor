@@ -129,7 +129,7 @@ reordered entries, but not whether the log was rebuilt with another key.
 
 | Message | Meaning |
 |---|---|
-| Entry N was changed after it was written | The entry's content does not match its hash. |
+| Entry N was changed after it was written | The content of the entry does not match its hash. |
 | Entry N does not follow entry M | An entry was replaced with one whose hash was recomputed. |
 | Entries N to M are missing | Lines were removed. |
 | The log starts at entry N | Earlier files or lines were removed (or archived elsewhere). |

@@ -75,3 +75,7 @@ intunewin
 usermessages
 agentupdate
 consolehttps
+auditlog
+isInside
+onWrite
+msgid
