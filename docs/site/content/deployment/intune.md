@@ -16,8 +16,13 @@ In the console, open **Clients**, expand **Deploy a client** at the bottom
 of the page and choose the **Microsoft Intune** tab. Only server
 administrators see this section. Download:
 
-- `Atlantiraptor-Intune.intunewin`: the app package, and
-- `Detect-Atlantiraptor.ps1`: the detection script.
+- `Atlantiraptor-Intune.intunewin`: the app package. It contains
+  `Install-Atlantiraptor.ps1`, the installer with your configuration,
+  which the install and uninstall commands below run. You don't download
+  that script separately.
+- `Detect-Atlantiraptor.ps1`: the detection script, which Intune runs to
+  check whether the agent is installed. It is not part of the package; you
+  upload it in the detection rules.
 
 Each download is recorded in the server's audit log. The package contains
 your client configuration, so treat it like a password: anyone who has it
@@ -30,7 +35,7 @@ In the [Intune admin center](https://intune.microsoft.com/), go to
 
 | Setting | Value |
 |---|---|
-| App package file | `Atlantiraptor-Intune.intunewin` |
+| App package file | `Atlantiraptor-Intune.intunewin` (Intune shows `Install-Atlantiraptor.ps1` as its setup file) |
 | Name / Publisher | Atlantiraptor / Atlant Security |
 | Install command | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Atlantiraptor.ps1` |
 | Uninstall command | `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Atlantiraptor.ps1 -Uninstall` |
