@@ -18,9 +18,9 @@ import (
 /*
    To inspect the produce rpm file:
 
-   rpm2cpio ./velociraptor-server-0.76.5.x86_64.rpm | less
+   rpm2cpio ./atlantiraptor-server-0.76.5.x86_64.rpm | less
 
-   rpm -qp --scripts velociraptor-server-0.77.2.x86_64.rpm  | less
+   rpm -qp --scripts atlantiraptor-server-0.77.2.x86_64.rpm  | less
 */
 
 var (

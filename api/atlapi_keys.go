@@ -29,6 +29,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"www.velocidex.com/golang/velociraptor/logging"
 
 	acl_proto "www.velocidex.com/golang/velociraptor/acls/proto"
 	"www.velocidex.com/golang/velociraptor/api/authenticators"
@@ -106,6 +107,11 @@ func apiKeysPath() fs_api.FSPathSpec {
 		SetType(fs_api.PATH_TYPE_FILESTORE_JSON)
 }
 
+func apiKeysTmpPath() fs_api.FSPathSpec {
+	return path_specs.NewSafeFilestorePath("config", "atl_api_keys_tmp").
+		SetType(fs_api.PATH_TYPE_FILESTORE_JSON)
+}
+
 func apiKeyPepper(root *config_proto.Config) ([]byte, error) {
 	if root == nil || root.Frontend == nil || root.Frontend.PrivateKey == "" {
 		return nil, errors.New("server key unavailable")
@@ -161,8 +167,11 @@ func writeKeysLocked(root *config_proto.Config, doc *apiKeyDoc) error {
 	if err != nil {
 		return err
 	}
+	// Write a temporary file and move it over the old one, so a crash
+	// or a full disk mid-write can never leave a truncated key store.
 	fs := file_store.GetFileStore(root)
-	writer, err := fs.WriteFile(apiKeysPath())
+	tmp := apiKeysTmpPath()
+	writer, err := fs.WriteFile(tmp)
 	if err != nil {
 		return fmt.Errorf("open api keys for writing: %w", err)
 	}
@@ -176,6 +185,9 @@ func writeKeysLocked(root *config_proto.Config, doc *apiKeyDoc) error {
 	}
 	if err := writer.Close(); err != nil {
 		return err
+	}
+	if err := fs.Move(tmp, apiKeysPath()); err != nil {
+		return fmt.Errorf("replace api keys: %w", err)
 	}
 	apiKeyCache, apiKeyFetched = doc, time.Now()
 	return nil
@@ -408,7 +420,10 @@ func VerifyAPIKey(root *config_proto.Config, token string, now time.Time) (APIKe
 			lastUsedSaved[k.ID] = now
 			updated := &apiKeyDoc{Keys: append([]APIKey{}, doc.Keys...), Revoked: doc.Revoked}
 			updated.Keys[i].LastUsed = now.Unix()
-			_ = writeKeysLocked(root, updated)
+			if err := writeKeysLocked(root, updated); err != nil {
+				logging.GetLogger(root, &logging.FrontendComponent).
+					Error("atl api: recording last use of key %v: %v", k.ID, err)
+			}
 			return updated.Keys[i], nil
 		}
 		return *k, nil

@@ -117,10 +117,10 @@ RMM, or by hand):
 
 ```sh
 atlantiraptor --config client.config.yaml debian client --binary ./atlantiraptor
-sudo dpkg -i velociraptor_client_*.deb
+sudo dpkg -i atlantiraptor_client_*.deb
 
 atlantiraptor --config client.config.yaml rpm client --binary ./atlantiraptor
-sudo rpm -i velociraptor_client_*.rpm
+sudo rpm -i atlantiraptor_client_*.rpm
 ```
 
 The service is called `velociraptor_client`. The agent runs as root, so it

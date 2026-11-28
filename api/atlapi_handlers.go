@@ -205,7 +205,12 @@ func AtlAPIHandler(config_obj *config_proto.Config) http.Handler {
 		}
 		// A valid key always works; the per-address throttle only slows
 		// down repeated failures, so others' failures can't lock it out.
+		// Behind a reverse proxy the TCP peer is the proxy, so use the
+		// proxy-aware client address (GUI.forwarded_proxy_header).
 		ip := remoteIP(r)
+		if client := authenticators.ClientIP(config_obj, r); client != nil {
+			ip = client.String()
+		}
 		key, err := VerifyAPIKey(root, strings.TrimSpace(strings.TrimPrefix(auth, "Bearer ")), time.Now())
 		if err != nil {
 			if authBlocked(ip, time.Now()) {

@@ -1,4 +1,4 @@
-velociraptor_client_0.74.3_amd64.deb
+atlantiraptor_client_0.74.3_amd64.deb
 
 >> /etc/velociraptor/client.config.yaml
 version:
@@ -24,7 +24,7 @@ Client:
 >> /etc/systemd/system/velociraptor_client.service
 
 [Unit]
-Description=Velociraptor client
+Description=Atlantiraptor client
 After=syslog.target network.target
 
 [Service]

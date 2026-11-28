@@ -41,9 +41,9 @@ import (
 /*
    To inspect the produced deb file:
 
-   ar p ./velociraptor-server-0.76.5.amd64.deb data.tar.gz | less
+   ar p ./atlantiraptor-server-0.76.5.amd64.deb data.tar.gz | less
 
-   ar p ./velociraptor-server-0.76.5.amd64.deb control.tar.gz | less
+   ar p ./atlantiraptor-server-0.76.5.amd64.deb control.tar.gz | less
 */
 
 var (

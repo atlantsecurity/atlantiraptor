@@ -1,4 +1,4 @@
-velociraptor-server-0.74.3.amd64.deb
+atlantiraptor-server-0.74.3.amd64.deb
 
 >> /etc/velociraptor/server.config.yaml
 version:
@@ -273,7 +273,7 @@ security: {}
 >> /etc/systemd/system/velociraptor_server.service
 
 [Unit]
-Description=Velociraptor server
+Description=Atlantiraptor server
 After=syslog.target network.target
 
 [Service]
@@ -301,7 +301,7 @@ fi
 if ! getent passwd velociraptor >/dev/null; then
    adduser --system --home /etc/velociraptor --no-create-home \
      --ingroup velociraptor velociraptor --shell /bin/false \
-     --gecos "Velociraptor server"
+     --gecos "Atlantiraptor server"
 fi
 
 
