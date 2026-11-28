@@ -14,7 +14,7 @@ import {
 } from '../../lib/queries';
 import * as api from '../../lib/api';
 import { fmtTime, timeAgo } from '../../lib/format';
-import { setItem, schema } from '../../../components/core/storage.jsx';
+import { setItem, schema } from '../../lib/storage';
 import type { Row } from '../../lib/table';
 import {
   Badge, Button, Card, ConfirmDialog, Dialog, EmptyState, Field, Input, Menu, MenuContent, MenuItem, MenuLabel,

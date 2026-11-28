@@ -1,6 +1,6 @@
 ---
 title: Preferences and keyboard shortcuts
-description: Personal settings in the Atlantiraptor console - theme, time zone, language, download password - and keyboard shortcuts.
+description: Personal settings in the Atlantiraptor console - theme, time zone, download password - and keyboard shortcuts.
 ---
 
 ## Settings
@@ -9,11 +9,11 @@ Open the account menu (top right) and choose **Settings…**:
 
 | Setting | Effect |
 |---|---|
-| **Theme** | Light or dark, plus several alternative themes. The account menu's light/dark switch is a shortcut for the two main ones. |
-| **Display time zone** | Times in tables and timelines are shown in this zone. Stored data is always UTC. |
-| **Language** | English, Deutsch, Español, Français, 日本語, Português, Tiếng Việt. New Atlantiraptor screens are in English. |
-| **Downloads password** | A default password for password-protected zip exports (see below). |
-| **Organization** | The organization you work in (also in the account menu). |
+| **Theme** | Light or dark (also the moon/sun button in the top bar). |
+| **Time zone** | Times in tables and timelines are shown in this zone. Stored data is always UTC. |
+| **Password for downloads** | A default password for password-protected zip exports (see below). |
+
+Switch organization from the organization name in the top bar.
 
 Settings are stored with your user on the server, so they follow you to
 another browser.
@@ -37,7 +37,7 @@ sets up two-factor sign in. See [Authentication](/deployment/authentication/#two
 | Keys | Where | Does |
 |---|---|---|
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘</kbd>+<kbd>K</kbd> | Anywhere | Command palette |
-| <kbd>Ctrl</kbd>+<kbd>/</kbd> | Anywhere | List of keyboard shortcuts (also **Keyboard shortcuts** in the account menu) |
+| <kbd>Ctrl</kbd>+<kbd>/</kbd> or <kbd>?</kbd> | Anywhere | List of keyboard shortcuts (also **Keyboard shortcuts** in the account menu) |
 | <kbd>/</kbd> | Lists (hunts, artifacts) | Focus the filter box |
 | <kbd>J</kbd> / <kbd>K</kbd>, <kbd>↓</kbd> / <kbd>↑</kbd> | Hunts | Next / previous hunt |
 | <kbd>N</kbd> | Hunts | New hunt |
@@ -46,8 +46,8 @@ sets up two-factor sign in. See [Authentication](/deployment/authentication/#two
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Code editors | Editor settings (key bindings, font size) |
 | <kbd>Alt</kbd>+<kbd>D</kbd> | Anywhere | Go to the dashboard |
 | <kbd>Alt</kbd>+<kbd>N</kbd> | Anywhere | Go to notebooks |
-
-The list shows further shortcuts for collection and artifact screens.
+| <kbd>Alt</kbd>+<kbd>A</kbd> | Anywhere | Go to artifacts |
+| <kbd>Alt</kbd>+<kbd>C</kbd> | Anywhere | Collections of the selected host |
 
 ## Customizing the console for everyone
 

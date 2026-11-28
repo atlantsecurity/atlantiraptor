@@ -148,6 +148,10 @@
 
   var timer;
   input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(render, 80); });
+
+  // ?q=... (the console's Help dialog links here) opens with results.
+  var initial = new URLSearchParams(window.location.search).get("q");
+  if (initial) { input.value = initial; input.focus(); render(); }
   input.addEventListener("focus", function () { load(); if (input.value) render(); });
   input.addEventListener("keydown", function (e) {
     var links = box.querySelectorAll("a");

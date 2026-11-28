@@ -1,15 +1,12 @@
 // Thin, typed HTTP client for the Velociraptor gRPC gateway (/api/v1/*).
 //
-// URL building, org header and base path handling mirror the legacy
-// api-service so both UIs can run side by side against the same server.
+// URL building and base path handling live in urls.ts.
 import axios, { AxiosError } from 'axios';
 
-// A private instance: the legacy api-service installs axios-retry on the
-// global axios, which silently delays every 5xx by several seconds. Retries
-// for the new UI are handled by TanStack Query instead.
+// Retries are handled by TanStack Query, not here.
 const http = axios.create();
 import qs from 'qs';
-import legacyApi from '../../components/core/api-service.jsx';
+import { basePath as urlBasePath, href as urlHref, srcOf as urlSrcOf } from './urls';
 
 declare global {
   interface Window {
@@ -35,7 +32,7 @@ export class ApiError extends Error {
 }
 
 export function basePath(): string {
-  return (legacyApi as { base_path: () => string }).base_path();
+  return urlBasePath();
 }
 
 function apiUrl(path: string): string {
@@ -152,10 +149,9 @@ export async function del<T>(
 
 // Builds an href to a server-side resource (downloads etc).
 export function href(path: string, params?: Record<string, unknown>): string {
-  return (legacyApi as { href: (u: string, p?: unknown, o?: unknown) => string })
-    .href(path, params, { internal: true });
+  return urlHref(path, params);
 }
 
 export function srcOf(path: string): string {
-  return (legacyApi as { src_of: (u: string) => string }).src_of(path);
+  return urlSrcOf(path);
 }

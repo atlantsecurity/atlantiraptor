@@ -2,19 +2,15 @@
  * Design system for the new UI.
  *
  * Tailwind runs with the "tw" prefix (classes look like tw:flex,
- * tw:hover:bg-hover) so it can never collide with Bootstrap classes
- * still used by the legacy screens. Preflight is skipped for the
- * same reason: Bootstrap's reboot already normalises elements.
+ * tw:hover:bg-hover). Element defaults are set below under .rx and in
+ * the base rules for html and body.
  *
  * Colours are semantic tokens backed by CSS variables, so a single
  * class (tw:bg-panel) works in both light and dark mode.
  */
 @import "tailwindcss/theme.css" layer(theme) prefix(tw);
-/* Utilities are unlayered and !important: the legacy Bootstrap and
-   theme CSS is unlayered and uses element selectors scoped to the body
-   theme class (e.g. ".veloci-light a"), which would otherwise beat
-   single-class utilities. Utilities only ever appear on new UI
-   elements, so this cannot affect legacy screens. */
+/* Utilities are unlayered and !important so they always beat the
+   element defaults below and third-party widget styles. */
 @import "tailwindcss/utilities.css" important;
 
 @source "./";
@@ -123,7 +119,44 @@
   color-scheme: dark;
 }
 
-/* Root of everything rendered by the new UI. */
+/* Monospace font for code, IDs and tables (Latin subset). */
+@font-face {
+  font-family: "Iosevka Term";
+  font-weight: 400;
+  src: url("../fonts/iosevka-term-regular-subset.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+0080-00FF;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Iosevka Term";
+  font-weight: 500;
+  src: url("../fonts/iosevka-term-medium-subset.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+0080-00FF;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Iosevka Term";
+  font-weight: 700;
+  src: url("../fonts/iosevka-term-bold-subset.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+0080-00FF;
+  font-display: swap;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--rx-canvas);
+  color: var(--rx-fg);
+  font-family: var(--tw-font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+*, ::before, ::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img, svg { vertical-align: middle; }
+table { border-collapse: collapse; }
+hr { border: 0; border-top: 1px solid var(--rx-line); margin: 1rem 0; }
+
+/* Root of everything rendered by the console. */
 .rx {
   font-family: var(--tw-font-sans);
   letter-spacing: normal;
@@ -133,40 +166,37 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Undo Bootstrap reboot / legacy theme defaults inside new screens.
-   Selectors have element-level specificity (0,0,1) and this file loads
-   after the legacy CSS, so they beat Bootstrap's reboot. They never
-   apply inside legacy screens hosted by the shell. */
-:where(.rx) h1:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h2:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h3:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h4:not(:where(.rx-legacy-host *, .rx-legacy-inline *)),
-:where(.rx) h5:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h6:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) p:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) dl:not(:where(.rx-legacy-host *, .rx-legacy-inline *)),
-:where(.rx) dd:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) ul:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) ol:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) figure:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) pre:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+/* Element defaults inside the console (there is no global reset). */
+:where(.rx) h1, :where(.rx) h2, :where(.rx) h3, :where(.rx) h4,
+:where(.rx) h5, :where(.rx) h6, :where(.rx) p, :where(.rx) dl,
+:where(.rx) dd, :where(.rx) ul, :where(.rx) ol, :where(.rx) figure, :where(.rx) pre {
   margin: 0;
 }
-:where(.rx) h1:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h2:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h3:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h4:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h5:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) h6:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) h1, :where(.rx) h2, :where(.rx) h3, :where(.rx) h4, :where(.rx) h5, :where(.rx) h6 {
   font-size: inherit;
   font-weight: 600;
   line-height: 1.25;
   color: inherit;
 }
-:where(.rx) ul:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) ol:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) ul, :where(.rx) ol {
   padding: 0;
   list-style: none;
 }
 /* Legacy themes style dl, pre and code via ".theme el" (0,1,1). */
-.rx dl:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+.rx dl {
   font-family: inherit;
 }
-.rx pre:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), .rx code:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+.rx pre, .rx code {
   font-family: var(--tw-font-mono);
   font-size: inherit;
   color: inherit;
 }
 /* Legacy themes colour every link via ".theme a" (0,1,1). */
-.rx a:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+.rx a {
   color: inherit;
   text-decoration: none;
 }
-:where(.rx) button:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) button {
   font: inherit;
   color: inherit;
   background: transparent;
@@ -175,38 +205,29 @@
   cursor: pointer;
   letter-spacing: inherit;
 }
-:where(.rx) button:disabled:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) button:disabled {
   cursor: default;
 }
-:where(.rx) input:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) select:not(:where(.rx-legacy-host *, .rx-legacy-inline *)), :where(.rx) textarea:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) input, :where(.rx) select, :where(.rx) textarea {
   font: inherit;
   color: inherit;
   letter-spacing: inherit;
 }
-:where(.rx) label:not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) label {
   margin: 0;
 }
-:where(.rx) :where(*, ::before, ::after):not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) :where(*, ::before, ::after) {
   box-sizing: border-box;
   border-width: 0;
   border-style: solid;
   border-color: var(--rx-line);
 }
-:where(.rx) :where(:focus-visible):not(:where(.rx-legacy-host *, .rx-legacy-inline *)) {
+:where(.rx) :where(:focus-visible) {
   outline: 2px solid var(--rx-accent);
   outline-offset: 1px;
 }
 .rx ::selection {
   background: var(--rx-accent-soft);
-}
-
-/* Legacy screens keep their own typography. */
-.rx-legacy-host, .rx-legacy-inline {
-  font-family: var(--font-family-sans-serif);
-  font-size: var(--font-size-base, 14px);
-  letter-spacing: 0.4px;
-  line-height: 1.5;
-  color: var(--color-foreground);
 }
 
 .rx-shadow { box-shadow: var(--rx-shadow); }
@@ -219,23 +240,6 @@
 }
 
 .rx-num { font-variant-numeric: tabular-nums; }
-
-/* Legacy screens are mounted inside the new shell's main area. The
-   legacy CSS positions #content absolutely under a 50px navbar; we
-   pin it to the main panel instead. */
-.rx-legacy-host {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-}
-.rx-legacy-host #content {
-  position: absolute;
-  inset: 0;
-  margin-left: 0;
-  min-width: 0;
-  overflow: auto;
-}
 
 /* Skeleton shimmer */
 .rx-skeleton {

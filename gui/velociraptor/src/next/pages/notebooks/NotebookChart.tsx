@@ -28,13 +28,19 @@ function toNumber(v: unknown): number | null {
   return null;
 }
 
-export default function NotebookChart({ kind, params }: { kind: ChartKind; params: Record<string, unknown> }) {
-  const q = useQuery({
+// Charts either fetch their table (notebook cells: params) or carry
+// their rows in the cell's data (report templates: inline).
+export default function NotebookChart({ kind, params, inline }: {
+  kind: ChartKind; params: Record<string, unknown>; inline?: { rows: Row[]; columns: string[] };
+}) {
+  const fetched = useQuery({
     queryKey: ['notebook-chart', params],
+    enabled: !inline,
     queryFn: ({ signal }) => api.get<TableResponse>('v1/GetTable', { rows: 10000, ...params, TableOptions: undefined }, signal),
     select: parseTable,
     staleTime: 5 * 60_000,
   });
+  const q = inline ? { data: inline, isLoading: false, error: null } : fetched;
   const [zoom, setZoom] = useState<[number, number] | null>(null);
   const [drag, setDrag] = useState<[number, number | null] | null>(null);
 

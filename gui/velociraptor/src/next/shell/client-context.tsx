@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { setItem, schema } from '../../components/core/storage.jsx';
+import { setItem, schema } from '../lib/storage';
 import type { ApiClient } from '../lib/types';
 
 // The client currently "in focus". Legacy screens read and write it
