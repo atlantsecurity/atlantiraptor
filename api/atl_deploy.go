@@ -196,6 +196,7 @@ func newDeployBundle(org_config *config_proto.Config, now time.Time) (*deployBun
 			if err != nil {
 				return nil, err
 			}
+			raw = bytes.ReplaceAll(raw, []byte("\r\n"), []byte("\n"))
 			tmpl, err := template.New(name).Option("missingkey=error").Parse(string(raw))
 			if err != nil {
 				return nil, err
