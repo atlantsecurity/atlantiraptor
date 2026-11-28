@@ -15,6 +15,7 @@ import {
 import { useArtifactDefinitions, useCreateHunt, useRecentHunts, usePermission } from '../../lib/queries';
 import { timeAgo, toDate } from '../../lib/format';
 import type { Hunt } from '../../lib/types';
+import { safeHttpUrl } from '../../lib/safeUrl';
 import Markdown from '../../ui/Markdown';
 import {
   Badge, Button, Card, CardHeader, ConfirmDialog, Dialog, EmptyState, Field, Input, Mono, SearchInput, Segmented, Select,
@@ -303,7 +304,7 @@ function PackCard({ pack, last, onLaunch }: { pack: FeedPack; last?: Hunt; onLau
               <div className="tw:text-2xs tw:text-muted tw:mb-1">References</div>
               <ul className="tw:space-y-0.5 tw:text-xs">
                 {pack.references.map(r => (
-                  <li key={r}><a href={r} target="_blank" rel="noreferrer" className="tw:text-accent tw:break-all">{r}</a></li>
+                  <li key={r}>{safeHttpUrl(r) ? <a href={safeHttpUrl(r)!} target="_blank" rel="noreferrer" className="tw:text-accent tw:break-all">{r}</a> : <span className="tw:break-all">{r}</span>}</li>
                 ))}
               </ul>
             </div>

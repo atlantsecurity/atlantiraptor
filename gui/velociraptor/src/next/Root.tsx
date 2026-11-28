@@ -1,45 +1,46 @@
 import { lazy, Suspense } from 'react';
-import { HashRouter, Route, Switch } from 'react-router-dom';
+import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { queryClient } from './lib/queries';
-import { ClientProvider, useSelectedClient } from './shell/client-context';
+import { ClientProvider } from './shell/client-context';
 import { TooltipProvider } from './ui/primitives';
 import AppShell from './shell/AppShell';
+import { Hotkeys } from './shell/Hotkeys';
+import { UserSettings } from './shell/UserSettings';
 import { isDarkTheme } from './shell/theme';
-// Order matters: the new UI's styles must load after the legacy CSS.
-import './shell/legacy-styles.js';
 import './styles.css';
 
-import { UserSettings } from '../components/core/user.jsx';
-import Snackbar from '../components/core/snackbar.jsx';
-import SidebarKeyNavigator from '../components/sidebar/hotkeys.jsx';
+// Pages shown without a session.
+const LoginPage = lazy(() => import('./pages/auth/AuthPages').then(m => ({ default: m.LoginPage })));
+const LogoffPage = lazy(() => import('./pages/auth/AuthPages').then(m => ({ default: m.LogoffPage })));
 
-// Pages shown without the shell (login, logoff, full screen views).
-const LoginPage = lazy(() => import('../components/welcome/login.jsx'));
-const LogoffPage = lazy(() => import('../components/welcome/logoff.jsx'));
-const KeyboardHelp = lazy(() => import('./shell/LegacyKeyboardHelp.jsx'));
-const LegacyFullscreen = lazy(() => import('./shell/LegacyFullscreen.jsx'));
+// Old full-screen addresses (bookmarks, links in exported reports) open
+// the matching page.
+function fullscreenTarget(path: string): string {
+  const p = path.replace(/^\/fullscreen/, '');
+  let m = /^\/notebooks\/([^/]+)/.exec(p);
+  if (m) return `/notebooks/${m[1]}`;
+  m = /^\/hunts\/([^/]+)\/notebook/.exec(p);
+  if (m) return `/hunts/${m[1]}/notebook`;
+  m = /^\/collected\/([^/]+)\/([^/]+)\/notebook/.exec(p);
+  if (m) return `/collected/${m[1]}/${m[2]}/notebook`;
+  m = /^\/shell\/[^/]+\/([^/]+)\//.exec(p);
+  if (m) return `/host/${m[1]}/shell`;
+  return '/';
+}
 
 function Shell() {
-  const { client } = useSelectedClient();
   return (
     <UserSettings>
-      <SidebarKeyNavigator client={client} />
+      <Hotkeys />
       <Switch>
-        <Route path="/fullscreen">
-          <Suspense fallback={null}>
-            <LegacyFullscreen />
-          </Suspense>
-        </Route>
+        <Route path="/fullscreen" render={({ location }) => <Redirect to={fullscreenTarget(location.pathname)} />} />
+        <Route path="/notebooks/:notebook_id/:rest+" render={({ match }) => <Redirect to={`/notebooks/${match.params.notebook_id}`} />} />
         <Route>
           <AppShell />
         </Route>
       </Switch>
-      <Suspense fallback={null}>
-        <KeyboardHelp />
-      </Suspense>
-      <Snackbar />
     </UserSettings>
   );
 }
@@ -48,12 +49,9 @@ export default function Root() {
   const errorState = window.ErrorState;
   if (errorState && (errorState.Type === 'Login' || errorState.Type === 'Logoff')) {
     return (
-      <HashRouter>
-        <Suspense fallback={null}>
-          {errorState.Type === 'Login' ? <LoginPage /> : <LogoffPage />}
-          <Snackbar />
-        </Suspense>
-      </HashRouter>
+      <Suspense fallback={null}>
+        {errorState.Type === 'Login' ? <LoginPage /> : <LogoffPage />}
+      </Suspense>
     );
   }
 

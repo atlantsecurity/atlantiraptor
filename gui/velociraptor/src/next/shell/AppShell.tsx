@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Link, Redirect, Route, Switch } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import CommandPalette from './CommandPalette';
 import SettingsLayout from '../pages/settings/SettingsLayout';
-import { useSelectedClient } from './client-context';
 import { useThemeSync } from './theme';
-import { Spinner, cn } from '../ui/primitives';
+import { EmptyState, Spinner, cn } from '../ui/primitives';
+import { Compass } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { usePhone } from '../ui/MobileBack';
 import { useLocation } from 'react-router-dom';
@@ -29,6 +29,7 @@ const SecurityPage = lazy(() => import('../pages/account/SecurityPage'));
 const ClientsPage = lazy(() => import('../pages/clients/ClientsPage'));
 const ClientOverview = lazy(() => import('../pages/host/ClientOverview'));
 const ShellPage = lazy(() => import('../pages/host/ShellPage'));
+const ServerOverview = lazy(() => import('../pages/host/ServerOverview'));
 const ArtifactsPage = lazy(() => import('../pages/artifacts/ArtifactsPage'));
 const FileBrowser = lazy(() => import('../pages/vfs/FileBrowser'));
 const CollectionsPage = lazy(() => import('../pages/collections/CollectionsPage'));
@@ -40,7 +41,6 @@ const SettingsHome = lazy(() => import('../pages/settings/SettingsHome'));
 const DeployPage = lazy(() => import('../pages/settings/DeployPage'));
 const HttpsPage = lazy(() => import('../pages/settings/HttpsPage'));
 const AuditPage = lazy(() => import('../pages/settings/AuditPage'));
-const LegacyRoutes = lazy(() => import('./LegacyRoutes.jsx'));
 
 // The settings pages share the Server settings frame. They keep their
 // own addresses so existing links keep working.
@@ -64,7 +64,6 @@ function readCollapsed(): boolean {
 
 export default function AppShell() {
   const dark = useThemeSync();
-  const { client, setClient } = useSelectedClient();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const phone = usePhone();
@@ -151,11 +150,14 @@ export default function AppShell() {
                 <Route path="/search/:query?">
                   <ClientsPage />
                 </Route>
-                <Route path="/host/:client_id(C\.[^/]+)/shell">
+                <Route path="/host/:client_id(C\.[^/]+|server)/shell">
                   <ShellPage />
                 </Route>
                 <Route path="/host/:client_id(C\.[^/]+)/:action?">
                   <ClientOverview />
+                </Route>
+                <Route path="/host/server">
+                  <ServerOverview />
                 </Route>
                 <Route path="/vfs/:client_id/:vfs_path(.*)?">
                   <FileBrowser />
@@ -175,11 +177,14 @@ export default function AppShell() {
                 <Route path="/notebooks/:notebook_id?" exact>
                   <NotebooksPage />
                 </Route>
-                <Route path="/classic" exact>
-                  <Redirect to="/classic/hunts" />
-                </Route>
+                {/* Addresses of the old interface open the matching page. */}
+                <Route path="/classic/collected/server" exact><Redirect to="/collected/server?collector=1" /></Route>
+                <Route path="/classic/dashboard"><Redirect to="/" /></Route>
+                <Route path="/classic" render={({ location }) => (
+                  <Redirect to={{ pathname: location.pathname.replace(/^\/classic/, '') || '/', search: location.search }} />
+                )} />
                 <Route>
-                  <LegacyRoutes client={client} setClient={setClient} />
+                  <NotFound />
                 </Route>
               </Switch>
             </Suspense>
@@ -187,6 +192,17 @@ export default function AppShell() {
         </main>
       </div>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} dark={dark} />
+    </div>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="tw:flex-1 tw:flex tw:items-center tw:justify-center tw:p-6">
+      <EmptyState icon={<Compass />} title="Page not found"
+        action={<Link to="/" className="tw:text-sm tw:text-accent tw:hover:underline">Go to the dashboard</Link>}>
+        This address does not exist in the console.
+      </EmptyState>
     </div>
   );
 }

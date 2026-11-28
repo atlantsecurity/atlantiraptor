@@ -23,7 +23,7 @@ var (
 
 		"ServiceDefinition": `
 [Unit]
-Description=Velociraptor client
+Description=Atlantiraptor client
 After=syslog.target network.target
 
 [Service]
@@ -474,9 +474,18 @@ func (self *PackageSpec) OutputFilename() string {
 	return res
 }
 
+// Package metadata. The package names (velociraptor-client,
+// velociraptor-server), service names and paths stay as they were, so
+// systems that already have a package installed upgrade in place.
+const (
+	packageMaintainer      = "Atlant Security EOOD"
+	packageMaintainerEmail = ""
+	packageHomepage        = "https://github.com/atlantsecurity/atlantiraptor"
+)
+
 func NewClientRPMSpec() *PackageSpec {
 	return &PackageSpec{
-		OutputFilenameTemplate: "velociraptor_client_{{ .Version }}_{{ .Arch }}.rpm",
+		OutputFilenameTemplate: "atlantiraptor_client_{{ .Version }}_{{ .Arch }}.rpm",
 		Files: ordereddict.NewDict().
 			Set("{{.ConfigPath}}", FileSpec{
 				Template: `{{ .ConfigYaml }}`,
@@ -501,9 +510,9 @@ func NewClientRPMSpec() *PackageSpec {
 		Expansion: TemplateExpansion{
 			Name:            "velociraptor-client",
 			Release:         "A",
-			Maintainer:      "Velocidex Enterprises",
-			MaintainerEmail: "support@velocidex.com",
-			Homepage:        "https://www.velocidex.com",
+			Maintainer:      packageMaintainer,
+			MaintainerEmail: packageMaintainerEmail,
+			Homepage:        packageHomepage,
 			Depends:         "libcap2-bin, systemd",
 
 			ConfigPath:             "/etc/velociraptor/client.config.yaml",
@@ -512,14 +521,14 @@ func NewClientRPMSpec() *PackageSpec {
 			ServiceGroup:           "velociraptor",
 			SystemdServiceFile:     "velociraptor_client.service",
 			SysvService:            "velociraptor_client",
-			ServiceDescription:     "Velociraptor is an endpoint monitoring tool",
+			ServiceDescription:     "Atlantiraptor endpoint agent",
 		},
 	}
 }
 
 func NewClientDebSpec() *PackageSpec {
 	return &PackageSpec{
-		OutputFilenameTemplate: "velociraptor_client_{{ .Version }}_{{ .Arch }}.deb",
+		OutputFilenameTemplate: "atlantiraptor_client_{{ .Version }}_{{ .Arch }}.deb",
 		Files: ordereddict.NewDict().
 			Set("{{.ConfigPath}}", FileSpec{
 				Template: `{{ .ConfigYaml }}`,
@@ -543,9 +552,9 @@ func NewClientDebSpec() *PackageSpec {
 		Templates: DebClientTemplates,
 		Expansion: TemplateExpansion{
 			Name:            "velociraptor-client",
-			Maintainer:      "Velocidex Enterprises",
-			MaintainerEmail: "support@velocidex.com",
-			Homepage:        "https://www.velocidex.com",
+			Maintainer:      packageMaintainer,
+			MaintainerEmail: packageMaintainerEmail,
+			Homepage:        packageHomepage,
 
 			ConfigPath:             "/etc/velociraptor/client.config.yaml",
 			VelociraptorBinaryPath: "/usr/local/bin/velociraptor_client",
@@ -553,7 +562,7 @@ func NewClientDebSpec() *PackageSpec {
 			ServiceGroup:           "velociraptor",
 			SystemdServiceFile:     "velociraptor_client.service",
 			SysvService:            "velociraptor_client",
-			ServiceDescription:     "Velociraptor client package.",
+			ServiceDescription:     "Atlantiraptor endpoint agent",
 		},
 	}
 }
@@ -562,11 +571,11 @@ func NewServerRPMSpec() *PackageSpec {
 	return &PackageSpec{
 		Server: true,
 		OutputFilenameTemplate: `{{- if eq .Variant "master" -}}
-velociraptor-server-master-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.rpm
+atlantiraptor-server-master-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.rpm
 {{- else if eq .Variant "minion" -}}
-velociraptor-server-minion-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.rpm
+atlantiraptor-server-minion-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.rpm
 {{- else -}}
-velociraptor-server-{{ .Version }}.{{ .Arch }}.rpm
+atlantiraptor-server-{{ .Version }}.{{ .Arch }}.rpm
 {{- end -}}
 `,
 		Files: ordereddict.NewDict().
@@ -594,9 +603,9 @@ velociraptor-server-{{ .Version }}.{{ .Arch }}.rpm
 		Templates: RPMServerTemplates,
 		Expansion: TemplateExpansion{
 			Name:            "velociraptor-server",
-			Maintainer:      "Velocidex Enterprises",
-			MaintainerEmail: "support@velocidex.com",
-			Homepage:        "https://www.velocidex.com",
+			Maintainer:      packageMaintainer,
+			MaintainerEmail: packageMaintainerEmail,
+			Homepage:        packageHomepage,
 			Depends:         "libcap2-bin, systemd",
 
 			ConfigPath:             "/etc/velociraptor/server.config.yaml",
@@ -605,7 +614,7 @@ velociraptor-server-{{ .Version }}.{{ .Arch }}.rpm
 			ServiceGroup:           "velociraptor",
 			SystemdServiceFile:     "velociraptor_server.service",
 			SysvService:            "velociraptor",
-			ServiceDescription:     "Velociraptor server",
+			ServiceDescription:     "Atlantiraptor server",
 		},
 	}
 }
@@ -614,11 +623,11 @@ func NewServerDebSpec() *PackageSpec {
 	return &PackageSpec{
 		Server: true,
 		OutputFilenameTemplate: `{{- if eq .Variant "master" -}}
-velociraptor-server-master-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.deb
+atlantiraptor-server-master-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.deb
 {{- else if eq .Variant "minion" -}}
-velociraptor-server-minion-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.deb
+atlantiraptor-server-minion-{{ .Version }}.{{ .Arch }}-{{ .NodeName}}.deb
 {{- else -}}
-velociraptor-server-{{ .Version }}.{{ .Arch }}.deb
+atlantiraptor-server-{{ .Version }}.{{ .Arch }}.deb
 {{- end -}}
 `,
 		Files: ordereddict.NewDict().
@@ -646,9 +655,9 @@ velociraptor-server-{{ .Version }}.{{ .Arch }}.deb
 		Templates: DebServerTemplates,
 		Expansion: TemplateExpansion{
 			Name:            "velociraptor-server",
-			Maintainer:      "Velocidex Enterprises",
-			MaintainerEmail: "support@velocidex.com",
-			Homepage:        "https://www.velocidex.com",
+			Maintainer:      packageMaintainer,
+			MaintainerEmail: packageMaintainerEmail,
+			Homepage:        packageHomepage,
 			Depends:         "libcap2-bin, systemd",
 
 			ConfigPath:             "/etc/velociraptor/server.config.yaml",
@@ -657,7 +666,7 @@ velociraptor-server-{{ .Version }}.{{ .Arch }}.deb
 			ServiceGroup:           "velociraptor",
 			SystemdServiceFile:     "velociraptor_server.service",
 			SysvService:            "velociraptor",
-			ServiceDescription:     "Velociraptor server",
+			ServiceDescription:     "Atlantiraptor server",
 		},
 	}
 }

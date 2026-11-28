@@ -6,7 +6,7 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BookOpen, Code2, Download, FileArchive, FileText, Globe, Lock, MoreHorizontal, Pencil, Plus,
-  Trash2, Type, Users as UsersIcon, ExternalLink, Lightbulb,
+  Trash2, Type, Users as UsersIcon, Lightbulb,
 } from 'lucide-react';
 import {
   useDeleteNotebook, useGlobalUsers, useNewNotebook, useNewNotebookCell, useNotebook, useNotebookList,
@@ -14,7 +14,7 @@ import {
 } from '../../lib/queries';
 import * as api from '../../lib/api';
 import { fmtTime, timeAgo } from '../../lib/format';
-import { setItem, schema } from '../../../components/core/storage.jsx';
+import { setItem, schema } from '../../lib/storage';
 import type { Row } from '../../lib/table';
 import {
   Badge, Button, Card, ConfirmDialog, Dialog, EmptyState, Field, Input, Menu, MenuContent, MenuItem, MenuLabel,
@@ -23,7 +23,8 @@ import {
 import { TagInput } from '../hunts/TagInput';
 import { ArchiveList, useArchiveReadyToast } from '../evidence/ArchiveList';
 import NotebookCellView, { CELL_TYPES } from './NotebookCell';
-
+
+
 import { isCaseDescription } from '../cases/model';
 export default function NotebooksPage() {
   const { notebook_id: id } = useParams<{ notebook_id?: string }>();
@@ -345,7 +346,6 @@ export function NotebookView({ id, embedded, create }: {
                     ))}
                     <MenuSeparator />
                   </>}
-                  <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/notebooks/${id}`)}>Open in classic view</MenuItem>
                   <MenuItem danger icon={<Trash2 />} onSelect={() => setConfirmDelete(true)}>Delete notebook</MenuItem>
                 </MenuContent>
               </Menu>

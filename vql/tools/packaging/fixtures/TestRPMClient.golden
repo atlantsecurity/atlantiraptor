@@ -1,4 +1,4 @@
-velociraptor_client_0.74.3_x86_64.rpm
+atlantiraptor_client_0.74.3_x86_64.rpm
 
 >> /etc/velociraptor/client.config.yaml
 
@@ -30,7 +30,7 @@ if [ -f /bin/systemctl ] ; then
 cat << SYSTEMDSCRIPT > /etc/systemd/system/velociraptor_client.service
 
 [Unit]
-Description=Velociraptor client
+Description=Atlantiraptor client
 After=syslog.target network.target
 
 [Service]
@@ -58,7 +58,7 @@ cat << SYSVSCRIPT > /etc/rc.d/init.d/velociraptor_client
 # velociraptor_client		Start up the velociraptor_client client daemon
 #
 # chkconfig: 2345 55 25
-# description: Velociraptor is an endpoint monitoring tool
+# description: Atlantiraptor endpoint agent
 #
 # processname: velociraptor_client
 # config: /etc/velociraptor/client.config.yaml
@@ -72,7 +72,7 @@ cat << SYSVSCRIPT > /etc/rc.d/init.d/velociraptor_client
 # Should-Stop: \$network \$syslog
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: Velociraptor is an endpoint monitoring tool
+# Short-Description: Atlantiraptor endpoint agent
 ### END INIT INFO
 
 # source function library

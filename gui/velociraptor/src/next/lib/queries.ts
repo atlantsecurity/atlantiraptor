@@ -9,7 +9,7 @@ import {
   QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient,
   keepPreviousData,
 } from '@tanstack/react-query';
-import UserConfig from '../../components/core/user.jsx';
+import { UserConfig, type UserConfigValue } from '../shell/UserSettings';
 import * as api from './api';
 import { parseTable, type ParsedTable, type Row } from './table';
 import { toDate, toNum } from './format';
@@ -17,7 +17,7 @@ import { archiveState } from './downloads';
 import type {
   ApiClient, ArtifactCollectorArgs, FlowDetails, ArtifactDescriptor, GetArtifactsResponse,
   Hunt, HuntCondition, HuntStats, ListHuntsResponse, SearchClientsResponse, Num,
-  TableResponse, UserTraits,
+  TableResponse,
 } from './types';
 
 export const queryClient = new QueryClient({
@@ -42,14 +42,8 @@ export const POLL = {
 
 // ---------------------------------------------------------------- User
 
-interface UserConfigValue {
-  traits: UserTraits;
-  updateTraits: () => void;
-  messages?: number;
-}
-
 export function useTraits(): UserConfigValue {
-  return useContext(UserConfig as unknown as React.Context<UserConfigValue>);
+  return useContext(UserConfig);
 }
 
 export function usePermission(name: string): boolean {
@@ -1066,6 +1060,8 @@ export interface NotebookCell {
   cell_id: string;
   input?: string;
   output?: string;
+  // JSON map of inline tables for report charts (see notebooks/cellData.ts).
+  data?: string;
   type?: string;
   messages?: string[];
   calculating?: boolean;

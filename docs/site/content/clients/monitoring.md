@@ -46,7 +46,8 @@ artifacts.
 
 Pick an artifact and a time window (a day, or a range). The table shows the
 rows from that window; filter, sort, pivot, and export the window as CSV or
-JSON. **Classic timeline view** shows several artifacts on one timeline.
+JSON. **⋯ › Timeline with other artifacts** shows several event artifacts
+side by side: a lane per artifact and one merged table, newest first.
 
 ![Client events table](/images/client-events.webp "Generic.Client.Stats rows for the last 24 hours.")
 

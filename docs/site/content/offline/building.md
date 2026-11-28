@@ -9,17 +9,23 @@ collection, or with the `collector` command.
 
 ## With the builder
 
-The builder is a step-by-step form in the classic console view. Open
-**Server collections** in the classic view (the address ends in
-`#/classic/collected/server`) and click **Build offline collector**:
+Open **Server collections** (or the **Server** page) and click
+**Offline collector**. The builder has, on one screen:
 
-1. **Select Artifacts**: the artifacts to collect.
-2. **Configure Parameters**: each artifact's parameters.
-3. **Configure Collection** (the collector's settings, below).
-4. **Specify Resources**: CPU limit, timeout, and so on.
-5. **Review** and **Launch**.
+1. **Artifacts** (left): search and pick what to collect, then set each
+   artifact's parameters.
+2. **Target machine**: the operating system the collector runs on. The
+   agent binary that gets embedded is shown next to it.
+3. **Where the results go**: a zip file next to the collector, or an
+   upload to S3, Google Cloud Storage, Azure, an SMB share or SFTP.
+   Upload credentials are built into the collector, so give them
+   write-only access.
+4. **Encryption**: none, this server's certificate (or another
+   certificate), or a password.
+5. **Advanced options**: output format, file names, folders, compression,
+   concurrency, CPU limit and time limits.
 
-The build runs as a server collection. When it finishes, the collector is
+Click **Build collector**. The build runs as a server collection. When it finishes, the collector is
 in that collection's **Files** tab, named `Collector_<binary>` (or the
 name you chose). Download it from there.
 

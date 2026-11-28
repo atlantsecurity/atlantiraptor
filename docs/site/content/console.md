@@ -1,6 +1,6 @@
 ---
 title: Tour of the console
-description: The Atlantiraptor web console - sidebar, top bar, command palette, pivots, themes, phones and the classic view.
+description: The Atlantiraptor web console - sidebar, top bar, command palette, pivots, themes and phones.
 ---
 
 The console is where analysts and administrators work. Open
@@ -70,7 +70,7 @@ the server-side search where a page offers it, so filters see every row.
 ## Light and dark
 
 The console follows a light theme by default. Switch to dark in the account
-menu. **Settings…** has more themes, the display time zone and language.
+menu. **Settings…** also has the display time zone and the downloads password.
 See [Preferences](/console/preferences/).
 
 ![Dashboard in the dark theme](/images/dashboard-dark.webp "The dashboard in the dark theme.")
@@ -84,12 +84,11 @@ quarantining a host when you are away from your desk.
 
 ![Dashboard on a phone](/images/phone-dashboard.webp "The dashboard on a phone.")
 
-## The classic view
+## Old addresses
 
-A few advanced screens from the original Velociraptor interface are still
-available, under `/classic` and through **Open in classic view** links (for
-example in notebooks and on event pages). They use the older style but work
-with the same data.
+The console replaced the original Velociraptor interface completely.
+Bookmarks to old `#/classic/...` and `#/fullscreen/...` addresses open the
+matching page.
 
 ## Links into the console
 

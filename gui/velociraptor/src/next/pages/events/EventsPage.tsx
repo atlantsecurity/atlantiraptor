@@ -9,7 +9,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Activity, CalendarDays, Download, ExternalLink, FileText, MoreHorizontal, Plus, Radio, Search, Server, Settings2,
+  Activity, CalendarDays, Download, FileText, GanttChart, MoreHorizontal, Plus, Radio, Search, Server, Settings2,
   Tag, Monitor,
 } from 'lucide-react';
 import {
@@ -28,6 +28,7 @@ import { ArtifactParams } from '../hunts/NewHuntDialog';
 import { MobileBack, isPhone } from '../../ui/MobileBack';
 
 const ClientPicker = lazy(() => import('../../ui/ClientPicker'));
+const EventTimelineDialog = lazy(() => import('./EventTimelineDialog').then(m => ({ default: m.EventTimelineDialog })));
 
 type Range = '15m' | '1h' | '24h' | '7d' | number;
 const QUICK: { value: Range; label: string; secs: number }[] = [
@@ -159,6 +160,7 @@ function EventView({ clientId, artifact, running }: { clientId: string; artifact
   const dayList = useMemo(() => [...(mode === 'logs' ? days?.logs : days?.rows) ?? []].sort((a, b) => b - a), [days, mode]);
   const [range, setRange] = useState<Range>('24h');
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   // When the default window is empty but older days have data, jump to
   // the newest of those instead of showing nothing.
@@ -180,6 +182,11 @@ function EventView({ clientId, artifact, running }: { clientId: string; artifact
 
   return (
     <>
+      {timelineOpen && (
+        <Suspense fallback={null}>
+          <EventTimelineDialog clientId={clientId} initial={artifact} onClose={() => setTimelineOpen(false)} />
+        </Suspense>
+      )}
       <div className="tw:px-5 tw:pt-4 tw:pb-3 tw:border-b tw:border-line tw:flex tw:flex-col tw:gap-3 tw:bg-panel">
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3">
           <h2 className="tw:font-mono tw:text-[15px] tw:font-semibold tw:truncate tw:min-w-0">{artifact}</h2>
@@ -203,7 +210,7 @@ function EventView({ clientId, artifact, running }: { clientId: string; artifact
               </MenuTrigger>
               <MenuContent>
                 <MenuItem icon={<Search />} onSelect={() => history.push(`/artifacts/${encodeURIComponent(artifact)}`)}>View artifact</MenuItem>
-                <MenuItem icon={<ExternalLink />} onSelect={() => history.push(`/classic/events/${clientId}/${encodeURIComponent(artifact)}`)}>Classic timeline view</MenuItem>
+                <MenuItem icon={<GanttChart />} onSelect={() => setTimelineOpen(true)}>Timeline with other artifacts</MenuItem>
               </MenuContent>
             </Menu>
           </div>

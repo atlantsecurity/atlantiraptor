@@ -6,7 +6,7 @@ import {
   ArrowDown, ArrowUp, Ban, ChevronDown, ChevronRight, Code2, Copy, FileCode, History, MoreHorizontal, Pencil,
   Play, Plus, Trash2, Type, Wand2, AlertTriangle,
 } from 'lucide-react';
-import parseHTML from '../../../components/core/sanitize.jsx';
+import parseHTML from '../../lib/sanitize';
 import {
   notebookCellAction, reformatVQL, useNotebookCell, useNotebookTable, useUpdateNotebookCell,
   type Notebook, type NotebookCell as Cell, type NotebookCellMeta,
@@ -17,17 +17,19 @@ import {
   Spinner, Tooltip, cn,
 } from '../../ui/primitives';
 import { DataTable } from '../../ui/DataTable';
+import { buttonHref, inlineTable } from './cellData';
+import { ToolInfoBadge } from './ToolInfoBadge';
 
 const CodeEditor = lazy(() => import('../../ui/CodeEditor.jsx'));
-const LegacyCellOutput = lazy(() => import('./LegacyCellOutput.jsx'));
 const NotebookChart = lazy(() => import('./NotebookChart'));
 const NotebookTimeline = lazy(() => import('./NotebookTimeline'));
 const CHART_TAGS: Record<string, 'line' | 'time' | 'bar' | 'scatter'> = {
   'notebook-line-chart': 'line', 'notebook-time-chart': 'time', 'notebook-bar-chart': 'bar', 'notebook-scatter-chart': 'scatter',
 };
-
-// Output tags that only the legacy renderer understands.
-const LEGACY_TAGS = /<(velo-line-chart|time-chart|velo-timeline(?![^>]*\bname=)|velo-sigma-editor|velo-tool-viewer|velo-button|grr-[a-z-]+)\b/;
+// Report templates write charts with their rows inline (in cell.data).
+const INLINE_CHART_TAGS: Record<string, 'line' | 'time' | 'bar' | 'scatter'> = {
+  'velo-line-chart': 'line', 'time-chart': 'time', 'bar-chart': 'bar', 'scatter-chart': 'scatter',
+};
 
 export const CELL_TYPES = [
   { value: 'vql', label: 'VQL', icon: <Code2 /> },
@@ -246,13 +248,12 @@ function CellMessages({ errors, others }: { errors: string[]; others: string[] }
   );
 }
 
-function CellOutput({ cell, notebookId, calculating, onRefresh }: {
-  cell: Cell; notebookId: string; calculating: boolean; onRefresh: () => void;
+function CellOutput({ cell, notebookId, calculating }: {
+  cell: Cell; notebookId: string; calculating: boolean; onRefresh?: () => void;
 }) {
   const out = cell.output ?? '';
-  const legacy = LEGACY_TAGS.test(out);
   const content = useMemo(() => {
-    if (!out || legacy) return null;
+    if (!out) return null;
     return parseHTML(out, {
       replace: (node: unknown) => {
         const n = node as { name?: string; attribs?: Record<string, string> };
@@ -273,24 +274,45 @@ function CellOutput({ cell, notebookId, calculating, onRefresh }: {
             </Suspense>
           );
         }
+        if (n.name && INLINE_CHART_TAGS[n.name]) {
+          const table = inlineTable(cell.data, n.attribs?.value);
+          let params: Record<string, unknown> = {};
+          try { params = JSON.parse(decodeURIComponent(n.attribs?.params ?? '')); } catch { /* ignore */ }
+          return table
+            ? <Suspense fallback={<Skeleton className="tw:h-72 tw:my-2" />}><NotebookChart kind={INLINE_CHART_TAGS[n.name]} params={params} inline={table} /></Suspense>
+            : <span className="tw:text-xs tw:text-faint">Chart data is not available.</span>;
+        }
+        if (n.name === 'velo-tool-viewer') {
+          return <ToolInfoBadge name={decodeURIComponent(n.attribs?.name ?? '')} />;
+        }
+        if (n.name === 'velo-button') {
+          const target = buttonHref(n.attribs?.href);
+          const text = n.attribs?.text || 'Open';
+          return target
+            ? <a href={target} target={target.startsWith('#') ? undefined : '_blank'} rel="noreferrer"
+                className="tw:inline-flex tw:items-center tw:h-7 tw:px-2.5 tw:mr-1.5 tw:mb-1.5 tw:rounded-md tw:border tw:border-line tw:text-xs tw:no-underline tw:hover:bg-hover">{text}</a>
+            : <span className="tw:text-xs">{text}</span>;
+        }
+        if (n.name === 'velo-sigma-editor') {
+          return <div className="tw:text-xs tw:text-muted tw:py-2">The Sigma rule editor is not part of this console. Write Sigma rules into an artifact instead (Artifacts, New artifact).</div>;
+        }
+        if (n.name === 'velo-timeline' || (n.name && n.name.startsWith('grr-'))) {
+          return <></>;
+        }
         if (n.name === 'velo-value') {
           return <span className="tw:font-mono">{decodeURIComponent(n.attribs?.value ?? '')}</span>;
         }
         return undefined;
       },
     });
-  }, [out, legacy, notebookId]);
+  }, [out, cell.data, notebookId]);
 
   return (
     <div className="tw:relative">
       {calculating && (
         <div className="tw:h-0.5 tw:overflow-hidden tw:bg-accent-soft"><div className="rx-indeterminate tw:h-full tw:bg-accent" /></div>
       )}
-      {legacy ? (
-        <Suspense fallback={<Skeleton className="tw:h-24 tw:m-3" />}>
-          <LegacyCellOutput cell={cell} notebookId={notebookId} refresh={onRefresh} />
-        </Suspense>
-      ) : content && <div className="rx-md rx-cell-output tw:px-4 tw:py-3">{content}</div>}
+      {content && <div className="rx-md rx-cell-output tw:px-4 tw:py-3">{content}</div>}
     </div>
   );
 }

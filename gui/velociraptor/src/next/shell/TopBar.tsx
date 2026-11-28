@@ -17,8 +17,8 @@ import {
 import { setTheme } from './theme';
 import { useSelectedClient } from './client-context';
 
-const UserSettingsModal = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.UserSettingsModal })));
-const HelpDialog = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.HelpDialog })));
+const UserSettingsDialog = lazy(() => import('./AccountDialogs').then(m => ({ default: m.UserSettingsDialog })));
+const HelpDialog = lazy(() => import('./AccountDialogs').then(m => ({ default: m.HelpDialog })));
 
 
 function ClientSearch() {
@@ -198,7 +198,6 @@ function initials(name: string | undefined) {
 export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalette: () => void; dark: boolean; onOpenNav?: () => void }) {
   const ctx = useTraits();
   const { traits, updateTraits } = ctx;
-  const { setClient } = useSelectedClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const orgs = traits?.orgs ?? [];
@@ -250,7 +249,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
 
         <MessagesBell />
 
-        <IconButton label="Search documentation" className="tw:max-sm:hidden" onClick={() => setHelpOpen(true)} icon={<CircleHelp className="tw:size-4" />} />
+        <IconButton label="Help" className="tw:max-sm:hidden" onClick={() => setHelpOpen(true)} icon={<CircleHelp className="tw:size-4" />} />
 
         <IconButton label={dark ? 'Light mode' : 'Dark mode'}
           onClick={() => setTheme(!dark, traits?.ui_settings, updateTraits)}
@@ -284,7 +283,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
       </div>
 
       <Suspense fallback={null}>
-        {settingsOpen && <UserSettingsModal setClient={setClient} onClose={() => setSettingsOpen(false)} />}
+        {settingsOpen && <UserSettingsDialog onClose={() => setSettingsOpen(false)} />}
         {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
       </Suspense>
     </header>

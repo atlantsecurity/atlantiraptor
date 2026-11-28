@@ -4,9 +4,9 @@ import {
   LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server,
   FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, HeartPulse, Rss, Settings2,
 } from 'lucide-react';
-import { getItem, schema } from '../../components/core/storage.jsx';
-import { EncodePathInURL } from '../../components/utils/paths.jsx';
-import logo from '../../components/sidebar/atlantiraptor.svg';
+import { getItem, schema } from '../lib/storage';
+import { encodePathInURL } from '../lib/paths';
+import logo from '../assets/atlantiraptor.svg';
 import { srcOf } from '../lib/api';
 import { useTraits } from '../lib/queries';
 import { cn, StatusDot, Tooltip } from '../ui/primitives';
@@ -84,7 +84,7 @@ export default function Sidebar({ collapsed, onToggle, className }: { collapsed:
   const clientItems: Item[] = clientId ? [
     { to: `/host/${clientId}`, label: 'Overview', icon: <Laptop />, match: /^\/host\/C\./ },
     {
-      to: `/vfs/${clientId}${EncodePathInURL(getItem(schema.CurrentVFSPathKey) || '/')}`,
+      to: `/vfs/${clientId}${encodePathInURL(getItem(schema.CurrentVFSPathKey) || '/')}`,
       label: 'Files', icon: <FolderTree />, match: /^\/vfs\//,
     },
     { to: `/collected/${clientId}`, label: 'Collections', icon: <History />, match: /^\/collected\/C\./ },

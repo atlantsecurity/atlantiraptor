@@ -40,10 +40,19 @@ var (
 	}, []string{"commit_hash", "build_time"})
 )
 
+// GetVersion describes this binary. A release build reports itself as
+// Atlantiraptor with its release version (for example 1.0.6), so the
+// server, its agents, logs and the console all show one version
+// number. Development builds keep the upstream Velociraptor version
+// they are based on (constants.VERSION).
 func GetVersion() *config_proto.Version {
+	name, version := "velociraptor", constants.VERSION
+	if v := ReleaseVersion(); v != "" {
+		name, version = AgentName, v
+	}
 	return &config_proto.Version{
-		Name:         "velociraptor",
-		Version:      constants.VERSION,
+		Name:         name,
+		Version:      version,
 		BuildTime:    build_time,
 		Commit:       commit_hash,
 		CiBuildUrl:   ci_run_url,

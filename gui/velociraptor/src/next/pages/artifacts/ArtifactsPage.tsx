@@ -16,6 +16,7 @@ import {
   Badge, Button, Card, CardHeader, ConfirmDialog, CopyButton, EmptyState, Input, Mono, Segmented, Skeleton, Switch, cn,
 } from '../../ui/primitives';
 import { useSelectedClient } from '../../shell/client-context';
+import { safeHttpUrl } from '../../lib/safeUrl';
 import Markdown from '../../ui/Markdown';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
@@ -307,7 +308,9 @@ function ArtifactView({ name, onEdit }: { name: string; onEdit: (name?: string, 
                   {a.tools!.map(t => (
                     <div key={t.name} className="tw:px-4 tw:py-2 tw:text-xs">
                       <div className="tw:font-mono tw:font-medium">{t.name}</div>
-                      {t.url && <a href={t.url} target="_blank" rel="noreferrer" className="tw:text-2xs tw:text-accent tw:hover:underline tw:break-all">{t.url}</a>}
+                      {t.url && (safeHttpUrl(t.url)
+                        ? <a href={safeHttpUrl(t.url)!} target="_blank" rel="noreferrer" className="tw:text-2xs tw:text-accent tw:hover:underline tw:break-all">{t.url}</a>
+                        : <span className="tw:text-2xs tw:text-muted tw:break-all">{t.url}</span>)}
                     </div>
                   ))}
                 </div>
@@ -317,10 +320,12 @@ function ArtifactView({ name, onEdit }: { name: string; onEdit: (name?: string, 
               <Card>
                 <CardHeader icon={<Link2 className="tw:size-4" />} title="References" />
                 <div className="tw:p-4 tw:space-y-1.5">
-                  {a.references!.map(r => (
-                    <a key={r} href={r} target="_blank" rel="noreferrer" className="tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:text-accent tw:hover:underline tw:break-all">
+                  {a.references!.map(r => safeHttpUrl(r) ? (
+                    <a key={r} href={safeHttpUrl(r)!} target="_blank" rel="noreferrer" className="tw:flex tw:items-center tw:gap-1.5 tw:text-xs tw:text-accent tw:hover:underline tw:break-all">
                       <ExternalLink className="tw:size-3 tw:shrink-0" />{r}
                     </a>
+                  ) : (
+                    <div key={r} className="tw:text-xs tw:text-muted tw:break-all">{r}</div>
                   ))}
                 </div>
               </Card>

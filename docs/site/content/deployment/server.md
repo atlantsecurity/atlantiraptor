@@ -110,11 +110,11 @@ systemd unit, and install it:
 ```sh
 # Debian, Ubuntu
 ./atlantiraptor --config server.config.yaml debian server --binary ./atlantiraptor
-sudo dpkg -i velociraptor-server-*.deb
+sudo dpkg -i atlantiraptor-server-*.deb
 
 # RHEL, Rocky, Alma, Fedora
 ./atlantiraptor --config server.config.yaml rpm server --binary ./atlantiraptor
-sudo rpm -i velociraptor-server-*.rpm
+sudo rpm -i atlantiraptor-server-*.rpm
 ```
 
 The package creates a system user, installs the configuration under
