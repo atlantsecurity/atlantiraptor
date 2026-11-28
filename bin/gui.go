@@ -113,13 +113,9 @@ func generateGUIConfig(datastore_directory, server_config_path, client_config_pa
 			PasswordSalt: hex.EncodeToString(user_record.PasswordSalt),
 		})
 
-	// For the GUI org create a separate org.
-	config_obj.GUI.InitialOrgs = append(config_obj.GUI.InitialOrgs,
-		&config_proto.InitialOrgRecord{
-			OrgId: "O123",
-			Name:  "ACME Inc",
-			Nonce: "ACME",
-		})
+	// No demo orgs: earlier versions seeded an "ACME Inc" org here,
+	// which showed up in the console's org switcher. Admins create
+	// orgs from Admin > Organizations when they need them.
 
 	// Write the config for next time
 	serialized, err := yaml.Marshal(config_obj)

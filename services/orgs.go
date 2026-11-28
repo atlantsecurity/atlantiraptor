@@ -81,6 +81,9 @@ type OrgManager interface {
 	GetRedirectedOrgConfig(org_id string) (*config_proto.ApiClientConfig, error)
 	DeleteOrg(ctx context.Context, principal, org_id string) error
 
+	// Changes an org's display name; its ID and nonce stay the same.
+	RenameOrg(org_id, name string) (*api_proto.OrgRecord, error)
+
 	// The manager is responsible for running multiple services - one
 	// for each org. This ensures org services are separated out and
 	// one org can not access data from another org.

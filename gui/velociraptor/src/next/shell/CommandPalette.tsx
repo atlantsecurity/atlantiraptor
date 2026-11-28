@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import {
   Crosshair, LayoutDashboard, Monitor, BookOpen, Package, Server, Radio, Users, KeyRound, Plus,
   Moon, Sun, Search, CornerDownLeft, Zap, FolderTree, History, UserPlus, FilePlus2,
-  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss, Bell,
+  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss, Bell, Building2,
 } from 'lucide-react';
 import { useArtifactSearch, useClientNameSuggest, useHunts, useNotebookList, useTraits } from '../lib/queries';
 import { classify, parseIocs, refang } from '../pages/ioc/parse';
@@ -70,6 +70,7 @@ export default function CommandPalette({ open, onOpenChange, dark }: {
     ...(isAdmin ? [
       { label: 'Users', icon: <Users />, to: '/users', keys: 'admin accounts' },
       { label: 'Groups', icon: <UsersRound />, to: '/groups', keys: 'admin teams' },
+      { label: 'Organizations', icon: <Building2 />, to: '/orgs', keys: 'orgs tenants customers multi-tenancy create switch' },
       { label: 'Security and 2FA', icon: <ShieldCheck />, to: '/account/security', keys: 'mfa totp password policy' },
       { label: 'Secrets', icon: <KeyRound />, to: '/secrets', keys: 'credentials' },
       { label: 'Integrations', icon: <Plug />, to: '/integrations', keys: 'email teams slack ai threat intel' },

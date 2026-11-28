@@ -21,6 +21,7 @@ const UpdatesPage = lazy(() => import('../pages/updates/UpdatesPage'));
 const MessagesPage = lazy(() => import('../pages/messages/MessagesPage'));
 const FeedsPage = lazy(() => import('../pages/feeds/FeedsPage'));
 const GroupsPage = lazy(() => import('../pages/users/GroupsPage'));
+const OrgsPage = lazy(() => import('../pages/orgs/OrgsPage'));
 const ApiKeysPage = lazy(() => import('../pages/apikeys/ApiKeysPage'));
 const NetworkPage = lazy(() => import('../pages/network/NetworkPage'));
 const SecurityPage = lazy(() => import('../pages/account/SecurityPage'));
@@ -130,6 +131,9 @@ export default function AppShell() {
                 </Route>
                 <Route path="/groups">
                   <GroupsPage />
+                </Route>
+                <Route path="/orgs">
+                  <OrgsPage />
                 </Route>
                 <Route path="/account/security">
                   <SecurityPage />

@@ -166,6 +166,12 @@ func PrepareGUIMux(
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(groupsHandler(), acls.READ_RESULTS))))
 
+	// Organization management (create, rename, delete). The handler
+	// requires ORG_ADMIN in the root org.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/orgs"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(orgsHandler(), acls.READ_RESULTS))))
+
 	// SIEM/SOAR API keys (console management) and the key-authenticated
 	// REST API. The REST API uses bearer keys, not cookies, so it needs
 	// no CSRF protection; it still goes through the IP filter.

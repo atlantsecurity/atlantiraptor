@@ -91,6 +91,13 @@
    " authenticators.authenticateUserHandle",
    " http.HandlerFunc"
   ],
+  "/velociraptor/api/v1/atl/orgs": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/atl/update": [
    "authenticators.IpFilter",
    " api.csrfProtect",
