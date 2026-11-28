@@ -175,6 +175,9 @@ func PrepareGUIMux(
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/network"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(networkHandler(config_obj), acls.READ_RESULTS))))
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/https"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(consoleHTTPSHandler(), acls.READ_RESULTS))))
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/update"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(updateHandler(config_obj), acls.READ_RESULTS))))

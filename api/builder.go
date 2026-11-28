@@ -124,6 +124,8 @@ func (self *Builder) withAutoCertFrontendSelfSignedGUI(
 			return err
 		}
 
+		startConsoleHTTPS(ctx, wg, config_obj, router)
+
 		// Start the GUI separately on a different port.
 		if config_obj.GUI.UsePlainHttp {
 			err = StartHTTPGUI(ctx, wg, config_obj, router)
@@ -209,6 +211,10 @@ func startSharedSelfSignedFrontend(
 		return err
 	}
 
+	if config_obj.Services.GuiServer {
+		startConsoleHTTPS(ctx, wg, config_obj, router)
+	}
+
 	// Combine both frontend and GUI on HTTP server.
 	if config_obj.GUI.UsePlainHttp && config_obj.Frontend.UsePlainHttp {
 		server_obj.Info("Frontend and GUI both share port with plain HTTP %v",
@@ -257,6 +263,8 @@ func startSelfSignedFrontend(
 		if err != nil {
 			return err
 		}
+
+		startConsoleHTTPS(ctx, wg, config_obj, router)
 
 		// Start the GUI separately on a different port.
 		if config_obj.GUI.UsePlainHttp {

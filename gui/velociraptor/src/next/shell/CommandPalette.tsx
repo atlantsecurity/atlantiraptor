@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import {
   Crosshair, LayoutDashboard, Monitor, BookOpen, Package, Server, Radio, Users, KeyRound, Plus,
   Moon, Sun, Search, CornerDownLeft, Zap, FolderTree, History, UserPlus, FilePlus2,
-  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss, Bell,
+  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss, Bell, Settings2, Lock, CloudDownload,
 } from 'lucide-react';
 import { useArtifactSearch, useClientNameSuggest, useHunts, useNotebookList, useTraits } from '../lib/queries';
 import { classify, parseIocs, refang } from '../pages/ioc/parse';
@@ -75,6 +75,9 @@ export default function CommandPalette({ open, onOpenChange, dark }: {
       { label: 'Integrations', icon: <Plug />, to: '/integrations', keys: 'email teams slack ai threat intel' },
       { label: 'API keys', icon: <Code2 />, to: '/apikeys', keys: 'siem soar integration' },
       { label: 'Network access', icon: <Network />, to: '/network', keys: 'allowlist ip firewall' },
+      { label: 'Server settings', icon: <Settings2 />, to: '/settings', keys: 'admin configuration preferences' },
+      { label: 'Address and certificate', icon: <Lock />, to: '/settings/https', keys: 'https ssl tls certificate domain hostname lets encrypt 443 url' },
+      { label: 'Server updates', icon: <CloudDownload />, to: '/updates', keys: 'upgrade version release' },
     ] : []),
   ];
   const navHits = navAll.filter(n => !ql || `${n.label} ${n.keys}`.toLowerCase().includes(ql));

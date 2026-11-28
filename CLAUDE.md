@@ -56,7 +56,7 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   with the `bin/rsrc_windows_*.syso` resources in place, written to `dist/release/`.
   Sign that folder; never sign `output/` (local development builds, rebuilt constantly).
 - Releases and self-update: servers install the latest GitHub release of this repository by
-  themselves (`services/selfupdate`, console page Admin > Server updates). A release needs
+  themselves (`services/selfupdate`, console page Server settings > Server updates). A release needs
   `Atlantiraptor-windows-amd64.exe` built with
   `-X www.velocidex.com/golang/velociraptor/config.release_version=x.y.z` (otherwise it is a
   development build that never auto-updates), signed, plus a `SHA256SUMS` file.

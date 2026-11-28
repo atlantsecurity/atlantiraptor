@@ -55,7 +55,7 @@ org without being reinstalled with that org's configuration.
 
 A user account is server-wide; roles are per org. An analyst at a managed
 service provider can be `hunter` in five customer orgs and `reader` in
-another. Give access on **Admin > Users**: select the user, **Add to org**,
+another. Give access on **Server settings > Users**: select the user, **Add to org**,
 and pick roles. The org switcher in the account menu (**Switch
 organization**) lists the orgs a user has access to. Console URLs carry the
 org (`?org_id=O1a2b3`), so a shared link opens in the right org.

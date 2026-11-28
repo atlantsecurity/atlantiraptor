@@ -3,6 +3,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import CommandPalette from './CommandPalette';
+import SettingsLayout from '../pages/settings/SettingsLayout';
 import { useSelectedClient } from './client-context';
 import { useThemeSync } from './theme';
 import { Spinner, cn } from '../ui/primitives';
@@ -34,7 +35,13 @@ const UsersPage = lazy(() => import('../pages/users/UsersPage'));
 const SecretsPage = lazy(() => import('../pages/secrets/SecretsPage'));
 const EventsPage = lazy(() => import('../pages/events/EventsPage'));
 const NotebooksPage = lazy(() => import('../pages/notebooks/NotebooksPage'));
+const SettingsHome = lazy(() => import('../pages/settings/SettingsHome'));
+const HttpsPage = lazy(() => import('../pages/settings/HttpsPage'));
 const LegacyRoutes = lazy(() => import('./LegacyRoutes.jsx'));
+
+// The settings pages share the Server settings frame. They keep their
+// own addresses so existing links keep working.
+const SETTINGS_ROUTES = ['/settings', '/users', '/groups', '/account/security', '/network', '/updates', '/integrations', '/apikeys', '/secrets'];
 
 function PageFallback() {
   return (
@@ -95,6 +102,25 @@ export default function AppShell() {
                 <Route exact path={['/', '/welcome', '/dashboard']}>
                   <Dashboard />
                 </Route>
+                <Route path={SETTINGS_ROUTES}>
+                  <SettingsLayout>
+                    <Suspense fallback={<PageFallback />}>
+                      <Switch>
+                        <Route path="/settings" exact><SettingsHome /></Route>
+                        <Route path="/settings/https"><HttpsPage /></Route>
+                        <Route path="/users/:user?"><UsersPage /></Route>
+                        <Route path="/groups"><GroupsPage /></Route>
+                        <Route path="/account/security"><SecurityPage /></Route>
+                        <Route path="/network"><NetworkPage /></Route>
+                        <Route path="/updates"><UpdatesPage /></Route>
+                        <Route path="/integrations"><IntegrationsPage /></Route>
+                        <Route path="/apikeys"><ApiKeysPage /></Route>
+                        <Route path="/secrets/:type?"><SecretsPage /></Route>
+                        <Route><Redirect to="/settings" /></Route>
+                      </Switch>
+                    </Suspense>
+                  </SettingsLayout>
+                </Route>
                 <Route path="/hunts/:hunt_id?/:tab?">
                   <HuntsPage />
                 </Route>
@@ -107,32 +133,14 @@ export default function AppShell() {
                 <Route path="/ioc">
                   <IocSweepPage />
                 </Route>
-                <Route path="/integrations">
-                  <IntegrationsPage />
-                </Route>
                 <Route path="/fleet">
                   <FleetHealthPage />
                 </Route>
                 <Route path="/feeds">
                   <FeedsPage />
                 </Route>
-                <Route path="/updates">
-                  <UpdatesPage />
-                </Route>
                 <Route path="/messages/:id?">
                   <MessagesPage />
-                </Route>
-                <Route path="/network">
-                  <NetworkPage />
-                </Route>
-                <Route path="/apikeys">
-                  <ApiKeysPage />
-                </Route>
-                <Route path="/groups">
-                  <GroupsPage />
-                </Route>
-                <Route path="/account/security">
-                  <SecurityPage />
                 </Route>
                 <Route path="/search/:query?">
                   <ClientsPage />
@@ -151,12 +159,6 @@ export default function AppShell() {
                 </Route>
                 <Route path="/collected/:client_id/:flow_id?/:tab?">
                   <CollectionsPage />
-                </Route>
-                <Route path="/users/:user?">
-                  <UsersPage />
-                </Route>
-                <Route path="/secrets/:type?">
-                  <SecretsPage />
                 </Route>
                 <Route path={['/events/:client_id(server)/:artifact?', '/events/:client_id(C\.[^/]+)/:artifact?']}>
                   <EventsPage />

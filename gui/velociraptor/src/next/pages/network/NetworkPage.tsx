@@ -1,4 +1,4 @@
-// Admin > Network access: which addresses may reach the console and the
+// Server settings > Network access: which addresses may reach the console and the
 // integration API. Enforced by the server; this page edits the lists.
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -72,7 +72,7 @@ function Editor({ view }: { view: NetworkView }) {
         <div className="tw:grid tw:grid-cols-1 tw:xl:grid-cols-2 tw:gap-4 tw:items-start">
           <ListCard title="Console" subtitle="The web console, its sign-in pages and its API (used by analysts' browsers)."
             draft={consoleList} onChange={setConsole} yourIp={view.your_ip} />
-          <ListCard title="Integration API" subtitle="/api/atl/v1, used by SIEM and SOAR tools with API keys. Each key can also have its own list (Admin › API keys)."
+          <ListCard title="Integration API" subtitle="/api/atl/v1, used by SIEM and SOAR tools with API keys. Each key can also have its own list (Server settings › API keys)."
             draft={apiList} onChange={setApi} yourIp={view.your_ip} />
         </div>
 
