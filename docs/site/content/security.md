@@ -20,6 +20,8 @@ released, if you wish.
 Vulnerabilities in code inherited from Velociraptor may also affect the
 upstream project; we coordinate with its maintainers where that applies.
 
+Fixed vulnerabilities are listed on [Security advisories](/security/advisories/).
+
 ## How Atlantiraptor protects itself
 
 ### Agents and the server

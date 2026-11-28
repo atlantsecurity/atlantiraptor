@@ -1,0 +1,352 @@
+# Security advisories for Atlantiraptor, published on the documentation
+# website at /security/advisories/ and as the RSS feed
+# /security/advisories/index.xml that servers poll
+# (Server.Monitoring.RSSFeeds) to notify their users.
+#
+# Most entries are vulnerabilities in code Atlantiraptor inherits from
+# Velociraptor. Add an entry once the fix is in an Atlantiraptor release
+# and set fixed_in to that release. id is the CVE (or another stable id):
+# it is the feed item's guid and the page anchor, so never change it.
+advisories:
+  - id: CVE-2026-132797
+    title: "Child orgs can use secrets in root org unconditionally"
+    date: 2026-11-27
+    severity: Medium
+    score: 4.9
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "Velociraptor uses managed secrets to allow VQL queries to share credentials without revealing those credentials to users. The root org admin can create secrets, control their org visibility and assign the secrets to users to allow them to use the credentials in VQL queries. Vulnerable versions of Velociraptor did not apply sufficient permission checks when reading secrets from the root org. An administrator in a child org could read a secret in the root org and assign their own users to it - leading to unintended use of credentials."
+  - id: CVE-2026-130319
+    title: "Multiple VQL plugins missing permission enforcement"
+    date: 2026-11-27
+    severity: High
+    score: 8.8
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "Velociraptor users usually need various permissions to call VQL plugins on the server from VQL notebooks. However several VQL plugins were missing these checks allowing users with NOTEBOOK_EDIT permissions to performs actions they may not have permissions for. The affected VQL functions are: - cache, memoize, process_tracker - Missing FILESYSYEM_WRITE permission check, allowing users to write files on the server's filesystem. - yarax - Missing the EXECVE permission check, allowing users to load an external DLL - leading to code execution. - cat - Missing the FILESYSTEM_READ permission allowing users to read files from the filesystem. - netstat - Missing the MACHINE_STATE permission allowing users to view sockets on the server."
+  - id: CVE-2026-129973
+    title: "Path traversal bypass of the native file-accessor sandbox"
+    date: 2026-11-27
+    severity: High
+    score: 7.2
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "Velociraptor allows administrators to restrict server-side VQL native file access to approved host directories. Plugins usually check the user has the FILESYSTEM_READ/FILESYSTEM_WRITE permission first (usually only given to the administrator user), then check if the file lands in the forbidden directories. In vulnerable versions of Velociraptor, this check did not account for directory traversal characters, allowing the user to read/write into arbitrary directories. The overall effect of this is that administrator users in any org can read/write files in other orgs bypassing the file-accessor sandbox."
+  - id: CVE-2026-129966
+    title: "Server panic (DoS) via smb:// tool URL with a short password"
+    date: 2026-11-27
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "A single authenticated API request can terminate the Velociraptor server process. When a tool URL uses the smb:// scheme and the URL password is shorter than five characters, the smb accessor panic without recovery, so the process exits."
+  - id: CVE-2026-129965
+    title: "Query plugin allows cross-tenant information leak"
+    date: 2026-11-27
+    severity: Medium
+    score: 4.3
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "The Velociraptor query() plugin allows a user to run a query in another org. In Vulnerable versions of Velociraptor, the plugin does not check that the user has a minimal permission in the target org of READ_RESULTS, but allows the query to proceed in the target org. A few plugins assume the user already has the minimal READ_RESULTS permission and do not check this permission - leading to some information leakage. Any VQL plugins which perform more critical work, do check the permissions and correctly deny the operation, so this issue only results in some information leakage such as client nonce and tools configuration."
+  - id: CVE-2026-129964
+    title: "Rogue client can crash the frontend through a malformed VQLResponse"
+    date: 2026-11-27
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "An authenticated Velociraptor client can crash the Velociraptor frontend by sending a malformed VQLResponse message containing attacker-controlled ByteOffset and UncompressedSize values. During subsequent processing, the Rows goroutine performs a slice operation with a negative offset and panics. The panic terminates the frontend process."
+  - id: CVE-2026-123449
+    title: "Reflected XSS in the artifact report error view"
+    date: 2026-11-27
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.4
+    summary: "Velociraptor uses a DOM sanitizer to protect against XSS attacks. Vulnerable versions of Velociraptor used a weaker regular expression to permit certain HTML attributes, which matched the right click handler (`oncontextmenu`). This allowed a stored XSS attack by permitting Javascript to be attached to the right click handler. The vulnerable code was triggered in an error path reachable from artifact viewer."
+  - id: CVE-2026-77798
+    title: "Authenticated Denial of Service"
+    date: 2026-09-21
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor contains a deadlock condition that may be triggered by authenticated users. The issue stems from a lock management bug in the user management module."
+  - id: CVE-2026-77797
+    title: "Prefetch parser out of bounds"
+    date: 2026-09-21
+    severity: Low
+    score: 3.6
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.3
+    summary: "Velociraptor's prefetch library contains an out of bound vulnerability which may cause a crash when parsing certain malformed prefetch files."
+  - id: CVE-2026-19583
+    title: "Required Permissions bypass by using client monitoring queries."
+    date: 2026-08-15
+    severity: Critical
+    score: 9.9
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor allows some sensitive artifacts to be gated by additional permissions. For example, the `Linux.Sys.BashShell` artifact allows arbitrary command execution on endpoints, and so it requires the EXECVE permission to schedule. However, so such check was implemented for client monitoring artifacts. Additionally there was no requirement that client monitoring artifact carry the CLIENT_EVENTS type. This allows any user who can schedule client monitoring artifacts to also schedule otherwise restricted artifacts (such as `Linux.Sys.BashShell`)."
+  - id: CVE-2026-78413
+    title: "Privilege escalation via SysmonLogForward client monitoring artifact"
+    date: 2026-07-31
+    severity: Medium
+    score: 5.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.3
+    summary: "Velociraptor allows collection of VQL queries packaged into Artifacts from endpoints. These artifacts can be used to do anything and usually run with elevated permissions. To limit access to some dangerous artifact, Velociraptor allows for those to require high permissions like EXECVE to launch. The `Windows.Sysinternals.SysmonLogForward` is a monitoring artifact used to forward sysmon events to the server. The artifact allows the user to specify an arbitrary binary path as a parameter, and did not enforce an additional required permission, allowing users with COLLECT_CLIENT permissions (normally given by the \"Investigator\" role) to collect it from endpoints and run a different binary program than the installed sysmon binary. To successfully exploit this vulnerability the user must already have access to collect artifacts from the endpoint (i.e. have the COLLECT_CLIENT given typically by the \"Investigator' role)."
+  - id: CVE-2026-78412
+    title: "WatchEvent API streams another organization's live events"
+    date: 2026-07-31
+    severity: Medium
+    score: 4.9
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.3
+    summary: "Velociraptor's WatchEvent gRPC API can specify the OrgId of the org from which events should be streamed. The server checks the API permissions against the caller's Org instead of the requested Org. This allows a user with API access in one org to read events from another org for which they have no access."
+  - id: CVE-2026-78411
+    title: "Server Metadata update with Insufficient Permission Check"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.3
+    summary: "Velociraptor's SetClientMetadata used the wrong permission check to enforce setting metadata on the server. This allows a user with LABEL_CLIENTS permission to update the server metadata. Server metadata is often used to store site wide configuration data that should only be updated by the server admin."
+  - id: CVE-2026-64955
+    title: "CSV Formula Injection in Export Pipeline"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "When Microsoft Excel imports a CSV file, it executes cells beginning with certain characters as formulas, giving such CSV files arbitrary execution. Velociraptor fails to sanitize such cells when exporting to CSV from various places such as the GUI, offline collector or data exports. It is not clear if the vulnerability is actually in Microsoft Excel treating a CSV data file as executable content, or if Velociraptor should be sanitizing the data to prevent Excel from executing it. However, since this is such a common use case for Velociraptor we decided to highlight it in an advisory."
+  - id: CVE-2026-64954
+    title: "collect_client() Permissions Bypass"
+    date: 2026-07-31
+    severity: High
+    score: 8.2
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor allows scheduling new collections via VQL queries in notebooks. For a user to schedule a new collection, they require the COLLECT_CLIENT permission. However, this is not enforced when the user can run a VQL query which resets the authorization provider.This allows a user who can run arbitrary VQL (usually with the \"analyst\" role) to launch new collections (usually requires the \"investigator\" role). This vulnerability is an escalation from an analyst to investigator role."
+  - id: CVE-2026-64952
+    title: "Hunt Deletion With Insufficient Permission Check"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "The hunt_delete() VQL function allows deleting hunts. Velociraptor misapplied the permission check requiring only COLLECT_CLIENT (usually assigned to the \"investigator\" role) instead of the \"DELETE_RESULTS\" permission (usually only assigned to \"administrators\")."
+  - id: CVE-2026-64951
+    title: "DoS triggered by Divide by Zero panic"
+    date: 2026-07-31
+    severity: Low
+    score: 3.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "A rogue Velociraptor client can upload a malformed sparse file such that if the GUI attempts to expand the file, a panic occurs which may crash the server process.The problem is a Divide by Zero bug in the ShouldPadFile() function."
+  - id: CVE-2026-19584
+    title: "VQL injection during notebook restore from backup."
+    date: 2026-07-31
+    severity: High
+    score: 7.7
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor allows for the creation of notebook backups in its default enabled daily backup feature. When Velociraptor restores the backup, the notebook cell content is interpolated into a template with no ACL checks. This allows a malicious user with NOTEBOOK_EDITOR permission to plant a VQL query which will evaluated at elevated permissions if the notebook's backup is subsequently restored."
+  - id: CVE-2026-19200
+    title: "Analyst overwrites live built-in artifacts through verify()"
+    date: 2026-07-31
+    severity: High
+    score: 8.9
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "The Velociraptor verify() VQL function allows a user to verify an artifact for syntatic and other issues. Due to an implementation fault in this VQL function, the global artifact repository is used which allows callers to overwrite existing artifacts without the required permissions. The attacker need only have the NOTEBOOK_EDIT permission (e.g. an analyst role) to be able to call this function."
+  - id: CVE-2026-19072
+    title: "Investigator reaches SuperUser via hunt EffectivePrincipal"
+    date: 2026-07-31
+    severity: Critical
+    score: 9.9
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor stores the compiled VQL in the hunt object internally to avoid having to recompile the artifacts for each endpoint in the hunt. Although the field \"compiled_collector_args\" is an internal field, Velociraptor allowed the field to be set from a user API call. This allows another user who can schedule a hunt (minimal role of \"investigator\" ) to set the compiled VQL statements for the hunt bypassing any ACL checks that would normally be applied. This flaw can then be escalated to allow the \"investigator\" user to run arbitrary VQL statements as an administrator user on the Velociraptor server."
+  - id: CVE-2026-18972
+    title: "Authenticated identity-spoofing vulnerability"
+    date: 2026-07-31
+    severity: Critical
+    score: 9.6
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "An authenticated attacker can spoof another GUI user's identity by sending their request with the custom header \"Grpc-Metadata-USER\". This can lead to an account takeover attack from a user with low privileges to administrator."
+  - id: CVE-2026-18860
+    title: "Incorrect Org deletion permissions check"
+    date: 2026-07-31
+    severity: High
+    score: 8.7
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor allows multi-tenant deployments named \"Orgs\". By default Velociraptor, uses the ROOT org, but users can create child orgs for other tenants within the same deployment. Users can have different permissions in each org. To manage Orgs, Velociraptor usually examines the ORG_ADMIN permission on the ROOT org. This issue results from the Velociraptor server allowing for the deletion of Orgs by incorrectly checking the ORG_ADMIN permission of callers within the calling ORG instead of the ROOT org. However, Org admins of child orgs were able to add this permission to their ACL token within their own org. This allows an administrator in a child org, which is not also an administrator in the ROOT org, to delete other orgs."
+  - id: CVE-2026-18652
+    title: "STACK Type Download Path Bypasses Denied Prefix Check"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor allows reading Stacked result sets from the GUI. Velociraptor's multi-tenant design stores sub orgs within the datastore directory. The path requested by the GUI is not correctly checked against the prefix deny list, allowing result sets to read from denied prefixes.In particular, a user with read access to the root org can access result sets from child orgs."
+  - id: CVE-2026-18640
+    title: "Directory traversal via the NewNotebook API"
+    date: 2026-07-31
+    severity: High
+    score: 7.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "The NewNotebook API does not sufficiently sanitize its parameters allowing an authenticated user with NOTEBOOK_EDIT permission to write the notebook record outside the org's data store directory. The file written must have an extension of \".json.db\" but can otherwise overwrite other metadata files (such as ACL records, hunts etc). This can corrupt these files and cause data corruption."
+  - id: CVE-2026-18639
+    title: "OIDC Authenticator susceptible to email spoofing"
+    date: 2026-07-31
+    severity: High
+    score: 7.3
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "When Velociraptor is configured to use an OIDC IdP for authentication, it uses the email claim as a username. However, some IdP allow users to change the email claim without verification. Some IdPs do not set the \"email_verified\" claim and do not actually verify the email.This allows a user to impersonate another user by setting their email address within the IdP, allowing account takeover."
+  - id: CVE-2026-18638
+    title: "Server crash via the SetPassword API"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Any authenticated Velociraptor user — including one holding only the readerrole — can terminate the entire server process with a single request, by calling SetPassword with a username that does not exist."
+  - id: CVE-2026-18636
+    title: "VFSGetBuffer API path deny list bypass"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.8
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "The Velociraptor gRPC API has a VFSGetBuffer endpoint which allows reading files from the datastore. To prevent users from reading sensitive files or accessing other orgs, the requested path is prefix checked against a list of denied prefixes. This prefix check can be bypassed allowing a user to access usually denied files. If the user has read permission in the ROOT org, this allows access to other orgs, in which the user may not have permission."
+  - id: CVE-2026-18635
+    title: "Query plugin allows impersonation in other orgs"
+    date: 2026-07-31
+    severity: High
+    score: 7.2
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor's VQL has a query() plugin which allows running a VQL query in a different org or user context. To be able to run as a different user, the calling user needs to have the IMPERSONATE permission (usually only given to administrators). Velociraptor versions prior to 0.77.2 evaluate this permission against the caller's org instead of against the target org.This allows an administrator in one org to impersonate another user in another org, in which they may not have the IMPERSONATE permission."
+  - id: CVE-2026-18348
+    title: "NETWORK ACL bypass via upload_azure / upload_sftp / upload_smb VQL plugins"
+    date: 2026-07-31
+    severity: Medium
+    score: 4.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Missing authorization check in the upload_azure, upload_sftp, and upload_smb VQL plugins allows an authenticated analyst-role user can initiate attacker-controlled outbound network connections from the Velociraptor server, bypassing the NETWORK ACL permission boundary. This enables internal network reconnaissance via port oracle and potential data exfiltration to external endpoints."
+  - id: CVE-2026-17535
+    title: "Multiple Crashes in NTFS Parser when applied to invalid NTFS Volumes"
+    date: 2026-07-31
+    severity: Medium
+    score: 6.2
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor's NTFS parsing library mishandles several out of bound and memory exhaustion bugs which may be triggered by maliciously crafted NTFS images. Typically Velociraptor's NTFS parser is used on live NTFS filesystems, limiting the opportunity of attackers corrupting the filesystem. However, in some applications (e.g. dead disk forensics) Velociraptor may be used on untrusted NTFS image files. If an attacker is able to inject maliciously corrupted NTFS Volumes they can cause a crash and a Denial of Service."
+  - id: CVE-2026-15371
+    title: "Stored XSS in URL column types"
+    date: 2026-07-31
+    severity: High
+    score: 8.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.77.2
+    summary: "Velociraptor's web GUI allows specifying a custom type for columns in tables. The URL type takes the cell value and forms a URL which can be clicked in the GUI.The code does not limit the schemes allowed in this URL , allowing an attacker to specify a JavaScript scheme exposing the user to XSS."
+  - id: CVE-2026-8795
+    title: "YAML Injection Leading to Potential Analyst Targeting"
+    date: 2026-05-01
+    fixed_in: 1.0.0
+    summary: "A YAML injection vulnerability in the Windows.Collectors.Remapping artifact allows an attacker who supplies a crafted collection ZIP to execute arbitrary VQL on the analyst's machine."
+  - id: CVE-2026-7573
+    title: "GetUserRoles API endpoint allows any authenticated user to enumerate ACL policies across all organizations"
+    date: 2026-05-01
+    severity: Medium
+    score: 5
+    fixed_in: 1.0.0
+    summary: "An authorization bypass (CWE-639) in the GetUserRoles gRPC API endpoint in Velocidex Velociraptor up to version 0.76.3 allows any authenticated low-privilege user to retrieve the complete ACL policy (roles and permissions) for any user across all organizations by supplying targeted Name and Org parameters via a network request."
+  - id: CVE-2026-7572
+    title: "EVTX Parser — Process Crash via Crafted .evtx File"
+    date: 2026-05-01
+    severity: Low
+    score: 3.3
+    fixed_in: 1.0.0
+    summary: "An off-by-one error (CWE-193) in the ConsumeUnit16Array and ConsumeUnit64Array functions in Velocidex Velociraptor up to version 0.76.1 on Windows and Linux allows a local attacker to cause a Denial of Service (DoS) via a process crash by providing a specially crafted .evtx file to the parse_evtx VQL plugin."
+  - id: CVE-2026-6948
+    title: "Unbounded Memory Allocation in VQLResponse Result-Set Writer"
+    date: 2026-04-27
+    fixed_in: 1.0.0
+    summary: "A resource exhaustion vulnerability was identified in the Velociraptor server's agent control channel, which may be exploited by a rogue client to crash the server."
+  - id: CVE-2026-6863
+    title: "HTTP Filestore Endpoints Misapply Permissions Across Organizations"
+    date: 2026-04-27
+    fixed_in: 1.0.0
+    summary: "A cross organization authorization bypass was identified in Velociraptor's HTTP API filestore access layer."
+  - id: CVE-2026-6290
+    title: "query() plugin misapplies permissions to orgs"
+    date: 2026-04-15
+    fixed_in: 1.0.0
+    summary: "Velociraptor versions prior to 0.76.3 contain a vulnerability in the query plugin which allows access to all orgs with the user's current ACL token."
+  - id: CVE-2026-5329
+    title: "Improper input validation in client message handler"
+    date: 2026-04-07
+    fixed_in: 1.0.0
+    summary: "Velociraptor versions prior to 0.76.2 contain an improper input validation vulnerability in the client monitoring message handler that may lead to remote code execution on the Velociraptor server."
+  - id: CVE-2025-14728
+    title: "Directory traversal vulnerability"
+    date: 2025-12-20
+    fixed_in: 1.0.0
+    summary: "Velociraptor normally is only allowed to write in the datastore. However, under some situations it is possible for a rogue client to write files outside the datastore."
+  - id: CVE-2025-6264
+    title: "Privilege escalation via UpdateConfig artifact"
+    date: 2025-06-18
+    severity: Medium
+    score: 5.5
+    fixed_in: 1.0.0
+    upstream_fixed: 0.74.3
+    summary: "Velociraptor allows collection of VQL queries packaged into Artifacts from endpoints. These artifacts can be used to do anything and usually run with elevated permissions. To limit access to some dangerous artifact, Velociraptor allows for those to require high permissions like EXECVE to launch. The Admin.Client.UpdateClientConfig is an artifact used to update the client's configuration. This artifact did not enforce an additional required permission, allowing users with COLLECT_CLIENT permissions (normally given by the \"Investigator\" role) to collect it from endpoints and update the configuration. This can lead to arbitrary command execution and endpoint takeover. To successfully exploit this vulnerability the user must already have access to collect artifacts from the endpoint (i.e. have the COLLECT_CLIENT given typically by the \"Investigator' role)."
+  - id: CVE-2025-0914
+    title: "Shell Plugin prevent_execve bypass"
+    date: 2025-02-25
+    severity: Low
+    score: 3.8
+    fixed_in: 1.0.0
+    upstream_fixed: 0.73.4
+    summary: "An improper access control issue in the VQL shell feature in Velociraptor Versions < 0.73.4 allowed authenticated users to execute the execve() plugin in deployments where this was explicitly forbidden by configuring the prevent_execve flag in the configuration file. This issue is fixed in release 0.73.4"
+  - id: CVE-2024-10526
+    title: "Local Privilege Escalation In Windows Velociraptor Service"
+    date: 2024-11-03
+    severity: High
+    score: 8.6
+    fixed_in: 1.0.0
+    upstream_fixed: 0.73.3
+    summary: "The Velociraptor Windows MSI installer creates the installation directory with WRITE_DACL permission to the BUILTIN\\Users group. This allows local users who are not administrators to grant themselves the Full Control permission on Velociraptor's files. By modifying Velociraptor's files, local users can subvert the binary and cause the Velociraptor service to execute arbitrary code as the SYSTEM user, or to replace the Velociraptor binary completely."
+  - id: CVE-2023-5950
+    title: "Reflected XSS"
+    date: 2023-11-06
+    fixed_in: 1.0.0
+    summary: "Rapid7 Velociraptor versions prior to 0.7.0-4 suffer from a reflected cross site scripting vulnerability. This vulnerability allows attackers to inject JS into the error path, potentially leading to unauthorized execution of scripts within a user's web browser. This issue affects Velociraptor: before 0.7.0-4. Patches are also available for version 0.6.9 (0.6.9-1)"
+  - id: CVE-2023-2226
+    title: "Crashes while parsing some malformed PE or OLE files"
+    date: 2023-04-21
+    fixed_in: 1.0.0
+    summary: "Due to insufficient validation in the PE and OLE parsers in Rapid7's Velociraptor versions earlier than 0.6.8 allows attacker to crash Velociraptor during parsing of maliciously malformed files. This issue affects Velociraptor: before 0.6.8."
+  - id: CVE-2023-0242
+    title: "Insufficient Permission Check In The VQL Copy() Function"
+    date: 2023-01-18
+    severity: High
+    score: 8.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.6.7-5
+    summary: "Improper Privilege Management vulnerability in Rapid7 Velociraptor in the copy() function. Velociraptor allows users to be created with different privileges on the server. Administrators are generally allowed to run any command on the server including writing arbitrary files. However, lower privilege users are generally forbidden from writing or modifying files on the server. The VQL copy() function applies permission checks for reading files but does not check for permission to write files. This allows a low privilege user (e.g. users with the Velociraptor \"investigator\" role) to overwrite files on the server, including Velociraptor configuration files. To exploit this vulnerability, the attacker must already have a Velociraptor user account at a low privilege level (at least \"analyst\"). Be able to log into the GUI and create a notebook where they can run the VQL query invoking the copy() VQL function. Typically most users deploy Velociraptor with limited access to a trusted group (most users will be administrators within the GUI). This vulnerability is associated with program files https://github.Com/Velocidex/velociraptor/blob/master/vql/filesystem/copy.go https://github.Com/Velocidex/velociraptor/blob/master/vql/filesystem/copy.go and program routines copy(). This issue affects Velociraptor: before 0.6.7-5."
+  - id: CVE-2023-0290
+    title: "Directory Traversal In Client Id Parameter"
+    date: 2023-01-17
+    severity: High
+    score: 8.1
+    fixed_in: 1.0.0
+    upstream_fixed: 0.6.7-5
+    summary: "Velociraptor did not properly sanitize the client id parameter to the CreateCollection API allowing a directory traversal in where the collection task could be written. It was possible to provide a client id of \"../clients/server\" to schedule the collection for the server (as a server artifact), but only require privileges to schedule collections on the client. Normally to schedule an artifact on the server requires the COLLECT_SERVER permissions (normally only granted to \"administrator\" role), but due to this issue it is sufficient to have the COLLECT_CLIENT privilege (normally granted to the \"investigator\" role) To exploit this vulnerability, the attacker must already have a Velociraptor user account at a low privilege level (not administrator but at least \"investigator\"). Be able to authenticate to the GUI (e.g. via OAuth2) and issue an API call to the backend. Typically most users deploy Velociraptor with limited access to a trusted group (most users will be administrators within the GUI). This vulnerability is associated with program files https://github.Com/Velocidex/velociraptor/blob/master/services/launcher/launcher.go https://github.Com/Velocidex/velociraptor/blob/master/services/launcher/launcher.go and program routines ScheduleArtifactCollection(). This issue affects Velociraptor: before 0.6.7-5."
