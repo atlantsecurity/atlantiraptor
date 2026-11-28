@@ -7,7 +7,7 @@ import qs from 'qs';
 const SERVER_PATH = /^\/(api|app|notebooks|downloads|hunts|clients|auth)\//;
 
 export function basePath(): string {
-  if (import.meta.env.DEV) return '';
+  if (import.meta.env?.DEV) return '';
   let base = window.base_path || '';
   if (base === '') base = window.location.pathname.replace(/\/app.*$/, '');
   return base;

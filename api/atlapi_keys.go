@@ -107,9 +107,25 @@ func apiKeysPath() fs_api.FSPathSpec {
 		SetType(fs_api.PATH_TYPE_FILESTORE_JSON)
 }
 
-func apiKeysTmpPath() fs_api.FSPathSpec {
-	return path_specs.NewSafeFilestorePath("config", "atl_api_keys_tmp").
+func apiKeysBackupPath() fs_api.FSPathSpec {
+	return path_specs.NewSafeFilestorePath("config", "atl_api_keys_backup").
 		SetType(fs_api.PATH_TYPE_FILESTORE_JSON)
+}
+
+func writeKeyFile(fs fs_api.FileStore, path fs_api.FSPathSpec, data []byte) error {
+	writer, err := fs.WriteFile(path)
+	if err != nil {
+		return fmt.Errorf("open api keys for writing: %w", err)
+	}
+	if err := writer.Truncate(); err != nil {
+		writer.Close()
+		return err
+	}
+	if _, err := writer.Write(data); err != nil {
+		writer.Close()
+		return err
+	}
+	return writer.Close()
 }
 
 func apiKeyPepper(root *config_proto.Config) ([]byte, error) {
@@ -128,6 +144,33 @@ func hashSecret(pepper []byte, secret string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
+// readKeyFile returns nil without error when the file does not exist.
+func readKeyFile(fs fs_api.FileStore, path fs_api.FSPathSpec) (*apiKeyDoc, error) {
+	if _, err := fs.StatFile(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) || os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("stat api keys: %w", err)
+	}
+	reader, err := fs.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("open api keys: %w", err)
+	}
+	data, err := io.ReadAll(io.LimitReader(reader, 4<<20))
+	reader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("read api keys: %w", err)
+	}
+	doc := &apiKeyDoc{}
+	if len(data) == 0 {
+		return nil, nil
+	}
+	if err := json.Unmarshal(data, doc); err != nil {
+		return nil, fmt.Errorf("parse api keys: %w", err)
+	}
+	return doc, nil
+}
+
 // readKeysLocked reads the key document. Caller holds apiKeyMu.
 func readKeysLocked(root *config_proto.Config) (*apiKeyDoc, error) {
 	if apiKeyCache != nil && time.Since(apiKeyFetched) < apiKeyCacheTTL {
@@ -137,26 +180,20 @@ func readKeysLocked(root *config_proto.Config) (*apiKeyDoc, error) {
 	if fs == nil {
 		return nil, errors.New("file store unavailable")
 	}
-	doc := &apiKeyDoc{}
-	if _, err := fs.StatFile(apiKeysPath()); err != nil {
-		if !errors.Is(err, os.ErrNotExist) && !os.IsNotExist(err) {
-			return nil, fmt.Errorf("stat api keys: %w", err)
+	// The main file, or the backup written just before it when the main
+	// file is missing or damaged (a crash while writing it).
+	doc, err := readKeyFile(fs, apiKeysPath())
+	if err != nil || doc == nil {
+		backup, berr := readKeyFile(fs, apiKeysBackupPath())
+		if berr == nil && backup != nil {
+			doc, err = backup, nil
 		}
-	} else {
-		reader, err := fs.ReadFile(apiKeysPath())
-		if err != nil {
-			return nil, fmt.Errorf("open api keys: %w", err)
-		}
-		data, err := io.ReadAll(io.LimitReader(reader, 4<<20))
-		reader.Close()
-		if err != nil {
-			return nil, fmt.Errorf("read api keys: %w", err)
-		}
-		if len(data) > 0 {
-			if err := json.Unmarshal(data, doc); err != nil {
-				return nil, fmt.Errorf("parse api keys: %w", err)
-			}
-		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		doc = &apiKeyDoc{}
 	}
 	apiKeyCache, apiKeyFetched = doc, time.Now()
 	return doc, nil
@@ -167,27 +204,14 @@ func writeKeysLocked(root *config_proto.Config, doc *apiKeyDoc) error {
 	if err != nil {
 		return err
 	}
-	// Write a temporary file and move it over the old one, so a crash
-	// or a full disk mid-write can never leave a truncated key store.
+	// Write the backup first, then the main file. A crash while writing
+	// either one leaves the other complete, and reading falls back to the
+	// backup (this works on every file store, unlike a rename).
 	fs := file_store.GetFileStore(root)
-	tmp := apiKeysTmpPath()
-	writer, err := fs.WriteFile(tmp)
-	if err != nil {
-		return fmt.Errorf("open api keys for writing: %w", err)
-	}
-	if err := writer.Truncate(); err != nil {
-		writer.Close()
-		return err
-	}
-	if _, err := writer.Write(data); err != nil {
-		writer.Close()
-		return err
-	}
-	if err := writer.Close(); err != nil {
-		return err
-	}
-	if err := fs.Move(tmp, apiKeysPath()); err != nil {
-		return fmt.Errorf("replace api keys: %w", err)
+	for _, path := range []fs_api.FSPathSpec{apiKeysBackupPath(), apiKeysPath()} {
+		if err := writeKeyFile(fs, path, data); err != nil {
+			return err
+		}
 	}
 	apiKeyCache, apiKeyFetched = doc, time.Now()
 	return nil

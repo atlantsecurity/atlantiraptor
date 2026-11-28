@@ -19,6 +19,9 @@ import 'ace-builds/src-min-noconflict/keybinding-vim.js';
 import 'ace-builds/src-min-noconflict/keybinding-vscode.js';
 import 'ace-builds/src-min-noconflict/mode-json.js';
 import 'ace-builds/src-min-noconflict/mode-sql.js';
+// The custom modes below extend these built-in ones.
+import 'ace-builds/src-min-noconflict/mode-yaml.js';
+import 'ace-builds/src-min-noconflict/mode-markdown.js';
 import VqlMode from './ace/mode-vql.jsx';
 import MarkdownMode from './ace/mode-markdown.jsx';
 import YamlMode from './ace/mode-yaml.jsx';
@@ -28,6 +31,7 @@ import YaraMode from './ace/mode-yara.jsx';
 import './ace/ace.css';
 import * as api from '../lib/api';
 import { useTraits } from '../lib/queries';
+import { isDarkTheme } from '../shell/theme';
 
 const MODES = {
   vql: VqlMode, markdown: MarkdownMode, md: MarkdownMode, yaml: YamlMode,
@@ -39,7 +43,7 @@ for (const [name, Mode] of Object.entries(MODES)) ace.define(`ace/mode/${name}`,
 
 // Options the component controls; never taken from or saved to the
 // user's preferences.
-const OWN = new Set(['mode', 'readOnly', 'minLines', 'maxLines', 'autoScrollEditorIntoView']);
+const OWN = new Set(['mode', 'theme', 'readOnly', 'minLines', 'maxLines', 'autoScrollEditorIntoView']);
 
 function cleanOptions(o) {
   const out = {};
@@ -64,7 +68,7 @@ export default function CodeEditor({ value, onChange, mode = 'yaml', readOnly = 
     <div className={'rx-code ' + (className || '')}>
       <AceEditor
         mode={MODES[mode] ? mode : 'sql'}
-        theme="github"
+        theme={isDarkTheme(traits?.theme) ? 'vibrant_ink' : 'github'}
         value={value || ''}
         onChange={onChange}
         focus={focus}

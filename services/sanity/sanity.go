@@ -205,13 +205,17 @@ func checkForServerUpgrade(
 		return errors.New("config_obj.Version not configured")
 	}
 
+	// Compare the upstream version this build is based on, not the
+	// Atlantiraptor release version (config_obj.Version in release
+	// builds): the tool upgrade below only needs to run when the
+	// bundled artifacts change, not on every Atlantiraptor release.
 	if utils.CompareVersions("velociraptor",
-		state.Version, config_obj.Version.Version) < 0 {
+		state.Version, constants.VERSION) < 0 {
 		logger := logging.GetLogger(config_obj, &logging.FrontendComponent)
 		logger.Info("Server upgrade detected %v -> %v... running upgrades.",
-			state.Version, config_obj.Version.Version)
+			state.Version, constants.VERSION)
 
-		state.Version = config_obj.Version.Version
+		state.Version = constants.VERSION
 		err = db.SetSubject(config_obj, state_path_manager.Path(), state)
 		if err != nil {
 			return err
