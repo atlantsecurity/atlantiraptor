@@ -3,7 +3,7 @@ title: Network access
 description: Restrict which IP addresses can use the Atlantiraptor console and its integration API.
 ---
 
-**Admin > Network access** limits which addresses may use the web console,
+**Server settings > Network access** limits which addresses may use the web console,
 its sign-in pages and its API, and, separately, the
 [integration REST API](/server-automation/api-keys/) that SIEMs and scripts
 use. Agents connect to the frontend on a different port and are not
@@ -15,7 +15,7 @@ sign-in page.
 
 ## Setting up a list
 
-1. Open **Admin > Network access**.
+1. Open **Server settings > Network access**.
 2. Turn on the list for the **console**, the **integration API**, or both.
 3. Enter one address or range per line, IPv4 or IPv6:
 

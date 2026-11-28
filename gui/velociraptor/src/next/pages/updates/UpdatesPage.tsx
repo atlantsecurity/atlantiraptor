@@ -1,4 +1,4 @@
-// Admin > Server updates: the server keeps itself on the latest signed
+// Server settings > Server updates: the server keeps itself on the latest signed
 // Atlantiraptor release from GitHub. Checking, verifying and installing
 // happen on the server; this page shows the state and the controls.
 import { useEffect, useState } from 'react';

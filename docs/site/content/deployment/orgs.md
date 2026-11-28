@@ -16,7 +16,7 @@ licence) live there.
 
 ## Managing orgs in the console
 
-Open **Admin > Organizations** (also reachable from the org switcher in the
+Open **Server settings > Organizations** (also reachable from the org switcher in the
 top bar: **Manage organizations…**). It lists every org with its ID and
 number of users, and lets you:
 
@@ -81,7 +81,7 @@ org without being reinstalled with that org's configuration.
 
 A user account is server-wide; roles are per org. An analyst at a managed
 service provider can be `hunter` in five customer orgs and `reader` in
-another. Give access on **Admin > Users**: select the user, **Add to org**,
+another. Give access on **Server settings > Users**: select the user, **Add to org**,
 and pick roles. The org switcher in the account menu (**Switch
 organization**) lists the orgs a user has access to. Console URLs carry the
 org (`?org_id=O1a2b3`), so a shared link opens in the right org.
@@ -107,7 +107,7 @@ org. See [Managing artifacts](/artifacts/managing/).
 Deleting an org removes its data permanently: its agents' records,
 collections, hunts, notebooks, custom artifacts and settings. Users keep
 their accounts but lose access to the org. Use **Delete…** on
-**Admin > Organizations**, or from a notebook in the root org, first see
+**Server settings > Organizations**, or from a notebook in the root org, first see
 what would be removed, then confirm:
 
 ```sql

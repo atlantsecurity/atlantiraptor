@@ -8,7 +8,7 @@ description: Signed automatic server updates from GitHub releases, manual upgrad
 Atlantiraptor servers on Windows keep themselves up to date. They check
 the [GitHub releases](https://github.com/atlantsecurity/atlantiraptor/releases)
 of Atlantiraptor, and when a newer signed release is available they install
-it and restart. The settings and status are on **Admin > Server updates**.
+it and restart. The settings and status are on **Server settings > Server updates**.
 
 ### What is checked before an install
 
@@ -44,7 +44,7 @@ freeze).
 
 A binary built from source without a release version is a *development
 build*. It never installs updates automatically. To move a development
-build onto the release track, install a release once from **Admin > Server
+build onto the release track, install a release once from **Server settings > Server
 updates**.
 
 ### Other platforms

@@ -74,3 +74,4 @@ plists
 intunewin
 usermessages
 agentupdate
+consolehttps

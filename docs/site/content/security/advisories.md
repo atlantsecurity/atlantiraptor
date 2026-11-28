@@ -10,7 +10,7 @@ here once they are in an Atlantiraptor release.
 
 ## Am I affected? {#am-i-affected}
 
-Check your version with `atlantiraptor version`, or on **Admin > Server
+Check your version with `atlantiraptor version`, or on **Server settings > Server
 updates**. If it is the same as or newer than **Fixed in**, the advisory
 does not affect you. Every advisory below is fixed in Atlantiraptor 1.0.0
 and later.
