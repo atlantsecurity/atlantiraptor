@@ -69,6 +69,41 @@ func (self *TestSuite) TestStackTable() {
 	assert.ErrorContains(self.T(), err, "No access to filesystem path")
 }
 
+// Only the requested columns come back, and the row limit still holds.
+func (self *TestSuite) TestColumnProjection() {
+	client_id := "C.123"
+	flow_id := "F.1235"
+
+	req := &api_proto.GetTableRequest{
+		ClientId: client_id,
+		FlowId:   flow_id,
+		Artifact: "Windows.Forensics.Prefetch",
+		Rows:     3,
+		Columns:  []string{"Executable", "LastRunTimes", "NoSuchColumn"},
+	}
+	path, err := tables.GetPathSpec(self.Ctx, self.ConfigObj, req, "admin")
+	assert.NoError(self.T(), err)
+
+	file_store_factory := file_store.GetFileStore(self.ConfigObj)
+	rs, err := result_sets.NewResultSetWriter(file_store_factory,
+		path, nil, utils.SyncCompleter, true)
+	assert.NoError(self.T(), err)
+	for i := 0; i < 10; i++ {
+		rs.Write(ordereddict.NewDict().
+			Set("Executable", "A.EXE").
+			Set("FilesAccessed", []string{"big", "list"}).
+			Set("LastRunTimes", []string{"2026-11-28T00:00:00Z"}))
+	}
+	rs.Close()
+
+	res, err := tables.GetTable(self.Ctx, self.ConfigObj, req, "admin")
+	assert.NoError(self.T(), err)
+	assert.Equal(self.T(), []string{"Executable", "LastRunTimes"}, res.Columns)
+	assert.Equal(self.T(), 3, len(res.Rows))
+	assert.Equal(self.T(), int64(10), res.TotalRows)
+	assert.Equal(self.T(), `["A.EXE",["2026-11-28T00:00:00Z"]]`, res.Rows[0].Json)
+}
+
 func (self *TestSuite) WriteResultSet(path api.FSPathSpec) {
 	file_store_factory := file_store.GetFileStore(self.ConfigObj)
 

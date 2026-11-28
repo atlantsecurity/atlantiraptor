@@ -3,7 +3,7 @@
 // without leaving the page.
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, Crosshair, ListChecks, ScanEye } from 'lucide-react';
 import * as api from '../../lib/api';
@@ -19,8 +19,7 @@ import { AI_TASK, IOC_LABELS, aiContext, areas, extractIocs, headline, iocSweepT
 import { AiTriageButton } from '../ai/AiTriage';
 import { clip } from '../ai/context';
 import { prefillIocSweep } from '../../lib/prefill';
-
-const ROWS_PER_SOURCE = 5000;
+import { planFor, sourceDone } from './triageLoad';
 
 function isTriageFlow(arts: string[], os: ReturnType<typeof osOf>): boolean {
   const want = FULL_TRIAGE[os];
@@ -40,29 +39,45 @@ export function TriagePanel({ clientId, client, canCollect }: { clientId: string
   const [starting, setStarting] = useState(false);
   const [view, setView] = useState<'summary' | 'findings' | 'timeline'>('summary');
 
-  const results = useQuery({
-    queryKey: ['triage-results', clientId, flowId, sources.join(','), state],
-    enabled: !!flowId && sources.length > 0,
-    staleTime: Infinity,
-    queryFn: async ({ signal }) => {
-      const out: Record<string, Row[]> = {};
-      await Promise.all(sources.map(async s => {
+  // One query per artifact, read once its part of the collection is done
+  // (see triageLoad.ts): findings appear as soon as the first artifacts
+  // arrive, and nothing is downloaded again when more results come in.
+  const stats = flow?.context?.query_stats;
+  const ready = sources.filter(s => sourceDone(s, running, stats));
+  const perSource = useQueries({
+    queries: ready.map(s => ({
+      queryKey: ['triage-source', clientId, flowId, s],
+      staleTime: Infinity,
+      gcTime: 30 * 60_000,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const plan = planFor(s);
         try {
           const t = parseTable(await api.get<TableResponse>('v1/GetTable', {
-            client_id: clientId, flow_id: flowId, artifact: s, start_row: 0, rows: ROWS_PER_SOURCE,
+            client_id: clientId, flow_id: flowId, artifact: s, start_row: 0, rows: plan.rows,
+            ...(plan.columns ? { columns: plan.columns } : {}),
           }, signal));
-          out[s] = t.rows;
+          return { source: s, rows: plan.countOnly ? [] : t.rows, count: t.total || t.rows.length };
         } catch {
-          out[s] = [];
+          return { source: s, rows: [] as Row[], count: 0 };
         }
-      }));
-      return out;
-    },
+      },
+    })),
   });
-  const found = useMemo(() => (results.data ? findings(results.data) : []), [results.data]);
-  const events = useMemo(() => (results.data ? timeline(results.data) : []), [results.data]);
-  const iocs = useMemo(() => (results.data ? extractIocs(results.data, found) : []), [results.data, found]);
-  const byArea = useMemo(() => (results.data ? areas(results.data, found) : []), [results.data, found]);
+  const loaded = perSource.filter(q => q.data).map(q => q.data!);
+  const loadedKey = loaded.map(d => d.source).join('|');
+  const data = useMemo(() => {
+    if (!loaded.length) return undefined;
+    const rows: Record<string, Row[]> = {};
+    const counts: Record<string, number> = {};
+    for (const d of loaded) { rows[d.source] = d.rows; counts[d.source] = d.count; }
+    return { rows, counts };
+  }, [loadedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pending = sources.length - loaded.length;
+  const results = { data: data?.rows, isLoading: !data && sources.length > 0 };
+  const found = useMemo(() => (data ? findings(data.rows) : []), [data]);
+  const events = useMemo(() => (data ? timeline(data.rows) : []), [data]);
+  const iocs = useMemo(() => (data ? extractIocs(data.rows, found) : []), [data, found]);
+  const byArea = useMemo(() => (data ? areas(data.rows, found, data.counts) : []), [data, found]);
   const host = client.os_info?.fqdn || client.os_info?.hostname || clientId;
 
   const start = async () => {
@@ -85,8 +100,8 @@ export function TriagePanel({ clientId, client, canCollect }: { clientId: string
           ? <>Last run {timeAgo(latest.Created as number)}{running ? ' · collecting now…' : ''} · <Link className="tw:text-accent tw:hover:underline" to={`/collected/${clientId}/${flowId}`}>all results</Link></>
           : 'Processes, network connections, persistence, users and execution history, in one collection.'}
         actions={<div className="tw:flex tw:gap-1.5">
-          {results.data && !running && <AiTriageButton task={AI_TASK}
-            getContext={async () => clip(aiContext(host, clientId, flowId ?? '', results.data!, found, iocs))} />}
+          {results.data && !running && pending === 0 && <AiTriageButton task={AI_TASK}
+            getContext={async () => clip(aiContext(host, clientId, flowId ?? '', results.data!, found, iocs, data?.counts))} />}
           <Button variant="primary" size="sm" icon={<ListChecks className="tw:size-3.5" />} loading={starting || running}
           disabled={!canCollect} onClick={start}>{latest ? 'Run again' : 'Run full triage'}</Button></div>} />
       {!latest ? (
@@ -103,9 +118,12 @@ export function TriagePanel({ clientId, client, canCollect }: { clientId: string
                 {v === 'summary' ? 'Summary' : v === 'findings' ? `Worth a look${found.length ? ` (${found.length})` : ''}` : `Activity timeline${events.length ? ` (${fmtNum(events.length)})` : ''}`}
               </button>
             ))}
-            {running && <span className="tw:ml-auto tw:text-2xs tw:text-muted">{sources.length} of {FULL_TRIAGE[os].length} artifacts returned so far</span>}
+            {(running || pending > 0) && <span className="tw:ml-auto tw:text-2xs tw:text-muted">
+              {running ? `${sources.length} of ${FULL_TRIAGE[os].length} artifacts returned so far` : ''}
+              {pending > 0 ? `${running ? ' · ' : ''}analysing ${loaded.length} of ${sources.length}…` : ''}
+            </span>}
           </div>
-          {results.isLoading || (!results.data && sources.length > 0) ? (
+          {results.isLoading ? (
             <div className="tw:p-4 tw:space-y-2">{[0, 1, 2].map(i => <Skeleton key={i} />)}</div>
           ) : view === 'summary' ? (
             <Summary areas={byArea} found={found} iocs={iocs} running={running} onOpen={() => setView('findings')} />

@@ -25,13 +25,15 @@ const AREAS: { id: string; label: string; re: RegExp }[] = [
 
 const areaOf = (source: string) => AREAS.find(a => a.re.test(source) || a.re.test(artifactOf(source))) ?? { id: 'other', label: 'Other', re: /./ };
 
-export function areas(sources: Record<string, Row[]>, found: Finding[]): Area[] {
+/** counts: total rows per source, when only part of the rows (or none) were read. */
+export function areas(sources: Record<string, Row[]>, found: Finding[], counts?: Record<string, number>): Area[] {
   const out = new Map<string, Area>();
   for (const [name, rows] of Object.entries(sources)) {
     const def = areaOf(name);
     const a = out.get(def.id) ?? { id: def.id, label: def.label, sources: [], rows: 0, flagged: 0, findings: [] };
-    a.sources.push({ name, rows: rows.length });
-    a.rows += rows.length;
+    const n = counts?.[name] ?? rows.length;
+    a.sources.push({ name, rows: n });
+    a.rows += n;
     out.set(def.id, a);
   }
   for (const f of found) {
@@ -195,9 +197,9 @@ export function headline(found: Finding[], iocs: FoundIoc[]): { tone: 'bad' | 'w
  * caller still caps it.
  */
 export function aiContext(host: string, clientId: string, flowId: string,
-  sources: Record<string, Row[]>, found: Finding[], iocs: FoundIoc[]): string {
+  sources: Record<string, Row[]>, found: Finding[], iocs: FoundIoc[], counts?: Record<string, number>): string {
   const lines: string[] = [`Host: ${host} (${clientId})`, `Full triage collection: ${flowId}`, '', '## Rows returned per artifact'];
-  for (const [s, rows] of Object.entries(sources)) lines.push(`${s}: ${rows.length}`);
+  for (const [s, rows] of Object.entries(sources)) lines.push(`${s}: ${counts?.[s] ?? rows.length}`);
   lines.push('', '## Findings from built-in checks');
   if (!found.length) lines.push('None.');
   for (const f of found) {
