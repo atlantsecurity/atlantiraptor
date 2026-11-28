@@ -34,7 +34,7 @@ project, so existing deployments upgrade in place).
 |---|---|
 | `frontend` | Runs the server: the client frontend, the console and the APIs |
 | `client` | Runs the client (agent) |
-| `gui` | Starts a throwaway server and client on this machine and opens the console: the quickest way to try Atlantiraptor |
+| `gui` | Starts a throwaway server and client on this machine and opens the console, for a quick look only. Its agent runs as the user who started it, not as SYSTEM, so it can't see everything; install servers with `server_service install` and agents as a service (see [Deploying agents](/deployment/clients/)) |
 
 ### Configuration and deployment
 

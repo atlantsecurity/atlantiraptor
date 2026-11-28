@@ -114,7 +114,9 @@ PowerShell command.
 
 **8. Run it on the computer you want to add**, in PowerShell opened as
 administrator. It downloads the signed program, checks the signature,
-and installs and starts the `Atlantiraptor` agent service.
+and installs and starts the `Atlantiraptor` agent service. It runs as
+SYSTEM, so it can read everything on the computer, including the raw
+disk and its `$MFT`.
 
 Within a minute the computer appears on the dashboard under **Recently
 seen** and under **Clients**.

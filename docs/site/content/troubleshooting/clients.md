@@ -16,7 +16,11 @@ description: Fix Atlantiraptor agents that don't connect, show as offline, share
    ```
 
    On Windows use the installed program and configuration in
-   `C:\Program Files\Atlant Security\Atlantiraptor\`.
+   `C:\Program Files\Atlant Security\Atlantiraptor\`. This is for
+   troubleshooting only: in a window the agent runs as you, not as
+   SYSTEM like the service, so some collections (raw NTFS, other users'
+   files and hives) can behave differently. Start the service again when
+   you are done.
 3. **Read the messages**:
 
    | Message | Cause and fix |

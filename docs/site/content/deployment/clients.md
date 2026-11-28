@@ -29,6 +29,14 @@ without re-deploying every agent.
 
 ## Windows
 
+On Windows the agent always runs as a service under the **LocalSystem**
+(SYSTEM) account, and every way of installing it below does that for you.
+SYSTEM is what lets it read everything an investigation needs: the raw NTFS
+volume (the `$MFT`, the USN journal, locked and in-use files), the `SAM`,
+`SECURITY` and other users' registry hives, and other processes' memory.
+Don't run the agent from a PowerShell window or under a user account on a
+computer you investigate; that is only for troubleshooting.
+
 ### The MSI installer (recommended)
 
 The Atlantiraptor MSI installs the agent as the Windows service
@@ -79,6 +87,15 @@ program's signature. Run it as an administrator:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Atlantiraptor.ps1
 ```
 
+With **Group Policy**, add it as a computer **startup script** (*Computer
+Configuration > Policies > Windows Settings > Scripts > Startup*), which
+Windows runs as SYSTEM. Not as a user logon script: that runs as the
+signed-in user, who can't install a service. Put `Install-Atlantiraptor.ps1`
+and, for computers without internet access, `Atlantiraptor.exe` on a share
+that the computer accounts (*Domain Computers*) can read. With SCCM, Intune
+or an RMM tool, run it as SYSTEM too, which is their default for device
+installs.
+
 `-Uninstall` removes the agent again (also one installed by the MSI).
 
 On a single machine, the program can also install itself as a service:
@@ -89,7 +106,8 @@ On a single machine, the program can also install itself as a service:
 
 This copies the program and configuration to
 `Client.windows_installer.install_path` and creates the service named by
-`Client.windows_installer.service_name`. `service remove` uninstalls it.
+`Client.windows_installer.service_name`, running as LocalSystem.
+`service remove` uninstalls it.
 
 ### Checking an agent
 
