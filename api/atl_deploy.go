@@ -38,6 +38,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/constants"
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 	"www.velocidex.com/golang/velociraptor/utils"
 	"www.velocidex.com/golang/velociraptor/utils/intunewin"
@@ -101,6 +102,9 @@ func deployClientConfig(org_config *config_proto.Config) (*config_proto.Config, 
 	}
 	client_config := config.StripClientConfig(org_config)
 	client_config = proto.Clone(client_config).(*config_proto.Config)
+	// The deployment certificate lets new agents through the agent
+	// port's certificate check (services/agentmtls).
+	client_config = agentmtls.WithDeploymentCert(org_config, client_config)
 
 	c := client_config.Client
 	c.WritebackWindows = deployWindowsBase + `\atlantiraptor.writeback.yaml`

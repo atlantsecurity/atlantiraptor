@@ -17,6 +17,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/http_comms"
 	"www.velocidex.com/golang/velociraptor/paths/artifacts"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/utils"
 )
 
@@ -139,6 +140,11 @@ func ws_receive_client_messages(
 
 		server_obj.Debug("Received a WS post of length %v from %v (%v)",
 			len(message), message_info.RemoteAddr, message_info.Source)
+
+		if err := agentmtls.Get().CheckAgent(
+			req, message_info.Source, message_info.OrgId); err != nil {
+			return send_error(ws, err, http.StatusForbidden)
+		}
 
 		if !message_info.Authenticated {
 			err := server_obj.ProcessUnauthenticatedMessages(
@@ -276,6 +282,11 @@ func ws_send_client_messages(
 
 		server_obj.Debug("Received a WS post of length %v from %v (%v)",
 			len(message), message_info.RemoteAddr, message_info.Source)
+
+		if err := agentmtls.Get().CheckAgent(
+			req, message_info.Source, message_info.OrgId); err != nil {
+			return send_error(ws, err, http.StatusForbidden)
+		}
 
 		// Reject unauthenticated messages. This ensures untrusted
 		// clients are not allowed to keep connections open.

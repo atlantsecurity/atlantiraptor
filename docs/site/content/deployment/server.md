@@ -21,8 +21,11 @@ opened **as administrator** (right-click **Windows PowerShell** and choose
 - Windows Server 2019 or later (x64), or Windows 10/11 for a small or lab
   deployment.
 - A dedicated data folder on a fast disk, for example `D:\Atlantiraptor`.
-- Firewall rules allowing the frontend port (8000 by default) from
-  endpoints, and the console port (8889) from your analysts.
+- Firewall rules allowing the frontend (agent) port, 8000 by default,
+  from endpoints. The console (8889) listens on the server itself only;
+  reach it over a VPN, an SSH tunnel or Remote Desktop rather than
+  opening it to the network. For laptops that connect from anywhere, see
+  [Internet-facing agents](/deployment/internet-facing/).
 
 ### 2. Download and check the program
 
@@ -113,7 +116,10 @@ and restart the service.
 ### 6. Sign in
 
 Browse to `https://<server name>:8889/` and sign in as the administrator
-the wizard created. Then:
+the wizard created. With a self-signed configuration the console listens
+on the server itself only (`GUI.bind_address: 127.0.0.1`), so open
+`https://localhost:8889/` on the server, or reach it over a VPN or an SSH
+tunnel. Then:
 
 - set up [two-factor sign in](/deployment/authentication/#two-factor-sign-in),
 - review **Server settings > Server updates** (see [Updating](/deployment/updates/)),

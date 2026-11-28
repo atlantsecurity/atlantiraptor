@@ -228,6 +228,7 @@ func GetTlsConfig(config_obj *config_proto.ClientConfig, extra_roots string) (*t
 	// server. NOTE: This could allow for fingerprinting the client by
 	// MITM... This is necessary when connecting back to a mTLS
 	// protected server to download tools.
+	var legacy *tls.Certificate
 	if config_obj.Crypto != nil &&
 		config_obj.Crypto.ClientCertificate != "" &&
 		config_obj.Crypto.ClientCertificatePrivateKey != "" {
@@ -237,8 +238,13 @@ func GetTlsConfig(config_obj *config_proto.ClientConfig, extra_roots string) (*t
 		if err != nil {
 			return nil, err
 		}
-		result.Certificates = []tls.Certificate{cert}
+		legacy = &cert
 	}
+
+	// Atlantiraptor agent mTLS: an agent presents a certificate for
+	// its own key to our frontend (see agent_identity.go), and the
+	// configured certificate to any other server that asks.
+	result.GetClientCertificate = clientCertificateCallback(config_obj, legacy)
 
 	return result, nil
 }

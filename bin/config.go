@@ -38,6 +38,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/json"
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/services/users"
 	"www.velocidex.com/golang/velociraptor/startup"
 	vsurvey "www.velocidex.com/golang/velociraptor/tools/survey"
@@ -347,7 +348,8 @@ func doDumpClientConfig() error {
 		return err
 	}
 
-	client_config := config.StripClientConfig(config_obj)
+	client_config := agentmtls.WithDeploymentCert(config_obj,
+		config.StripClientConfig(config_obj))
 	res, err := yaml.Marshal(client_config)
 	if err != nil {
 		return fmt.Errorf("Unable to encode config: %w", err)

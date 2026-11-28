@@ -15,6 +15,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/config"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
 	"www.velocidex.com/golang/velociraptor/json"
+	"www.velocidex.com/golang/velociraptor/services/agentmtls"
 	"www.velocidex.com/golang/velociraptor/utils"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
 	"www.velocidex.com/golang/velociraptor/vql/tools"
@@ -348,7 +349,8 @@ func validateClientConfig(
 
 	// Derive client config from server config
 	if config_yaml == "" {
-		return config.StripClientConfig(config_obj), nil
+		return agentmtls.WithDeploymentCert(config_obj,
+			config.StripClientConfig(config_obj)), nil
 	}
 
 	// Load and validate the client config file.
