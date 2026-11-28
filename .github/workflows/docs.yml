@@ -50,7 +50,6 @@ jobs:
               ':!artifacts/definitions/Server/Import/Extras.yaml' \
               ':!artifacts/definitions/Server/Import/PreviousReleases.yaml' \
               ':!artifacts/definitions/Server/Import/ArtifactBundle.yaml' \
-              ':!artifacts/definitions/Server/Monitoring/RSSFeeds.yaml' \
               ':!services/users/rebrand.go' ':!services/users/rebrand_test.go' \
               ':!.github/workflows/docs.yml'; then
             echo "::error::Replace the links above with links to https://atlantsecurity.github.io/atlantiraptor/"

@@ -178,6 +178,7 @@ func Build(opts Options) (*Site, error) {
 		site.generateConfigReference,
 		site.generateCLIReference,
 		site.generateRESTReference,
+		site.generateAdvisories,
 	}
 	for _, g := range generators {
 		if err := g(); err != nil {

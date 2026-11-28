@@ -75,6 +75,9 @@ is listed on the [GitHub releases page](https://github.com/atlantsecurity/atlant
   of Atlantiraptor (weekly by default), verify the Authenticode signature
   and checksum, and install new versions themselves.
   See [Updating Atlantiraptor](/deployment/updates/).
+- **Security advisories** published by Atlant Security: servers follow
+  the advisories feed and tell every console user once about each new
+  one. See [Security advisories](/security/advisories/).
 - **Two-factor sign in** with authenticator apps and recovery codes, a
   policy for who must use it, and an option to remember a trusted IP
   address for a number of days. See [Authentication](/deployment/authentication/#two-factor-sign-in).
