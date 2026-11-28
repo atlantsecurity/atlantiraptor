@@ -55,6 +55,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/server"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/usermessages"
 	"www.velocidex.com/golang/velociraptor/utils"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
 	"www.velocidex.com/golang/velociraptor/vql/acl_managers"
@@ -473,7 +474,10 @@ func (self *ApiServer) GetUserUITraits(
 		result.InterfaceTraits.Links = user_options.Links
 		result.InterfaceTraits.DisableServerEvents = user_options.DisableServerEvents
 		result.InterfaceTraits.DisableQuarantineButton = user_options.DisableQuarantineButton
-		result.Messages = user_options.Messages
+		// The bell shows unread messages; identical deliveries count once.
+		if user_options.Messages > 0 {
+			result.Messages = int64(usermessages.UnreadCount(ctx, result.Username))
+		}
 	}
 
 	return result, nil

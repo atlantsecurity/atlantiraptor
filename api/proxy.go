@@ -181,6 +181,10 @@ func PrepareGUIMux(
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/feeds"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(feedsHandler(config_obj), acls.READ_RESULTS))))
+	// The user's own console messages; no extra permission needed.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/messages"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(messagesHandler(), acls.READ_RESULTS))))
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/atl/v1/"),
 		ipFilter(config_obj, AtlAPIHandler(config_obj)))
 

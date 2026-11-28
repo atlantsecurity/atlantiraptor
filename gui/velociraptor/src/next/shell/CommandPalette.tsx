@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import {
   Crosshair, LayoutDashboard, Monitor, BookOpen, Package, Server, Radio, Users, KeyRound, Plus,
   Moon, Sun, Search, CornerDownLeft, Zap, FolderTree, History, UserPlus, FilePlus2,
-  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss,
+  Siren, Briefcase, ScanSearch, HeartPulse, Plug, Code2, Network, UsersRound, ShieldCheck, Radar, ShieldAlert, Rss, Bell,
 } from 'lucide-react';
 import { useArtifactSearch, useClientNameSuggest, useHunts, useNotebookList, useTraits } from '../lib/queries';
 import { classify, parseIocs, refang } from '../pages/ioc/parse';
@@ -59,6 +59,7 @@ export default function CommandPalette({ open, onOpenChange, dark }: {
     { label: 'Response', icon: <Siren />, to: '/response', keys: 'quarantine isolate kill delete respond approvals' },
     { label: 'Cases', icon: <Briefcase />, to: '/cases', keys: 'incidents investigations' },
     { label: 'IOC sweep', icon: <ScanSearch />, to: '/ioc', keys: 'indicators hashes ioc' },
+    { label: 'Messages', icon: <Bell />, to: '/messages', keys: 'notifications inbox advisories cve announcements alerts' },
     { label: 'Hunt feeds', icon: <Rss />, to: '/feeds', keys: 'premium atlant packs threat intel subscription licence' },
     { label: 'Clients', icon: <Monitor />, to: '/search/all', keys: 'endpoints hosts' },
     { label: 'Notebooks', icon: <BookOpen />, to: '/notebooks', keys: '' },
