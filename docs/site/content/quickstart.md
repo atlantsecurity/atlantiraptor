@@ -148,7 +148,9 @@ service instead:
 .\Atlantiraptor.exe --config client.config.yaml service install
 ```
 
-For many computers, use the installer: see
+For more computers, the console does the copying for you: open
+**Clients**, expand **Deploy a client** at the bottom, and paste the
+command it shows into PowerShell (as administrator) on each computer. See
 [Add more computers](/tasks/add-computers/).
 
 ## Next step
