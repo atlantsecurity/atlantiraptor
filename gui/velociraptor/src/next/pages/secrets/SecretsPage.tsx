@@ -160,7 +160,7 @@ function SecretCard({ def, name, onReplace }: { def: SecretDefinition; name: str
       <div className="tw:p-4 tw:flex tw:flex-col tw:gap-4">
         {isLoading ? <Skeleton className="tw:h-10" /> : <>
           <Field label={<span className="tw:flex tw:items-center tw:gap-1.5"><UsersIcon className="tw:size-3.5" />Shared with</span>}
-            hint="Only these users can use the secret in their queries. Server administrators always can.">
+            hint="Only these users can use the secret in their queries. * means everyone (the AI triage key is shared this way).">
             <TagInput value={shared} onChange={setUsers} suggestions={(users ?? []).map(u => u.name)}
               placeholder={shared.length ? 'Add user…' : 'Nobody yet, type a username'} tone="accent" />
           </Field>

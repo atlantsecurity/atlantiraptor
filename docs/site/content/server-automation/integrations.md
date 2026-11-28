@@ -26,7 +26,7 @@ Credentials are never entered on the card itself: each integration uses a
 | **Email** | `Server.Alerts.Email` | SMTP Creds | Recipients, minimum severity, how often the same alert may be mailed, hourly limits |
 | **Splunk or Elastic** | `Server.Alerts.ForwardSIEM` | Splunk Creds (HEC URL, token, index) or Elastic Creds | Destination, Elastic index |
 | **MISP indicator feed** | `Server.Import.MISP` | HTTP Secrets | Days back, only indicators flagged for detection |
-| **AI triage** | | | Provider (Claude, OpenAI or DeepSeek) and model; see [AI triage](/console/ai-triage/) |
+| **AI triage** | `Server.AI.Triage` | API key, pasted on the card (stored as a secret for you) | Provider (Claude, OpenAI or DeepSeek) and model; see [AI triage](/console/ai-triage/) |
 
 Forwarders read the alert queue, so they send alerts from every source:
 Sigma and YARA monitors, rapid hunts, your own `alert()` calls.

@@ -47,8 +47,12 @@ a notification tells you when it is done, and the result appears under
 
 **Full triage** collects processes, network connections, programs that
 start automatically, users and recently run programs together. As the
-results arrive, the page lists findings that are **worth a look**, each
-with the reason:
+results arrive, a **Summary** tab gives the short version: how many
+things need a look, what each area returned, and a list of indicators
+(internet addresses, suspicious commands, file paths and hashes) you can
+copy or sweep across every computer. **AI triage** next to it asks the AI
+for a second opinion, if your administrator set it up. The **Worth a
+look** tab lists each finding with the reason:
 
 - programs running from Temp, AppData, ProgramData or `/tmp`,
 - programs whose file has been deleted from disk,
