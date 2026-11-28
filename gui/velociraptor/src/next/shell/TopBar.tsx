@@ -3,7 +3,7 @@ import { lazy, Suspense, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Popover } from 'radix-ui';
 import {
-  Bell, CircleHelp, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor, ShieldCheck,
+  Bell, CircleHelp, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor, ShieldCheck, Settings2,
 } from 'lucide-react';
 import { useClientNameSuggest, useTraits } from '../lib/queries';
 import { href } from '../lib/api';
@@ -122,7 +122,10 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
   const messages = ctx.messages || 0;
   const orgs = traits?.orgs ?? [];
   const currentOrg = window.globals?.OrgId || traits?.org || 'root';
-  const orgName = traits?.org_name || orgs.find(o => o.id === currentOrg)?.name;
+  const orgLabel = (id: string, name?: string) => (id === 'root' || name === '<root>' ? 'Root organization' : name);
+  const orgName = orgLabel(currentOrg, traits?.org_name || orgs.find(o => o.id === currentOrg)?.name);
+  const perms = traits?.Permissions;
+  const canManageOrgs = !!perms && (perms.org_admin || perms.server_admin);
 
   const switchOrg = (org: string) => {
     window.location.assign(href('/app/index.html', { org_id: org }) + '#/dashboard');
@@ -143,7 +146,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
       </button>
 
       <div className="tw:ml-auto tw:flex tw:items-center tw:gap-1">
-        {orgName && orgs.length > 1 && (
+        {orgName && (orgs.length > 1 || canManageOrgs) && (
           <Menu>
             <MenuTrigger asChild>
               <button type="button" className="tw:flex tw:items-center tw:gap-1.5 tw:h-8 tw:px-2.5 tw:rounded-md tw:text-xs tw:font-medium tw:text-muted tw:hover:bg-hover">
@@ -154,8 +157,12 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
               <MenuLabel>Switch organization</MenuLabel>
               {orgs.map(o => (
                 <MenuItem key={o.id} onSelect={() => switchOrg(o.id)}
-                  icon={o.id === currentOrg ? <Check /> : <span className="tw:size-3.5" />}>{o.name}</MenuItem>
+                  icon={o.id === currentOrg ? <Check /> : <span className="tw:size-3.5" />}>{orgLabel(o.id, o.name)}</MenuItem>
               ))}
+              {canManageOrgs && <>
+                <MenuSeparator />
+                <MenuItem icon={<Settings2 />} onSelect={() => { window.location.hash = '/orgs'; }}>Manage organizations…</MenuItem>
+              </>}
             </MenuContent>
           </Menu>
         )}

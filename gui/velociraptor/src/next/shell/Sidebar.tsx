@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server, Users, KeyRound,
-  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, Plug, HeartPulse, UsersRound, ShieldCheck, Code2, Network, CloudDownload, Rss,
+  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, Plug, HeartPulse, UsersRound, ShieldCheck, Code2, Network, CloudDownload, Rss, Building2,
 } from 'lucide-react';
 import { getItem, schema } from '../../components/core/storage.jsx';
 import { EncodePathInURL } from '../../components/utils/paths.jsx';
@@ -79,6 +79,7 @@ export default function Sidebar({ collapsed, onToggle, className }: { collapsed:
   const admin: Item[] = isAdmin ? [
     { to: '/users', label: 'Users', icon: <Users />, match: /^\/users/ },
     { to: '/groups', label: 'Groups', icon: <UsersRound />, match: /^\/groups/ },
+    { to: '/orgs', label: 'Organizations', icon: <Building2 />, match: /^\/orgs/ },
     { to: '/account/security', label: 'Security and 2FA', icon: <ShieldCheck />, match: /^\/account/ },
     { to: '/secrets', label: 'Secrets', icon: <KeyRound />, match: /^\/secrets/ },
     { to: '/integrations', label: 'Integrations', icon: <Plug />, match: /^\/integrations/ },
