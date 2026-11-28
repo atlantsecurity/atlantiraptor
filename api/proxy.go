@@ -178,6 +178,11 @@ func PrepareGUIMux(
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/update"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(updateHandler(config_obj), acls.READ_RESULTS))))
+	// Client configuration and install commands (Clients > Deploy a
+	// client). Server admin check is in the handler.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/deploy"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(deployHandler(), acls.READ_RESULTS))))
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/feeds"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(feedsHandler(config_obj), acls.READ_RESULTS))))

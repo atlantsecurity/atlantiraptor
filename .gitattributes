@@ -21,3 +21,5 @@ logs text eol=lf
 *.index binary
 *.log binary
 *.idx binary
+# Install script templates: the server sets the line endings itself.
+api/deploy_templates/* text eol=lf
