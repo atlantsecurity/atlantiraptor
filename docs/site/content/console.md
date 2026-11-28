@@ -17,7 +17,7 @@ arrow at its bottom to get more room.
 | **Investigate** | [Dashboard](/console/dashboard/), [Hunts](/hunts/), [Response](/console/response/), [Cases](/console/cases/), [IOC sweep](/console/ioc-sweep/), [Hunt feeds](/hunts/feeds/), [Clients](/clients/), [Notebooks](/notebooks/) |
 | **Client** (appears once you pick a client) | [Overview](/clients/host/), [Files](/clients/files/), [Collections](/clients/collections/), [Client events](/clients/monitoring/) |
 | **Server** | [Fleet health](/console/fleet-health/), [Artifacts](/artifacts/managing/), Server collections, Server events |
-| **Server settings** (administrators) | [Users](/users/), [Groups](/users/#groups), [Security and 2FA](/deployment/authentication/#two-factor-sign-in), [Secrets](/secrets/), [Integrations](/server-automation/integrations/), [API keys](/server-automation/api-keys/), [Network access](/deployment/network-access/), [Server updates](/deployment/updates/), [Address and certificate](/deployment/tls/#your-own-address-from-the-console) |
+| **Server settings** (administrators) | [Users](/users/), [Groups](/users/#groups), [Organizations](/deployment/orgs/), [Security and 2FA](/deployment/authentication/#two-factor-sign-in), [Secrets](/secrets/), [Integrations](/server-automation/integrations/), [API keys](/server-automation/api-keys/), [Network access](/deployment/network-access/), [Server updates](/deployment/updates/), [Address and certificate](/deployment/tls/#your-own-address-from-the-console), [Deploy a client](/deployment/clients/) |
 | **Links** | Extra links configured in `GUI.links`, such as this documentation |
 
 What you see depends on your [roles](/users/): pages you cannot use are
