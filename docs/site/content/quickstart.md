@@ -59,6 +59,35 @@ run `.\Atlantiraptor.exe gui --datastore C:\AtlLab\data` instead to keep it
 in a folder you choose, and delete that folder to start again from
 scratch.
 
+The lab stops when you close the window or sign out. To keep it running
+in the background, start it once with `--datastore` as above, then stop
+it and install it as a Windows service:
+
+1. In the data folder, copy `server.config.yaml` to
+   `server.service.config.yaml`. In the copy, change the
+   `windows_installer` section under `Client` to the following, and add
+   `output_directory: C:\AtlLab\data\logs` under `Logging`:
+
+   ```yaml
+   windows_installer:
+     service_name: AtlantiraptorServer
+     install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe
+     service_description: Atlantiraptor server
+   ```
+
+2. In PowerShell **run as administrator**:
+
+   ```powershell
+   .\Atlantiraptor.exe --config C:\AtlLab\data\server.service.config.yaml server_service install
+   Get-Service AtlantiraptorServer
+   ```
+
+The service keeps your data, users and the console at
+`https://127.0.0.1:8889/`. It doesn't start the lab's built-in agent, so
+[install the agent](/deployment/clients/) if you still want this computer
+as a client. See [Installing the server](/deployment/server/) for
+managing and removing the service.
+
 Next: [Your first Rapid hunt](/first-hunt/).
 
 ## B. A server and a second computer

@@ -29,10 +29,56 @@ administrator:
 ```
 
 This starts a server, the console and an agent on your own machine, and
-opens the console in your browser. See the
+opens the console in your browser. It runs only while that window is open,
+so use it only to try Atlantiraptor. See the
 [quick start](https://atlantsecurity.github.io/atlantiraptor/quickstart/)
 and, for a real deployment,
 [Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/).
+
+## Run the server as a Windows service
+
+A server you keep should always run as a Windows service: it starts with
+Windows, keeps running when you sign out, restarts if it stops, and
+updates itself. Installing it needs PowerShell **run as administrator**.
+In this order:
+
+1. Create the configuration (skip this if you already have
+   `server.config.yaml`):
+
+   ```powershell
+   .\Atlantiraptor.exe config generate -i
+   ```
+
+2. Give the service its own name. In `server.config.yaml`, set the
+   `windows_installer` section under `Client` to the following. The
+   defaults (`Velociraptor`) would replace any existing Velociraptor
+   service with that name.
+
+   ```yaml
+   windows_installer:
+     service_name: AtlantiraptorServer
+     install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe
+     service_description: Atlantiraptor server
+   ```
+
+   Make sure `Logging.output_directory` points to a folder, because a
+   service has no console window to log to.
+
+3. Stop any `gui` lab or other copy of the server, so that ports 8000 and
+   8889 are free.
+
+4. Install and start the service:
+
+   ```powershell
+   .\Atlantiraptor.exe --config server.config.yaml server_service install
+   ```
+
+5. Check it: `Get-Service AtlantiraptorServer` shows `Running`, and the
+   console answers on `https://<server>:8889/`.
+
+The full steps, including how to change settings later and remove the
+service, are in
+[Installing the server](https://atlantsecurity.github.io/atlantiraptor/deployment/server/).
 
 ## Deploy a client
 
