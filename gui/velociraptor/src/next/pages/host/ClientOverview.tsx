@@ -351,7 +351,7 @@ function RecentCollections({ clientId }: { clientId: string }) {
   );
 }
 
-function Metadata({ clientId }: { clientId: string }) {
+export function Metadata({ clientId }: { clientId: string }) {
   const { data = [] } = useClientMetadata(clientId);
   const set = useSetClientMetadata();
   const [k, setK] = useState('');

@@ -183,7 +183,7 @@ function RecentClients() {
   );
 }
 
-function ServerHealth() {
+export function ServerHealth() {
   const [range, setRange] = useState<RangeValue>('3600');
   const { data, isLoading } = useServerHealth(Number(range));
 
