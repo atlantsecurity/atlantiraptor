@@ -86,10 +86,16 @@ quarantining a host when you are away from your desk.
 
 ## The classic view
 
-A few advanced screens from the original Velociraptor interface are still
-available, under `/classic` and through **Open in classic view** links (for
-example in notebooks and on event pages). They use the older style but work
-with the same data.
+Two screens from the original Velociraptor interface have no new version
+yet, so they remain in the older style:
+
+- **Server collections**, where the offline collector builder lives
+  (`#/classic/collected/server`, see [Building an offline collector](/offline/building/)).
+- The **classic timeline view** of client and server events, which shows
+  several event artifacts on one timeline (**Classic timeline view** on an
+  event page).
+
+Every other old `/classic/...` address now opens the matching new page.
 
 ## Links into the console
 

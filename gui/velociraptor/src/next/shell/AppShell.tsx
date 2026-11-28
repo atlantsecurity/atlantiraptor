@@ -175,9 +175,14 @@ export default function AppShell() {
                 <Route path="/notebooks/:notebook_id?" exact>
                   <NotebooksPage />
                 </Route>
-                <Route path="/classic" exact>
-                  <Redirect to="/classic/hunts" />
+                {/* Classic screens with a new version redirect to it. */}
+                <Route path={['/classic/collected/server', '/classic/events']}>
+                  <LegacyRoutes client={client} setClient={setClient} />
                 </Route>
+                <Route path="/classic/dashboard"><Redirect to="/" /></Route>
+                <Route path="/classic" render={({ location }) => (
+                  <Redirect to={{ pathname: location.pathname.replace(/^\/classic/, '') || '/', search: location.search }} />
+                )} />
                 <Route>
                   <LegacyRoutes client={client} setClient={setClient} />
                 </Route>
