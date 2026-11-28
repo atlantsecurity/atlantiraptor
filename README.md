@@ -19,66 +19,41 @@ integration REST API and signed automatic updates.
 
 ## Quick start
 
-Download `Atlantiraptor-windows-amd64.exe` from the
-[latest release](https://github.com/atlantsecurity/atlantiraptor/releases/latest)
-(or build it, below), save it as `Atlantiraptor.exe`, and run as an
-administrator:
+The server runs as a Windows service. In PowerShell **as administrator**:
 
 ```powershell
-.\Atlantiraptor.exe gui
+# 1. Download the latest release and check that Atlant Security signed it
+New-Item -ItemType Directory -Force C:\AtlLab | Out-Null; cd C:\AtlLab
+Invoke-WebRequest -UseBasicParsing -OutFile Atlantiraptor.exe `
+  https://github.com/atlantsecurity/atlantiraptor/releases/latest/download/Atlantiraptor-windows-amd64.exe
+Get-AuthenticodeSignature .\Atlantiraptor.exe | Format-List Status, SignerCertificate   # Valid, Atlant Security EOOD
+
+# 2. Create server.config.yaml with the setup wizard
+.\Atlantiraptor.exe config generate -i
+
+# 3. Give the server service its own name (the defaults still say Velociraptor)
+(Get-Content .\server.config.yaml) `
+  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
+  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
+  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
+  Set-Content .\server.config.yaml
+
+# 4. Install and start the service
+.\Atlantiraptor.exe --config .\server.config.yaml server_service install
+Get-Service AtlantiraptorServer   # Running
 ```
 
-This starts a server, the console and an agent on your own machine, and
-opens the console in your browser. It runs only while that window is open,
-so use it only to try Atlantiraptor. See the
-[quick start](https://atlantsecurity.github.io/atlantiraptor/quickstart/)
-and, for a real deployment,
-[Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/).
+5. Open `https://localhost:8889/` on the server and sign in with the
+   administrator you created in the wizard.
+6. Add an agent: **Server settings > Deploy a client**, copy the Windows
+   command and run it in PowerShell as administrator on each computer
+   (the server computer too, if you want to monitor it).
 
-## Run the server as a Windows service
-
-A server you keep should always run as a Windows service: it starts with
-Windows, keeps running when you sign out, restarts if it stops, and
-updates itself. Installing it needs PowerShell **run as administrator**.
-In this order:
-
-1. Create the configuration (skip this if you already have
-   `server.config.yaml`):
-
-   ```powershell
-   .\Atlantiraptor.exe config generate -i
-   ```
-
-2. Give the service its own name. In `server.config.yaml`, set the
-   `windows_installer` section under `Client` to the following. The
-   defaults (`Velociraptor`) would replace any existing Velociraptor
-   service with that name.
-
-   ```yaml
-   windows_installer:
-     service_name: AtlantiraptorServer
-     install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe
-     service_description: Atlantiraptor server
-   ```
-
-   Make sure `Logging.output_directory` points to a folder, because a
-   service has no console window to log to.
-
-3. Stop any `gui` lab or other copy of the server, so that ports 8000 and
-   8889 are free.
-
-4. Install and start the service:
-
-   ```powershell
-   .\Atlantiraptor.exe --config server.config.yaml server_service install
-   ```
-
-5. Check it: `Get-Service AtlantiraptorServer` shows `Running`, and the
-   console answers on `https://<server>:8889/`.
-
-The full steps, including how to change settings later and remove the
-service, are in
-[Installing the server](https://atlantsecurity.github.io/atlantiraptor/deployment/server/).
+Step by step, with the wizard's answers for a lab:
+[Set up a test lab](https://atlantsecurity.github.io/atlantiraptor/quickstart/).
+For production:
+[Installing the server](https://atlantsecurity.github.io/atlantiraptor/deployment/server/)
+and [Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/).
 
 ## Deploy a client
 
@@ -88,12 +63,11 @@ and the org's enrollment nonce (the shared secret that lets it enroll).
 The configuration is created together with the server; each agent then
 makes its own key the first time it starts.
 
-1. Set up a server that other computers can reach (see
-   [Set up a test lab, part B](https://atlantsecurity.github.io/atlantiraptor/quickstart/#b-a-server-and-a-second-computer)
-   or [Deploying](https://atlantsecurity.github.io/atlantiraptor/deployment/)).
-   The one-computer `gui` lab only listens on `localhost`.
-2. In the console, open **Clients** and expand **Deploy a client** at the
-   bottom of the page (server administrators only).
+1. Set up a server that other computers can reach: its Public DNS name
+   in the wizard must be an address they can use, not `localhost` (see
+   [Agents on other computers](https://atlantsecurity.github.io/atlantiraptor/quickstart/#b-a-server-and-a-second-computer)).
+2. In the console, open **Server settings > Deploy a client** (server
+   administrators only; the same section is at the bottom of **Clients**).
 3. Pick **Windows**, **Linux**, **macOS** or **Microsoft Intune**, and copy
    the command into the computer you want to add:
    - **Windows**: paste it into PowerShell run as administrator. It
@@ -111,9 +85,9 @@ makes its own key the first time it starts.
      [Deploying with Intune](https://atlantsecurity.github.io/atlantiraptor/deployment/intune/).
 4. Within a minute the computer appears under **Clients**.
 
-Without the console, get the configuration with
-`Atlantiraptor.exe --config server.config.yaml config client > client.config.yaml`
-and install with the [MSI](https://atlantsecurity.github.io/atlantiraptor/deployment/clients/#the-msi-installer-recommended)
+Without the console, download `client.config.yaml` from **Deploy a
+client** and install with the
+[MSI](https://atlantsecurity.github.io/atlantiraptor/deployment/clients/#the-msi-installer-recommended)
 or `Atlantiraptor.exe --config client.config.yaml service install`.
 Treat the client configuration like a password: anyone who has it can
 enroll a computer to your server.

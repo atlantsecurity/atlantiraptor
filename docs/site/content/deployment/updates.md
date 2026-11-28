@@ -67,13 +67,11 @@ environment (`HTTPS_PROXY`), if one is set.
 1. Read the release notes.
 2. [Back up](/deployment/backups/) the configuration and datastore.
 3. Install the new program:
-   - **Windows service**: in PowerShell run as administrator, stop the
-     service, replace the program in the install folder, and start the
-     service. Or run
-     `Atlantiraptor.exe --config server.config.yaml server_service install`
-     with the new program, which does the same. Automatic updates need
-     none of this: the server swaps its own program in the install folder
-     and restarts its service through the service manager.
+   - **Windows service**: in PowerShell as administrator, check the new
+     program's signature, then run it with the installed configuration:
+     `.\Atlantiraptor.exe --config 'C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.config.yaml' server_service install`.
+     It stops the service, replaces the program, and starts the service
+     again (see [Installing the server](/deployment/server/#windows)).
    - **Linux package**: build a new package from the new binary and install
      it over the old one (`dpkg -i` or `rpm -U`).
    - **Docker**: rebuild the image and recreate the container.
