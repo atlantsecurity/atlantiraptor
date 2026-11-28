@@ -189,21 +189,28 @@ function UnixTab({ info, os }: { info: DeployInfo; os: 'linux' | 'macos' }) {
 }
 
 function IntuneTab({ info }: { info: DeployInfo }) {
+  const script = info.intune.setup_file;
   return (
     <div className="tw:space-y-3">
       <p className="tw:text-muted">
-        Deploy the agent to Windows computers managed by Microsoft Intune as a <b>Win32 app</b>. The package below is
-        ready to upload: it contains the install script with your configuration, and Intune installs it as SYSTEM.
+        Deploy the agent to Windows computers managed by Microsoft Intune as a <b>Win32 app</b>.
       </p>
-      <div className="tw:flex tw:flex-wrap tw:gap-2">
-        <Button size="sm" variant="primary" icon={<Download />} onClick={() => download('Atlantiraptor-Intune.intunewin')}>Atlantiraptor-Intune.intunewin</Button>
-        <Button size="sm" variant="secondary" icon={<Download />} onClick={() => download('Detect-Atlantiraptor.ps1')}>Detect-Atlantiraptor.ps1</Button>
+      <div className="tw:rounded-md tw:bg-accent-soft tw:px-3 tw:py-2 tw:text-[13px]">
+        <b>Intune needs two files from here:</b> the app package <Mono>Atlantiraptor-Intune.intunewin</Mono> (step 2)
+        and the detection script <Mono>Detect-Atlantiraptor.ps1</Mono> (step 5). The installer{' '}
+        <Mono>{script}</Mono> is already inside the package, so you don't upload it separately.
       </div>
-      <ol className="tw:list-decimal tw:pl-5 tw:space-y-1.5 tw:text-muted">
+      <ol className="tw:list-decimal tw:pl-5 tw:space-y-3 tw:text-muted">
         <li>In the <a className="tw:underline" href="https://intune.microsoft.com/" target="_blank" rel="noreferrer">Intune admin center <ExternalLink className="tw:inline tw:size-3" /></a>,
           go to <b>Apps &gt; Windows &gt; Create</b> and choose <b>Windows app (Win32)</b>.</li>
-        <li>Select <Mono>Atlantiraptor-Intune.intunewin</Mono> as the app package file. Name: <b>Atlantiraptor</b>, publisher: <b>Atlant Security</b>.</li>
-        <li>Program:
+        <li>
+          <div>App information: download the app package and select it as the <b>App package file</b>.
+            Intune then shows <Mono>{script}</Mono> as its setup file. Name: <b>Atlantiraptor</b>, publisher: <b>Atlant Security</b>.</div>
+          <div className="tw:mt-1.5">
+            <Button size="sm" variant="primary" icon={<Download />} onClick={() => download('Atlantiraptor-Intune.intunewin')}>Atlantiraptor-Intune.intunewin</Button>
+          </div>
+        </li>
+        <li>Program: copy these two commands. They run <Mono>{script}</Mono> from inside the package.
           <div className="tw:mt-1.5 tw:space-y-1.5">
             <CodeBox label="Install command" text={info.intune.install_command} />
             <CodeBox label="Uninstall command" text={info.intune.uninstall_command} />
@@ -211,16 +218,29 @@ function IntuneTab({ info }: { info: DeployInfo }) {
           Install behavior: <b>System</b>. Device restart behavior: <b>No specific action</b>.
         </li>
         <li>Requirements: operating system architecture <b>64-bit</b>, minimum Windows 10 1607.</li>
-        <li>Detection rules: <b>Use a custom detection script</b>, upload <Mono>Detect-Atlantiraptor.ps1</Mono>, and set
-          <b> Run script as 32-bit process on 64-bit clients</b> to No.</li>
+        <li>
+          <div>Detection rules: choose <b>Use a custom detection script</b>, download the detection script and upload it as the
+            <b> Script file</b>. Set <b>Run script as 32-bit process on 64-bit clients</b> to No. (Intune runs it to check
+            whether the agent is installed.)</div>
+          <div className="tw:mt-1.5">
+            <Button size="sm" variant="secondary" icon={<Download />} onClick={() => download('Detect-Atlantiraptor.ps1')}>Detect-Atlantiraptor.ps1</Button>
+          </div>
+        </li>
         <li>Assignments: add your device group under <b>Required</b>, then create the app.</li>
       </ol>
-      <p className="tw:text-muted tw:text-xs">
-        Simpler alternative: upload <Mono>{info.intune.setup_file}</Mono> under <b>Devices &gt; Scripts and remediations &gt; Platform scripts</b>,
-        with <b>Run this script using the logged on credentials</b> = No and <b>Run script in 64 bit PowerShell Host</b> = Yes.
-        An MSI from Atlant Security can also be added as a Line-of-business app. Details:{' '}
-        <a className="tw:underline" href={`${DOCS}/deployment/intune/`} target="_blank" rel="noreferrer">Deploying with Intune</a>.
-      </p>
+      <div className="tw:text-muted tw:text-xs tw:space-y-1.5 tw:border-t tw:border-line tw:pt-3">
+        <p>
+          Not using a Win32 app? A simpler alternative is a platform script: add <Mono>{script}</Mono> under{' '}
+          <b>Devices &gt; Scripts and remediations &gt; Platform scripts</b>, with <b>Run this script using the logged on
+          credentials</b> = No and <b>Run script in 64 bit PowerShell Host</b> = Yes. Intune then can't report or uninstall
+          the agent. Only this alternative needs the script on its own:
+        </p>
+        <Button size="xs" variant="secondary" icon={<Download />} onClick={() => download(script)}>{script}</Button>
+        <p>
+          An MSI from Atlant Security can also be added as a Line-of-business app. Details:{' '}
+          <a className="tw:underline" href={`${DOCS}/deployment/intune/`} target="_blank" rel="noreferrer">Deploying with Intune</a>.
+        </p>
+      </div>
     </div>
   );
 }
