@@ -1,84 +1,48 @@
 ---
 title: Set up a test lab
-description: Get an Atlantiraptor server and agent running in ten minutes - everything on one computer, or a server plus a second computer.
+description: Install the Atlantiraptor server as a Windows service and connect an agent, in about fifteen minutes.
 ---
 
 To use Atlantiraptor you need two things running: the **server** (which
 also serves the console, the web page you work in) and at least one
 **agent** on a computer you want to look at. Both are the same program,
-`Atlantiraptor.exe`.
+`Atlantiraptor.exe`, and both run as Windows services, so they keep
+running after you close PowerShell and start again when Windows restarts.
 
-Pick one of two test setups:
+This lab needs one Windows computer for the server. The agent can run on
+the same computer, on a second one, or on both. A virtual machine works
+for either. Nothing here is hardened for production; for that, see
+[Deploying Atlantiraptor](/deployment/) once you know the basics.
 
-- **[A. Everything on one computer](#a-everything-on-one-computer)**:
-  one command, two minutes. The server, the console and an agent all run
-  on your own Windows computer. Best for a first look.
-- **[B. A server and a second computer](#b-a-server-and-a-second-computer)**:
-  about ten minutes. Closer to the real thing: the agent on one computer
-  reports to the server on another.
+## Install the server
 
-Both are for testing. Nothing here is hardened for production; for that,
-see [Deploying Atlantiraptor](/deployment/) once you know the basics.
+Do every step on the server computer, in one PowerShell window opened
+**as administrator**: click **Start**, type `PowerShell`, right-click
+**Windows PowerShell** and choose **Run as administrator**. Installing a
+service needs administrator rights.
 
-## Download the program
-
-Download `Atlantiraptor-windows-amd64.exe` from the
-[latest release](https://github.com/atlantsecurity/atlantiraptor/releases/latest),
-create a folder such as `C:\AtlLab`, and save the file there as
-`Atlantiraptor.exe`.
-
-It is signed by Atlant Security EOOD. To check, right-click it, choose
-**Properties > Digital Signatures**, and look for that name.
-
-## A. Everything on one computer
-
-**1.** Click **Start**, type `PowerShell`, right-click **Windows PowerShell**
-and choose **Run as administrator**. (The agent needs administrator
-rights to see the whole computer.)
-
-**2.** Run:
+**1. Download the program.** Make a folder for the lab and download the
+latest release into it:
 
 ```powershell
+New-Item -ItemType Directory -Force C:\AtlLab | Out-Null
 cd C:\AtlLab
-.\Atlantiraptor.exe gui
+Invoke-WebRequest -UseBasicParsing -OutFile Atlantiraptor.exe `
+  https://github.com/atlantsecurity/atlantiraptor/releases/latest/download/Atlantiraptor-windows-amd64.exe
 ```
 
-**3.** Your browser opens the console at `https://127.0.0.1:8889/`. It warns
-that the certificate is not trusted, because the lab made its own.
-Choose **Advanced** and continue to the page.
-
-**4.** Sign in as `admin` with the password `password`. This account only
-works from this computer.
-
-Your own computer is now the one connected client: you can see it on the
-dashboard under **Recently seen**.
-
-To stop, press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the PowerShell window.
-Everything the lab stored is in a data folder under your temporary folder;
-run `.\Atlantiraptor.exe gui --datastore C:\AtlLab\data` instead to keep it
-in a folder you choose, and delete that folder to start again from
-scratch.
-
-Next: [Your first Rapid hunt](/first-hunt/).
-
-## B. A server and a second computer
-
-You need two Windows computers on the same network: one for the server,
-and one with the agent (the *client*). A virtual machine works for either.
-
-### On the server computer
-
-**1.** Open PowerShell **as administrator** and find this computer's IP
-address:
+**2. Check the signature.** Only run the program if it is signed by
+Atlant Security:
 
 ```powershell
-cd C:\AtlLab
-ipconfig
+Get-AuthenticodeSignature .\Atlantiraptor.exe | Format-List Status, SignerCertificate
 ```
 
-Note the **IPv4 Address**, for example `192.168.1.10`.
+`Status` must be `Valid` and the signer must be `Atlant Security EOOD`.
+If it isn't, delete the file and download it again from the
+[releases page](https://github.com/atlantsecurity/atlantiraptor/releases/latest).
 
-**2.** Create the configuration with the setup wizard:
+**3. Create the configuration** with the setup wizard:
 
 ```powershell
 .\Atlantiraptor.exe config generate -i
@@ -91,67 +55,110 @@ Use the arrow keys and Enter to answer. For a lab:
 | Deployment Type | **Self Signed SSL** |
 | What OS will the server be deployed on? | **Windows** |
 | Datastore and logs directories | Keep the suggestions, or type `C:\AtlLab\data` |
-| Public DNS name | This computer's IP address, for example `192.168.1.10` |
+| Public DNS name | `localhost` if the agent will only run on this computer. Otherwise this computer's IP address, for example `192.168.1.10`; `ipconfig` shows it as **IPv4 Address**. |
 | DNS Type | **None - Configure DNS manually** |
 | Websocket comms | **No** |
 | Frontend port, GUI port | Keep `8000` and `8889` |
 | Admin user | A user name and password for you |
 | Anything else | Keep the default |
 
-The wizard saves two files: `server.config.yaml` (for the server; it
-holds private keys, keep it to yourself) and `client.config.yaml` (for
-agents).
+The wizard saves `server.config.yaml`, which holds the server's private
+keys, and `client.config.yaml`. You won't need `client.config.yaml`: the
+console gives you a ready-made install command for agents in step 8.
 
-**3.** Let agents reach the server through the Windows firewall:
+**4. Give the server service its own name.** The configuration names the
+service `Velociraptor` and installs it under `C:\Program Files\Velociraptor`.
+Name it `AtlantiraptorServer` instead, so it can't be confused with an
+agent:
+
+```powershell
+(Get-Content .\server.config.yaml) `
+  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
+  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
+  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
+  Set-Content .\server.config.yaml
+Select-String -Path .\server.config.yaml -Pattern 'service_name|install_path' | Select-Object -First 2
+```
+
+The last command should show `AtlantiraptorServer` and
+`C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe`. Never use
+`Atlantiraptor` as the server's service name: that is the agent's service.
+
+**5. Install and start the service:**
+
+```powershell
+.\Atlantiraptor.exe --config .\server.config.yaml server_service install
+Get-Service AtlantiraptorServer
+```
+
+The install copies the program and the configuration to
+`C:\Program Files\Atlantiraptor Server\`, registers the
+`AtlantiraptorServer` service (it starts automatically with Windows and
+restarts if it stops) and starts it. `Get-Service` should show
+**Running**. If it doesn't, see [Server problems](/troubleshooting/server/).
+
+**6. Put the configuration away.** The service uses its own copy in the
+install folder. Move `C:\AtlLab\server.config.yaml` somewhere only
+administrators can read, and keep it as a backup: anyone who has it can
+pretend to be your server.
+
+**7. Open the console.** On the server computer, browse to
+`https://localhost:8889/`. The browser warns that the certificate is not
+trusted, because the lab made its own: choose **Advanced** and continue.
+Sign in with the user you created in step 3. In this lab the console only
+answers on the server computer itself.
+
+## Connect an agent
+
+The server alone has nothing to look at. Install an agent on the server
+computer, on another computer, or on both.
+
+**8. Copy the install command.** In the console, open **Server settings >
+Deploy a client**, pick the **Windows** tab and click **Copy** next to the
+PowerShell command.
+
+**9. Run it on the computer you want to add**, in PowerShell opened as
+administrator. It downloads the signed program, checks the signature,
+and installs and starts the `Atlantiraptor` agent service.
+
+Within a minute the computer appears on the dashboard under **Recently
+seen** and under **Clients**.
+
+### Agents on other computers {#b-a-server-and-a-second-computer}
+
+For an agent on another computer, the server's Public DNS name in step 3
+must be the server's IP address, not `localhost`. Then let agents through
+the Windows firewall on the **server** computer:
 
 ```powershell
 New-NetFirewallRule -DisplayName "Atlantiraptor agents" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
 ```
 
-**4.** Start the server, and leave the window open:
-
-```powershell
-.\Atlantiraptor.exe --config server.config.yaml frontend -v
-```
-
-**5.** On the same computer, open `https://127.0.0.1:8889/` in a browser,
-accept the certificate warning, and sign in with the user you created.
-In this lab setup the console only answers on the server computer
-itself.
-
-### On the second computer
-
-**1.** Copy `Atlantiraptor.exe` and **`client.config.yaml`** (not the server
-configuration) into a folder such as `C:\AtlLab`.
-
-**2.** Open PowerShell **as administrator** and start the agent:
-
-```powershell
-cd C:\AtlLab
-.\Atlantiraptor.exe --config client.config.yaml client -v
-```
-
-The window shows it connecting and enrolling. Leave it open.
-
-**3.** Within a minute the computer appears in the console on the server, on
-the dashboard under **Recently seen** and under **Clients**.
-
-If it doesn't appear, check that the second computer can reach the
-server's port 8000 (`Test-NetConnection 192.168.1.10 -Port 8000`), and
-read the messages in the agent's window. More help is in
-[Agent problems](/troubleshooting/clients/).
-
-To keep the agent running after you close the window, install it as a
-service instead:
-
-```powershell
-.\Atlantiraptor.exe --config client.config.yaml service install
-```
-
-For more computers, the console does the copying for you: open
-**Clients**, expand **Deploy a client** at the bottom, and paste the
-command it shows into PowerShell (as administrator) on each computer. See
+If the computer doesn't appear, check from it that the server's port 8000
+answers (`Test-NetConnection 192.168.1.10 -Port 8000`). More help is in
+[Agent problems](/troubleshooting/clients/). For many computers, see
 [Add more computers](/tasks/add-computers/).
+
+## Stop, start or remove the lab
+
+Use **Services** (`services.msc`) or PowerShell as administrator:
+
+```powershell
+Stop-Service AtlantiraptorServer
+Start-Service AtlantiraptorServer
+```
+
+To remove the server service:
+
+```powershell
+cd 'C:\Program Files\Atlantiraptor Server'
+.\AtlantiraptorServer.exe --config .\AtlantiraptorServer.config.yaml server_service remove
+```
+
+Then delete that folder and the data folder you chose in step 3. To
+remove an agent, download `Install-Atlantiraptor.ps1` from **Server
+settings > Deploy a client** and run it as administrator with
+`-Uninstall`.
 
 ## Next step
 
