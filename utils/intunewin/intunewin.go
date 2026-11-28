@@ -188,7 +188,7 @@ func encrypt(plain, key, macKey, iv []byte) ([]byte, []byte, error) {
 	return out, mac, nil
 }
 
-// Decrypt reverses Build's encryption of the content file given the
+// Decrypt reverses the encryption that Build applies to of the content file given the
 // package's Detection.xml; it checks the HMAC and digest. Used by tests
 // and to inspect packages.
 func Decrypt(pkg []byte) (*ApplicationInfo, []byte, error) {
