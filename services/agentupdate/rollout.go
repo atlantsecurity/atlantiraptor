@@ -24,7 +24,7 @@ const (
 	StateUpgraded  = "upgraded"
 
 	// An agent counts as online if it was seen this recently. Only
-	// online agents are sent the upgrade, so an attempt's clock starts
+	// online agents are sent the upgrade, so the clock of an attempt starts
 	// when the agent can actually run it.
 	onlineWindow = 15 * time.Minute
 

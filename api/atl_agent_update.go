@@ -9,7 +9,7 @@ package api
 //                  "canary_percent", "canary_hours", "exclude_label"}}
 //   resume        move a paused or canary rollout to every agent
 //   retry_failed  give agents whose upgrade failed new attempts
-//   run           run a round now
+//   run           start a round now
 
 import (
 	"encoding/json"
