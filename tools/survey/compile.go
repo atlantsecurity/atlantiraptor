@@ -36,6 +36,10 @@ func (self *ConfigSurvey) Compile() (*config_proto.Config, error) {
 		return nil, err
 	}
 
+	// server_service install uses these; agents get their own
+	// service name (see config.StripClientConfig).
+	config_obj.Client.WindowsInstaller = config.ServerWindowsInstaller()
+
 	config_obj.Datastore.Implementation = "FileBaseDataStore"
 	if self.DatastoreLocation == "" {
 		self.DatastoreLocation = self.DefaultDatastoreLocation()

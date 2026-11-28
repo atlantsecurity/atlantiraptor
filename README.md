@@ -31,21 +31,18 @@ Get-AuthenticodeSignature .\Atlantiraptor.exe | Format-List Status, SignerCertif
 # 2. Create server.config.yaml with the setup wizard
 .\Atlantiraptor.exe config generate -i
 
-# 3. Give the server service its own name (the defaults still say Velociraptor)
-(Get-Content .\server.config.yaml) `
-  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
-  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
-  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
-  Set-Content .\server.config.yaml
-
-# 4. Install and start the service
+# 3. Install and start the service (named AtlantiraptorServer)
 .\Atlantiraptor.exe --config .\server.config.yaml server_service install
 Get-Service AtlantiraptorServer   # Running
 ```
 
-5. Open `https://localhost:8889/` on the server and sign in with the
+Releases up to 1.0.5 name the service `Velociraptor` in the new
+configuration; rename it before step 3 as shown in
+[Installing the server](https://atlantsecurity.github.io/atlantiraptor/deployment/server/#4-check-the-service-name).
+
+4. Open `https://localhost:8889/` on the server and sign in with the
    administrator you created in the wizard.
-6. Add an agent: **Server settings > Deploy a client**, copy the Windows
+5. Add an agent: **Server settings > Deploy a client**, copy the Windows
    command and run it in PowerShell as administrator on each computer
    (the server computer too, if you want to monitor it).
 

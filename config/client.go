@@ -1,6 +1,9 @@
 package config
 
-import config_proto "www.velocidex.com/golang/velociraptor/config/proto"
+import (
+	"google.golang.org/protobuf/proto"
+	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
+)
 
 // The client config is a reduced version of the server config with
 // sensitive values removed.
@@ -34,7 +37,52 @@ func StripClientConfig(config_obj *config_proto.Config) *config_proto.Config {
 		Autoexec: config_obj.Autoexec,
 	}
 
+	// The server's Windows service name lives in the same
+	// Client.windows_installer section. Agents must never install
+	// themselves under the server's service, so a client config made
+	// from a server config gets the agent's own service instead.
+	if config_obj.Client != nil && config_obj.Client.WindowsInstaller != nil &&
+		config_obj.Client.WindowsInstaller.ServiceName == ServerServiceName {
+		client := proto.Clone(config_obj.Client).(*config_proto.ClientConfig)
+		client.WindowsInstaller = AgentWindowsInstaller()
+		client_config.Client = client
+	}
+
 	return client_config
+}
+
+const (
+	// The Windows service the server installs itself as
+	// (server_service install), and where.
+	ServerServiceName        = "AtlantiraptorServer"
+	ServerInstallPath        = `$ProgramFiles\Atlantiraptor Server\AtlantiraptorServer.exe`
+	ServerServiceDescription = "Atlantiraptor server by Atlant Security"
+
+	// The endpoint agent's Windows service, as the MSI and the
+	// console's Deploy a client installer set it up.
+	AgentServiceName        = "Atlantiraptor"
+	AgentInstallPath        = `$ProgramFiles\Atlant Security\Atlantiraptor\Atlantiraptor.exe`
+	AgentServiceDescription = "Atlantiraptor endpoint agent by Atlant Security"
+)
+
+// ServerWindowsInstaller is the windows_installer section new server
+// configurations get. Existing configurations keep whatever they have,
+// so installed services are never renamed.
+func ServerWindowsInstaller() *config_proto.WindowsInstallerConfig {
+	return &config_proto.WindowsInstallerConfig{
+		ServiceName:        ServerServiceName,
+		InstallPath:        ServerInstallPath,
+		ServiceDescription: ServerServiceDescription,
+	}
+}
+
+// AgentWindowsInstaller is the windows_installer section of an agent.
+func AgentWindowsInstaller() *config_proto.WindowsInstallerConfig {
+	return &config_proto.WindowsInstallerConfig{
+		ServiceName:        AgentServiceName,
+		InstallPath:        AgentInstallPath,
+		ServiceDescription: AgentServiceDescription,
+	}
 }
 
 // Determine if the binary is running as a frontend. At a minimum we

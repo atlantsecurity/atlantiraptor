@@ -63,28 +63,23 @@ Use the arrow keys and Enter to answer. For a lab:
 | Anything else | Keep the default |
 
 The wizard saves `server.config.yaml`, which holds the server's private
-keys, and `client.config.yaml`. You won't need `client.config.yaml`: the
-console gives you a ready-made install command for agents in step 8.
+keys. It also names the Windows service the server will run as,
+`AtlantiraptorServer`; agents get their own service, `Atlantiraptor`.
 
-**4. Give the server service its own name.** The configuration names the
-service `Velociraptor` and installs it under `C:\Program Files\Velociraptor`.
-Name it `AtlantiraptorServer` instead, so it can't be confused with an
-agent:
+Configurations made by version 1.0.5 or earlier name the
+service `Velociraptor` instead. Check with
+`Select-String .\server.config.yaml -Pattern 'service_name'`. If the
+first line says `Velociraptor`, rename it before you install:
 
 ```powershell
 (Get-Content .\server.config.yaml) `
   -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
-  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
-  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
+  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: $ProgramFiles\Atlantiraptor Server\AtlantiraptorServer.exe' `
+  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server by Atlant Security' |
   Set-Content .\server.config.yaml
-Select-String -Path .\server.config.yaml -Pattern 'service_name|install_path' | Select-Object -First 2
 ```
 
-The last command should show `AtlantiraptorServer` and
-`C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe`. Never use
-`Atlantiraptor` as the server's service name: that is the agent's service.
-
-**5. Install and start the service:**
+**4. Install and start the service:**
 
 ```powershell
 .\Atlantiraptor.exe --config .\server.config.yaml server_service install
@@ -97,12 +92,12 @@ The install copies the program and the configuration to
 restarts if it stops) and starts it. `Get-Service` should show
 **Running**. If it doesn't, see [Server problems](/troubleshooting/server/).
 
-**6. Put the configuration away.** The service uses its own copy in the
+**5. Put the configuration away.** The service uses its own copy in the
 install folder. Move `C:\AtlLab\server.config.yaml` somewhere only
 administrators can read, and keep it as a backup: anyone who has it can
 pretend to be your server.
 
-**7. Open the console.** On the server computer, browse to
+**6. Open the console.** On the server computer, browse to
 `https://localhost:8889/`. The browser warns that the certificate is not
 trusted, because the lab made its own: choose **Advanced** and continue.
 Sign in with the user you created in step 3. In this lab the console only
@@ -113,11 +108,11 @@ answers on the server computer itself.
 The server alone has nothing to look at. Install an agent on the server
 computer, on another computer, or on both.
 
-**8. Copy the install command.** In the console, open **Server settings >
+**7. Copy the install command.** In the console, open **Server settings >
 Deploy a client**, pick the **Windows** tab and click **Copy** next to the
 PowerShell command.
 
-**9. Run it on the computer you want to add**, in PowerShell opened as
+**8. Run it on the computer you want to add**, in PowerShell opened as
 administrator. It downloads the signed program, checks the signature,
 and installs and starts the `Atlantiraptor` agent service.
 
