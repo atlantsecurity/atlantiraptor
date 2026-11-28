@@ -22,7 +22,7 @@ export interface TimelineEvent {
   source: string;
 }
 
-const str = (v: unknown): string => (v === undefined || v === null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v));
+export const str = (v: unknown): string => (v === undefined || v === null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v));
 
 // Places ordinary users can write to, where malware likes to live.
 export const USER_WRITABLE = /([\\/](appdata|temp|tmp|users[\\/]public|programdata|downloads|perflogs)[\\/])|^\/(tmp|var\/tmp|dev\/shm)\//i;
@@ -36,7 +36,7 @@ function toMs(v: unknown): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-function isPublicIp(ip: string): boolean {
+export function isPublicIp(ip: string): boolean {
   const m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(ip);
   if (m) {
     const [a, b] = [Number(m[1]), Number(m[2])];
@@ -54,7 +54,7 @@ function isPublicIp(ip: string): boolean {
   return false;
 }
 
-function remoteIp(r: Row): string {
+export function remoteIp(r: Row): string {
   const raddr = r.Raddr as Record<string, unknown> | undefined;
   if (raddr && typeof raddr === 'object') return str(raddr.IP);
   return str(r.RemoteAddr ?? r.Raddr ?? r.RemoteAddress);
@@ -69,7 +69,9 @@ function firstMatching(r: Row, cols: string[], re: RegExp): string {
 }
 
 const base = (s: string) => s.replace(/^.*[\\/]/, '');
-const sourceOf = (sources: Record<string, Row[]>, re: RegExp) => Object.keys(sources).find(s => re.test(s));
+// Artifacts with named sources come back as "Artifact/Source"; match on the artifact.
+export const artifactOf = (source: string) => source.split('/')[0];
+const sourceOf = (sources: Record<string, Row[]>, re: RegExp) => Object.keys(sources).find(s => re.test(s) || re.test(artifactOf(s)));
 
 export function findings(sources: Record<string, Row[]>, now = Date.now()): Finding[] {
   const out: Finding[] = [];
@@ -104,9 +106,11 @@ export function findings(sources: Record<string, Row[]>, now = Date.now()): Find
     });
   }
 
-  const ns = sourceOf(sources, /\.Netstat$/);
-  if (ns) {
-    const ext = sources[ns].filter(r => isPublicIp(remoteIp(r)));
+  // Linux and macOS split connections into TCP4/TCP6/UDP sources.
+  const nsAll = Object.keys(sources).filter(s => /\.Netstat$/.test(artifactOf(s)));
+  if (nsAll.length) {
+    const ns = nsAll.length === 1 ? nsAll[0] : artifactOf(nsAll[0]);
+    const ext = nsAll.flatMap(s => sources[s]).filter(r => isPublicIp(remoteIp(r)));
     if (ext.length) out.push({
       id: 'net-external', source: ns, rows: ext, tone: 'info',
       title: `${ext.length} connection${ext.length === 1 ? '' : 's'} to public internet addresses`,
@@ -159,17 +163,18 @@ function lastRun(r: Row): number {
 export function timeline(sources: Record<string, Row[]>, limit = 2000): TimelineEvent[] {
   const ev: TimelineEvent[] = [];
   for (const [source, rows] of Object.entries(sources)) {
+    const art = artifactOf(source);
     for (const r of rows) {
-      if (/\.(Pslist|Pstree)$/.test(source) && r.CreateTime) {
+      if (/\.(Pslist|Pstree)$/.test(art) && r.CreateTime) {
         ev.push({ time: toMs(r.CreateTime), what: 'Process started', detail: `${str(r.Name)} (pid ${str(r.Pid)}) ${str(r.CommandLine || r.Exe)}`, source });
-      } else if (/\.Prefetch$/.test(source)) {
+      } else if (/\.Prefetch$/.test(art)) {
         const times = Array.isArray(r.LastRunTimes) ? r.LastRunTimes : [r.LastRunTimes];
         for (const t of times) if (t) ev.push({ time: toMs(t), what: 'Program ran', detail: str(r.ExecutablePath || r.Executable), source });
-      } else if (/\.(LastUserLogin)$/.test(source)) {
+      } else if (/\.(LastUserLogin)$/.test(art)) {
         ev.push({ time: toMs(r.login_Time ?? r.Time ?? r.time), what: 'Logon', detail: `${str(r.login_User ?? r.User)} from ${str(r.login_Host ?? r.Host)}`, source });
       } else if (/\.TaskScheduler/.test(source) && r.RegistrationTime) {
         ev.push({ time: toMs(r.RegistrationTime), what: 'Task registered', detail: `${str(r.TaskName ?? base(str(r.OSPath)))} ${str(r.Command)}`, source });
-      } else if (/\.Bam$/.test(source) && (r.Time ?? r.LastRun)) {
+      } else if (/\.Bam$/.test(art) && (r.Time ?? r.LastRun)) {
         ev.push({ time: toMs(r.Time ?? r.LastRun), what: 'Program ran (BAM)', detail: str(r.Binary ?? r.Program ?? r.Path), source });
       }
     }

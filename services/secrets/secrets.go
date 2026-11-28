@@ -57,6 +57,9 @@ func SecretLRUKey(type_name, name string) string {
 	return type_name + "/" + name
 }
 
+// SHARED_WITH_EVERYONE in a secret's users lets any principal use it.
+const SHARED_WITH_EVERYONE = "*"
+
 func NewSecret(type_name, name string,
 	secret *ordereddict.Dict) *services.Secret {
 	result := &services.Secret{
@@ -402,7 +405,10 @@ func (self *SecretsService) GetSecret(ctx context.Context,
 	}
 
 	for _, u := range secret_record.Users {
-		if u == principal {
+		// "*" shares the secret with everyone who can run the queries
+		// that use it (the console's AI key is stored this way so every
+		// analyst can run AI triage without seeing the key).
+		if u == principal || u == SHARED_WITH_EVERYONE {
 			return secret_record, nil
 		}
 	}

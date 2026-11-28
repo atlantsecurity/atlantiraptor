@@ -56,6 +56,27 @@ them with custom parameters from **Collections**.
 (autoruns, services, scheduled tasks), users and execution history in one
 collection. As results arrive, the page shows:
 
+### Summary
+
+A readable overview of the collection, opened first:
+
+- one line saying how many things there are to review or check (or that
+  nothing was flagged),
+- a tile per area (processes, network connections, persistence, users
+  and logons, execution history, shell history) with how many rows it
+  returned and what was flagged in it,
+- **Indicators found**: public IP addresses, URLs and domains,
+  suspicious commands (encoded PowerShell, `certutil` or `mshta`
+  downloads, download-and-run or reverse-shell one-liners), and the paths
+  and hashes of flagged files. These come from fixed rules, not AI. Copy
+  them, export them as CSV, or click **Sweep the fleet** to open
+  [IOC sweep](/console/ioc-sweep/) with them filled in.
+
+**AI triage** on the panel sends the flagged rows, the indicators and the
+process command lines (not every raw row) to the AI provider set up under
+Integrations, and asks for a verdict and a list of indicators of
+compromise. See [AI triage](/console/ai-triage/).
+
 ### Worth a look
 
 Findings that deserve attention, each with why it matters:

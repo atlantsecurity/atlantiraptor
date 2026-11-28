@@ -10,9 +10,12 @@ description: |
   admins set on the Integrations page. Callers cannot redirect the
   request or choose another secret.
 
-  The API key lives in an `HTTP Secrets` secret whose `url` is the
-  provider endpoint, method `POST`, and whose `extra_headers` carry the
-  key:
+  Admins paste the API key on the Integrations page; the console stores
+  it in an `HTTP Secrets` secret named `atl-ai-<provider>`, shared with
+  every user (`*`) so analysts can run triage without seeing the key.
+  The secret's `url` is the provider endpoint, method `POST`, and its
+  `extra_headers` carry the key (secrets set up by hand this way keep
+  working):
 
   - anthropic: url `https://api.anthropic.com/v1/messages`, header
     `x-api-key: <key>`
@@ -112,12 +115,14 @@ sources:
                 else=parsed.choices[0].finish_reason) AS StopReason,
              if(condition=NOT valid_provider OR NOT secret OR NOT model,
                 then="AI triage is not configured: a server admin must choose a provider, model and secret on the Integrations page.",
+             else=if(condition=status = 0,
+                then=format(format="The %v request did not go out: the server could not use the API key or reach the provider. Paste the key again on the Integrations page, then check the server's network access.", args=provider),
              else=if(condition=status < 200 OR status >= 300,
                 then=format(format="The %v request failed (HTTP %v). %v", args=[provider, status, redact(s=parsed.error.message)]),
              else=if(condition=provider = "anthropic" AND parsed.stop_reason = "refusal",
                 then="The model declined this request.",
              else=if(condition=NOT answer,
                 then=format(format="The %v response contained no text.", args=provider),
-             else=answer)))) AS Summary,
+             else=answer))))) AS Summary,
              len(list=context) AS CharsSent
       FROM scope()

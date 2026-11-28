@@ -97,6 +97,33 @@ func (self *SecretsTestSuite) TestSecretsService() {
 		json.MustMarshalIndent(golden))
 }
 
+func (self *SecretsTestSuite) TestSharedWithEveryone() {
+	secrets, err := services.GetSecretsService(self.ConfigObj)
+	assert.NoError(self.T(), err)
+
+	scope := vql_subsystem.MakeScope()
+	err = secrets.AddSecret(self.Ctx, scope, constants.HTTP_SECRETS, "atl-ai-anthropic",
+		ordereddict.NewDict().
+			Set("url", "https://api.anthropic.com/v1/messages").
+			Set("method", "POST").
+			Set("extra_headers", `x-api-key: "sk-ant-test"`), "admin")
+	assert.NoError(self.T(), err)
+
+	// Nobody may use it until it is shared.
+	_, err = secrets.GetSecret(self.Ctx, "analyst", constants.HTTP_SECRETS, "atl-ai-anthropic")
+	assert.Error(self.T(), err)
+
+	err = secrets.ModifySecret(self.Ctx, &api_proto.ModifySecretRequest{
+		TypeName: constants.HTTP_SECRETS, Name: "atl-ai-anthropic",
+		AddUsers: []string{"*"}}, "admin")
+	assert.NoError(self.T(), err)
+
+	s, err := secrets.GetSecret(self.Ctx, "analyst", constants.HTTP_SECRETS, "atl-ai-anthropic")
+	assert.NoError(self.T(), err)
+	url, _ := s.Data.GetString("url")
+	assert.Equal(self.T(), "https://api.anthropic.com/v1/messages", url)
+}
+
 func verifyData(
 	t *testing.T,
 	config_obj *config_proto.Config,
