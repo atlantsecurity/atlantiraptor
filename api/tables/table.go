@@ -179,8 +179,42 @@ func getTable(
 		return nil, err
 	}
 
+	// Cancelled on return, which stops the reader and the projection
+	// once enough rows were taken.
+	sub_ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	return ConvertRowsToTableResponse(
-		rs_reader.Rows(ctx), result, in.Timezone, in.Rows), nil
+		projectColumns(sub_ctx, rs_reader.Rows(sub_ctx), in.Columns),
+		result, in.Timezone, in.Rows), nil
+}
+
+// projectColumns keeps only the requested columns of each row, so a
+// caller that needs a few small columns (the console's triage checks)
+// does not download large ones it never reads. No columns means all.
+func projectColumns(ctx context.Context,
+	in <-chan *ordereddict.Dict, columns []string) <-chan *ordereddict.Dict {
+	if len(columns) == 0 {
+		return in
+	}
+	out := make(chan *ordereddict.Dict)
+	go func() {
+		defer close(out)
+		for row := range in {
+			projected := ordereddict.NewDict()
+			for _, c := range columns {
+				if v, pres := row.Get(c); pres {
+					projected.Set(c, v)
+				}
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- projected:
+			}
+		}
+	}()
+	return out
 }
 
 func getStackTable(
