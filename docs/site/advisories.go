@@ -141,8 +141,8 @@ type rssDoc struct {
 	Channel rssChannel `xml:"channel"`
 }
 
-// advisoriesRSS renders the feed. The guid is the advisory's page
-// link, which never changes, so servers notify about each advisory
+// advisoriesRSS renders the feed. The guid is the page link of the advisory,
+// which never changes, so servers notify about each advisory
 // once.
 func (self *Site) advisoriesRSS(page *Page, advisories []Advisory) ([]byte, error) {
 	pageURL := self.PageURL(page.Path)
