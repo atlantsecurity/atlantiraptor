@@ -10,6 +10,12 @@ and choose the DNS name, ports and certificate type.
 
 ## Windows
 
+On Windows the server always runs as a Windows service: it starts with
+Windows, restarts if it stops, and [updates itself](/deployment/updates/)
+by restarting the service. Do every step below in one PowerShell window
+opened **as administrator** (right-click **Windows PowerShell** and choose
+**Run as administrator**); installing a service needs it.
+
 ### 1. Prepare the machine
 
 - Windows Server 2019 or later (x64), or Windows 10/11 for a small or lab
@@ -18,17 +24,20 @@ and choose the DNS name, ports and certificate type.
 - Firewall rules allowing the frontend port (8000 by default) from
   endpoints, and the console port (8889) from your analysts.
 
-Download `Atlantiraptor-windows-amd64.exe` from the
-[latest release](https://github.com/atlantsecurity/atlantiraptor/releases/latest),
-check its signature, and save it as `Atlantiraptor.exe`:
+### 2. Download and check the program
 
 ```powershell
+New-Item -ItemType Directory -Force C:\AtlSetup | Out-Null
+cd C:\AtlSetup
+Invoke-WebRequest -UseBasicParsing -OutFile Atlantiraptor.exe `
+  https://github.com/atlantsecurity/atlantiraptor/releases/latest/download/Atlantiraptor-windows-amd64.exe
 Get-AuthenticodeSignature .\Atlantiraptor.exe | Format-List Status, SignerCertificate
 ```
 
-The status must be `Valid` and the signer `Atlant Security EOOD`.
+The status must be `Valid` and the signer `Atlant Security EOOD`. If it
+isn't, delete the file and don't run it.
 
-### 2. Create the configuration
+### 3. Create the configuration
 
 Run the interactive wizard and answer its questions (server operating
 system, data folder, certificate type, public DNS name, ports, first
@@ -39,40 +48,94 @@ administrator):
 ```
 
 It writes `server.config.yaml` and `client.config.yaml`. The server
-configuration contains private keys: store it with restricted permissions
-and keep a backup. See [Server configuration](/deployment/configuration/)
-for what the wizard creates and how to change it later.
+configuration contains private keys. See
+[Server configuration](/deployment/configuration/) for what the wizard
+creates and how to change it later.
 
-### 3. Install the service
+### 4. Name the service
+
+The service's name and folder come from `Client.windows_installer` in the
+server configuration. A new configuration still has the inherited
+defaults, `Velociraptor` under `C:\Program Files\Velociraptor\`. Change
+them to the Atlantiraptor server's own name before you install:
 
 ```powershell
-.\Atlantiraptor.exe --config server.config.yaml server_service install
+(Get-Content .\server.config.yaml) `
+  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
+  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
+  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
+  Set-Content .\server.config.yaml
+Select-String -Path .\server.config.yaml -Pattern 'service_name|install_path' | Select-Object -First 2
 ```
 
-This copies the program and its configuration to the path set in
-`Client.windows_installer.install_path` (by default under
-`C:\Program Files\Velociraptor\`), registers a Windows service named by
-`Client.windows_installer.service_name`, and starts it. The service runs the
-server (the `frontend` command) as LocalSystem.
+Or edit the `windows_installer` block under `Client:` by hand:
 
-> **Note:** The server service and the agent service use the same
-> configuration keys for their names. If the server machine will also run
-> the Atlantiraptor agent (installed from the MSI, service `Atlantiraptor`),
-> keep the defaults; if you deploy agents with `service install` instead,
-> set a different `service_name` and `install_path` in the server
-> configuration before installing, so the two do not overwrite each other.
+```yaml
+  windows_installer:
+    service_name: AtlantiraptorServer
+    install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe
+    service_description: Atlantiraptor server
+```
 
-Manage the service with `server_service stop`, `start`, `pause`,
-`continue` and `remove`, or with the Windows Services console.
+> **Warning:** Never use `Atlantiraptor` (the agent's service) or the name
+> of any other service on the machine. The install replaces a service
+> with the same name, and its program file, without asking.
 
-### 4. Sign in
+These names only affect the server. Agents installed from **Server
+settings > Deploy a client** or the MSI always use their own service,
+`Atlantiraptor`.
+
+### 5. Install and start the service
+
+```powershell
+.\Atlantiraptor.exe --config .\server.config.yaml server_service install
+Get-Service AtlantiraptorServer
+```
+
+The install:
+
+1. stops and replaces an existing service of the same name,
+2. copies the program to `install_path` and the configuration next to it
+   as `AtlantiraptorServer.config.yaml`,
+3. registers the service: LocalSystem, automatic start, restarted after a
+   minute if it stops, running the server (the `frontend` command),
+4. starts it.
+
+`Get-Service` should show **Running**. If it doesn't, look in the Windows
+**Application** event log and see [Server problems](/troubleshooting/server/).
+
+Then move `C:\AtlSetup\server.config.yaml` somewhere only administrators
+can read and back it up: the service uses its own copy, and anyone with
+the file can pretend to be your server. To change the configuration
+later, edit `C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.config.yaml`
+and restart the service.
+
+### 6. Sign in
 
 Browse to `https://<server name>:8889/` and sign in as the administrator
 the wizard created. Then:
 
 - set up [two-factor sign in](/deployment/authentication/#two-factor-sign-in),
 - review **Server settings > Server updates** (see [Updating](/deployment/updates/)),
-- [deploy agents](/deployment/clients/).
+- [deploy agents](/deployment/clients/). The server runs no agent of its
+  own; to monitor the server computer too, install an agent on it like on
+  any other computer.
+
+### Managing the service
+
+Use **Services** (`services.msc`), `Stop-Service AtlantiraptorServer` and
+`Start-Service AtlantiraptorServer`, or the program itself from the
+install folder:
+
+```powershell
+cd 'C:\Program Files\Atlantiraptor Server'
+.\AtlantiraptorServer.exe --config .\AtlantiraptorServer.config.yaml server_service stop
+.\AtlantiraptorServer.exe --config .\AtlantiraptorServer.config.yaml server_service start
+.\AtlantiraptorServer.exe --config .\AtlantiraptorServer.config.yaml server_service remove
+```
+
+Removing the service leaves the program, the configuration and the data
+folder in place.
 
 ## Linux
 

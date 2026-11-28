@@ -27,10 +27,10 @@ GitHub, checks that Atlant Security signed it, and installs it as the
 Intune, the console builds a ready-to-upload Win32 app package: see
 [Deploying with Intune](/deployment/intune/).
 
-If the section warns that agents connect to `localhost`, your server is the
-one-computer test lab, which other computers can't reach. Set up
-[a server and a second computer](/quickstart/#b-a-server-and-a-second-computer)
-first.
+If the section warns that agents connect to `localhost`, the server was
+set up for agents on its own computer only, and other computers can't
+reach it. See
+[Agents on other computers](/quickstart/#b-a-server-and-a-second-computer).
 
 ## Windows: the installer
 
