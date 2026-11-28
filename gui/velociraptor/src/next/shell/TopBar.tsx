@@ -3,9 +3,11 @@ import { lazy, Suspense, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Popover } from 'radix-ui';
 import {
-  Bell, CircleHelp, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor, ShieldCheck, Settings2,
+  Bell, CircleHelp, ExternalLink, Command, Menu as MenuIcon, LogOut, Moon, Settings, Sun, Building2, Keyboard, Check, Monitor, ShieldCheck, Settings2,
 } from 'lucide-react';
 import { useClientNameSuggest, useTraits } from '../lib/queries';
+import { ALL, CATEGORY_LABEL, useMessageAction, useMessages } from '../lib/messages';
+import { SeverityIcon } from '../ui/MessageIcon';
 import { href } from '../lib/api';
 import { clientStatus, timeAgo } from '../lib/format';
 import {
@@ -16,7 +18,6 @@ import { setTheme } from './theme';
 import { useSelectedClient } from './client-context';
 
 const UserSettingsModal = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.UserSettingsModal })));
-const ShowGlobalMessages = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.ShowGlobalMessages })));
 const HelpDialog = lazy(() => import('./LegacyDialogs.jsx').then(m => ({ default: m.HelpDialog })));
 
 
@@ -107,6 +108,88 @@ function ClientSearch() {
   );
 }
 
+// The bell: unread count and the latest messages, full titles, one
+// click to read a message or open its link. The full inbox is the
+// Messages page.
+function MessagesBell() {
+  const history = useHistory();
+  const [open, setOpen] = useState(false);
+  const { data } = useMessages();
+  const act = useMessageAction();
+  const unread = data?.unread ?? 0;
+  // Unread first, then the latest.
+  const items = [...(data?.items ?? [])]
+    .sort((a, b) => Number(a.read) - Number(b.read) || b.last_seen - a.last_seen)
+    .slice(0, 6);
+  const go = (path: string) => { setOpen(false); history.push(path); };
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Tooltip content={unread ? `${unread} unread message${unread === 1 ? '' : 's'}` : 'Messages'}>
+        <Popover.Trigger asChild>
+          <button type="button" aria-label={unread ? `Messages, ${unread} unread` : 'Messages'}
+            className="tw:relative tw:flex tw:items-center tw:justify-center tw:size-8 tw:rounded-md tw:text-muted tw:hover:bg-hover tw:hover:text-fg">
+            <Bell className="tw:size-4" />
+            {unread > 0 && (
+              <span className="tw:absolute tw:top-1 tw:right-1 tw:min-w-[14px] tw:h-[14px] tw:px-0.5 tw:rounded-full tw:bg-bad tw:text-white tw:text-[9px] tw:font-bold tw:flex tw:items-center tw:justify-center">
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
+          </button>
+        </Popover.Trigger>
+      </Tooltip>
+      <Popover.Portal>
+        <Popover.Content align="end" sideOffset={6} collisionPadding={8}
+          className="rx tw:z-[1600] tw:w-[min(420px,calc(100vw-16px))] tw:rounded-lg tw:border tw:border-line tw:bg-raised rx-shadow-lg tw:animate-fade-in">
+          <div className="tw:flex tw:items-center tw:gap-2 tw:px-3 tw:h-10 tw:border-b tw:border-line">
+            <span className="tw:text-[13px] tw:font-semibold">Messages</span>
+            {unread > 0 && <span className="tw:text-2xs tw:text-muted">{unread} unread</span>}
+            {unread > 0 && (
+              <button type="button" onClick={() => act.mutate({ action: 'read', ids: [ALL] })}
+                className="tw:ml-auto tw:flex tw:items-center tw:gap-1 tw:text-2xs tw:text-muted tw:hover:text-fg">
+                <Check className="tw:size-3" /> Mark all read
+              </button>
+            )}
+          </div>
+          <div className="tw:max-h-[60vh] tw:overflow-y-auto">
+            {items.length === 0 && <div className="tw:px-3 tw:py-6 tw:text-center tw:text-xs tw:text-faint">No messages</div>}
+            {items.map(m => (
+              <div key={m.id} className="tw:flex tw:gap-2.5 tw:px-3 tw:py-2.5 tw:border-b tw:border-line tw:last:border-b-0 tw:hover:bg-hover">
+                <span className="tw:pt-0.5 tw:flex tw:flex-col tw:items-center tw:gap-1.5">
+                  <SeverityIcon m={m} />
+                  {!m.read && <span className="tw:size-2 tw:rounded-full tw:bg-accent" aria-label="Unread" />}
+                </span>
+                <div className="tw:min-w-0 tw:flex-1">
+                  <button type="button" onClick={() => go(`/messages/${m.id}`)}
+                    className={cn('tw:block tw:text-left tw:text-[13px] tw:leading-snug tw:break-words tw:hover:text-accent',
+                      m.read ? 'tw:text-muted' : 'tw:font-semibold')}>
+                    {m.title}
+                  </button>
+                  <div className="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:text-2xs tw:text-faint">
+                    <span>{CATEGORY_LABEL[m.category]}</span>
+                    <span>{timeAgo(m.last_seen)}</span>
+                    {m.link && (
+                      <a href={m.link} target="_blank" rel="noopener noreferrer"
+                        onClick={() => { if (!m.read) act.mutate({ action: 'read', ids: [m.id] }); }}
+                        className="tw:ml-auto tw:inline-flex tw:items-center tw:gap-1 tw:text-accent tw:hover:underline">
+                        {m.link_host || 'Open'} <ExternalLink className="tw:size-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={() => go('/messages')}
+            className="tw:w-full tw:h-9 tw:border-t tw:border-line tw:text-xs tw:font-medium tw:text-accent tw:hover:bg-hover tw:rounded-b-lg">
+            {data && data.total > items.length ? `See all ${data.total} messages` : 'Open messages'}
+          </button>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 function initials(name: string | undefined) {
   if (!name) return '?';
   return name.slice(0, 2).toUpperCase();
@@ -117,9 +200,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
   const { traits, updateTraits } = ctx;
   const { setClient } = useSelectedClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [messagesOpen, setMessagesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const messages = ctx.messages || 0;
   const orgs = traits?.orgs ?? [];
   const currentOrg = window.globals?.OrgId || traits?.org || 'root';
   const orgLabel = (id: string, name?: string) => (id === 'root' || name === '<root>' ? 'Root organization' : name);
@@ -167,17 +248,7 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
           </Menu>
         )}
 
-        <Tooltip content={messages ? `${messages} notifications` : 'No notifications'}>
-          <button type="button" onClick={() => messages && setMessagesOpen(true)} aria-label="Notifications"
-            className="tw:relative tw:flex tw:items-center tw:justify-center tw:size-8 tw:rounded-md tw:text-muted tw:hover:bg-hover tw:hover:text-fg">
-            <Bell className="tw:size-4" />
-            {messages > 0 && (
-              <span className="tw:absolute tw:top-1 tw:right-1 tw:min-w-[14px] tw:h-[14px] tw:px-0.5 tw:rounded-full tw:bg-bad tw:text-white tw:text-[9px] tw:font-bold tw:flex tw:items-center tw:justify-center">
-                {messages > 99 ? '99+' : messages}
-              </span>
-            )}
-          </button>
-        </Tooltip>
+        <MessagesBell />
 
         <IconButton label="Search documentation" className="tw:max-sm:hidden" onClick={() => setHelpOpen(true)} icon={<CircleHelp className="tw:size-4" />} />
 
@@ -214,7 +285,6 @@ export default function TopBar({ onOpenPalette, dark, onOpenNav }: { onOpenPalet
 
       <Suspense fallback={null}>
         {settingsOpen && <UserSettingsModal setClient={setClient} onClose={() => setSettingsOpen(false)} />}
-        {messagesOpen && <ShowGlobalMessages onClose={() => setMessagesOpen(false)} />}
         {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
       </Suspense>
     </header>
