@@ -44,6 +44,9 @@
     <!-- Config in its own uncompressed cabinet so it can be replaced later. -->
     <Media Id="2" Cabinet="part2.cab" EmbedCab="yes" CompressionLevel="none" />
 
+    <!-- The Atlantiraptor shield in Add or remove programs. -->
+    <Icon Id="AtlantiraptorIcon" SourceFile="icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AtlantiraptorIcon" />
     <Property Id="ARPNOREPAIR" Value="1" />
     <Property Id="ARPNOMODIFY" Value="1" />
     <Property Id="ARPURLINFOABOUT" Value="https://atlantsecurity.com" />

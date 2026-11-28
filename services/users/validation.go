@@ -91,10 +91,9 @@ func (self Validator) validateLinks(
 			l.Type = "sidebar"
 		}
 
-		// If no icon is specified we just use the default Velo icon
-		// because why not?
+		// If no icon is specified use the Atlantiraptor icon.
 		if l.IconUrl == "" {
-			l.IconUrl = config.VeloIconDataURL
+			l.IconUrl = config.AtlantiraptorIconDataURL
 		}
 
 		if l.Method == "" {
@@ -115,5 +114,5 @@ func (self Validator) validateLinks(
 
 	links = MergeGUILinks(links, DefaultLinks)
 
-	return links, nil
+	return RebrandLegacyLinks(links), nil
 }

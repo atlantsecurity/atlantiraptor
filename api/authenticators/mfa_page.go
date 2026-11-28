@@ -8,6 +8,7 @@ const mfaPageHTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantiraptor – two-factor sign in</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJBdGxhbnRpcmFwdG9yIj4KICA8cGF0aCBkPSJNMzIgMyA3IDEydjE4YzAgMTUuNiAxMC42IDI3LjQgMjUgMzEgMTQuNC0zLjYgMjUtMTUuNCAyNS0zMVYxMkwzMiAzeiIgZmlsbD0iIzRmNDZlNSIvPgogIDxwYXRoIGQ9Ik0zMiAxNSAxOS41IDQ3aDcuMmwyLjUtN2g1LjZsMi41IDdoNy4yTDMyIDE1em0wIDEzLjUgMS45IDZoLTMuOGwxLjktNnoiIGZpbGw9IiNmZmYiLz4KPC9zdmc+Cg==">
 <style>
 body{font:15px/1.5 system-ui,sans-serif;background:#f6f7f9;color:#1a1a1a;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
 .card{background:#fff;border:1px solid #e3e5e8;border-radius:12px;padding:28px;width:360px;box-shadow:0 4px 20px rgba(0,0,0,.06)}

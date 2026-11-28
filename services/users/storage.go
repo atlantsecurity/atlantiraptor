@@ -319,7 +319,8 @@ func setDefaultGUIOptions(
 	// targets by simply adding an entry with disabled: true - we will
 	// not override the configured link from the default and it will
 	// be ignored.
-	options.Links = MergeGUILinks(options.Links, DefaultLinks)
+	options.Links = RebrandLegacyLinks(
+		MergeGUILinks(options.Links, DefaultLinks))
 
 	// Force the below settings from the config file. They can not be
 	// overridden by a user. This is just a mechanism to communicate
