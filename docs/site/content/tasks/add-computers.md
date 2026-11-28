@@ -18,7 +18,7 @@ install commands with the configuration already inside.
    **PowerShell run as administrator**, on Linux and macOS into a terminal
    (it uses `sudo`).
 
-![Deploy a client](/images/deploy-a-client.webp "Clients > Deploy a client: the server address, the client configuration and a ready-to-copy install command for each system.")
+![Deploy a client](/images/deploy-a-client.webp "Server settings > Deploy a client: the server address, the client configuration and a ready-to-copy install command for each system.")
 
 On Windows the command downloads the signed `Atlantiraptor.exe` from
 GitHub, checks that Atlant Security signed it, and installs it as the

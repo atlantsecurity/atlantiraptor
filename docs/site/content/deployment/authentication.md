@@ -55,6 +55,8 @@ current code.
 Server administrators choose who must use two-factor sign in, on the same
 page under **Two-factor policy**:
 
+![Security and 2FA page](/images/security-2fa.webp "Server settings > Security and 2FA: your own two-factor sign-in and password, and the policy for everyone.")
+
 | Policy | Effect |
 |---|---|
 | **Everyone** (recommended, the default) | Every user signing in with a password. |

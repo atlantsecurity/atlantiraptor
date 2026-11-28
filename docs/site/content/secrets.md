@@ -23,7 +23,7 @@ Open **Secrets** (server administrators), pick a type, and **Add secret**:
 4. In the root organization, **Visible to all organizations** shares the
    secret with every org.
 
-![Secrets page](/images/secrets.webp "An AWS S3 Creds secret, who it is shared with, and the fields its type accepts.")
+![Secrets page](/images/secrets.webp "The Secrets page: the secret types on the left; each type lists its stored secrets and the fields it accepts.")
 
 Values can't be read back. **Replace values** overwrites them, and
 **Delete secret** removes it.

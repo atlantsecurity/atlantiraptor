@@ -33,6 +33,8 @@ The collections list shows each collection's artifacts, state, creator,
 start time and how much it returned. A running collection updates live.
 Open one to see:
 
+![A collection's results](/images/collection-results.webp "A client's collections on the left; the selected one shows its rows, files, logs and duration, with Download zip.")
+
 - **Overview**: the request (artifacts, parameters, resources), state,
   duration, rows and bytes uploaded, and any error.
 - **Results**: one table per artifact source. Sort, filter and pivot on

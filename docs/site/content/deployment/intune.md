@@ -8,7 +8,7 @@ The console builds everything Intune needs: a Win32 app package
 configuration, and a detection script. You don't need Microsoft's Win32
 Content Prep Tool.
 
-![Deploy a client, Microsoft Intune tab](/images/deploy-intune.webp "Clients > Deploy a client > Microsoft Intune: download the package and the detection script, then copy the commands into Intune.")
+![Deploy a client, Microsoft Intune tab](/images/deploy-intune.webp "Server settings > Deploy a client > Microsoft Intune: download the package and the detection script, then copy the commands into Intune.")
 
 ## 1. Download the package
 

@@ -17,7 +17,7 @@ arrow at its bottom to get more room.
 | **Investigate** | [Dashboard](/console/dashboard/), [Hunts](/hunts/), [Response](/console/response/), [Cases](/console/cases/), [IOC sweep](/console/ioc-sweep/), [Hunt feeds](/hunts/feeds/), [Clients](/clients/), [Notebooks](/notebooks/) |
 | **Client** (appears once you pick a client) | [Overview](/clients/host/), [Files](/clients/files/), [Collections](/clients/collections/), [Client events](/clients/monitoring/) |
 | **Server** | [Fleet health](/console/fleet-health/), [Artifacts](/artifacts/managing/), Server collections, Server events |
-| **Server settings** (administrators) | [Users](/users/), [Groups](/users/#groups), [Organizations](/deployment/orgs/), [Security and 2FA](/deployment/authentication/#two-factor-sign-in), [Secrets](/secrets/), [Integrations](/server-automation/integrations/), [API keys](/server-automation/api-keys/), [Network access](/deployment/network-access/), [Server updates](/deployment/updates/), [Address and certificate](/deployment/tls/#your-own-address-from-the-console), [Deploy a client](/deployment/clients/) |
+| **Admin** (administrators) | [Server settings](/console/server-settings/): [Users](/users/), [Groups](/users/#groups), [Organizations](/deployment/orgs/), [Security and 2FA](/deployment/authentication/#two-factor-sign-in), [Secrets](/secrets/), [Integrations](/server-automation/integrations/), [API keys](/server-automation/api-keys/), [Network access](/deployment/network-access/), [Server updates](/deployment/updates/), [Address and certificate](/deployment/tls/#your-own-address-from-the-console), [Deploy a client](/deployment/clients/), [Audit log](/deployment/audit-log/) |
 | **Links** | Extra links configured in `GUI.links`, such as this documentation |
 
 What you see depends on your [roles](/users/): pages you cannot use are
@@ -27,7 +27,8 @@ hidden or read-only.
 
 - the **client search** box: type a host name, `label:`, `ip:` or a client
   ID (see [Finding clients](/clients/#searching-for-clients)),
-- **notifications** of finished collections, exports and hunts,
+- the **bell** with your [messages](/console/messages/): security advisories,
+  announcements and messages from other users,
 - the **documentation search** (**?** icon), which searches these pages
   from inside the console,
 - the **account menu**: switch organization, settings, password and
@@ -51,7 +52,7 @@ Every results table in the console works the same way:
 
 - Click a column header to sort, and use the filter box to show only
   matching rows.
-- Hover over a value and open its menu to **pivot**. Depending on what the
+- Hover over a value and open its menu, or right-click it, to **pivot**. Depending on what the
   value is (a user, process, IP address, domain, hash or path), the menu
   offers:
   - **Rapid hunt this**: which other machines have seen it,
@@ -62,7 +63,7 @@ Every results table in the console works the same way:
   - **Look up on VirusTotal**,
   - **Copy**.
 
-![Pivot menu on a result value](/images/pivot-menu.webp "Clicking a value in a results table offers filters, Rapid hunt, IOC sweep and adding it to a case.")
+![Pivot menu on a result value](/images/pivot-menu.webp "Right-clicking a value in a results table offers filters, Rapid hunt, IOC sweep and adding it to a case.")
 
 Large result sets load in pages; scroll to the end to load the rest, or use
 the server-side search where a page offers it, so filters see every row.

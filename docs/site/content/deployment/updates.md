@@ -10,6 +10,8 @@ the [GitHub releases](https://github.com/atlantsecurity/atlantiraptor/releases)
 of Atlantiraptor, and when a newer signed release is available they install
 it and restart. The settings and status are on **Server settings > Server updates**.
 
+![Server updates page](/images/server-updates.webp "Server settings > Server updates: the running version, the latest release and the automatic update settings.")
+
 ### What is checked before an install
 
 The server installs a release only if all of these hold:
@@ -87,6 +89,8 @@ tested.
 After the server updates itself, it brings Windows agents to the same
 release. The status and settings are on **Admin > Server updates > Agent
 updates**.
+
+![Agent updates settings](/images/agent-updates.webp "The Agent updates card: the target version, the opt-out label, the canary group and how long it runs first.")
 
 1. The server downloads the Windows binary of that release from GitHub,
    checks it against the release's `SHA256SUMS` and the Atlant Security

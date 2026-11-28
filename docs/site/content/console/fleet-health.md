@@ -6,6 +6,8 @@ description: Find agents that went quiet, agents running old versions, and colle
 **Fleet health** (under **Server** in the sidebar) shows what needs
 attention in your deployment itself, rather than on your endpoints.
 
+![Fleet health](/images/fleet-health.webp "Fleet health: agents online and quiet, agent versions, and hunts with failing collections.")
+
 ## Agents that went quiet
 
 Clients are grouped by when they last checked in:

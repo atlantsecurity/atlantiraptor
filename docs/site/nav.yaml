@@ -40,6 +40,8 @@ sections:
       - path: console/cases
       - path: console/ai-triage
       - path: console/fleet-health
+      - path: console/messages
+      - path: console/server-settings
       - path: console/preferences
 
   - title: Endpoints
