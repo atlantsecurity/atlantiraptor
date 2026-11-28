@@ -17,7 +17,7 @@ they can see anything. See [Users and roles](/users/).
 ## Passwords
 
 `basic` is the wizard's default. Administrators create users and set
-initial passwords on **Admin > Users** or with the command line:
+initial passwords on **Server settings > Users** or with the command line:
 
 ```sh
 atlantiraptor --config server.config.yaml user add alice --role analyst
@@ -77,7 +77,7 @@ user's password changes or their second factor is reset or turned off.
 
 ### A user lost their phone
 
-An administrator opens **Admin > Users**, selects the user and chooses
+An administrator opens **Server settings > Users**, selects the user and chooses
 **Reset two-factor sign in**. The user sets it up again at the next sign
 in.
 

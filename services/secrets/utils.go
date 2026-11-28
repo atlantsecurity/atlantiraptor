@@ -181,3 +181,22 @@ func NewSecretFromProto(
 	}
 	return result, nil
 }
+
+// EncryptBlob encrypts data at rest with the server's secrets key
+// (the same key that protects stored secrets).
+func EncryptBlob(ctx context.Context, config_obj *config_proto.Config, plaintext []byte) ([]byte, error) {
+	dek, err := GetDek(ctx, config_obj)
+	if err != nil {
+		return nil, err
+	}
+	return encrypt(dek, plaintext)
+}
+
+// DecryptBlob reverses EncryptBlob.
+func DecryptBlob(ctx context.Context, config_obj *config_proto.Config, ciphertext []byte) ([]byte, error) {
+	dek, err := GetDek(ctx, config_obj)
+	if err != nil {
+		return nil, err
+	}
+	return decrypt(dek, ciphertext)
+}

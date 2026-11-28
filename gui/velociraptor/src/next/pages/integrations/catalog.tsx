@@ -1,5 +1,5 @@
 // What each integration needs. Credentials are never entered here: every
-// integration points at a named secret managed under Admin › Secrets.
+// integration points at a named secret managed under Server settings › Secrets.
 import { Mail, MessageSquare, Database, Rss } from 'lucide-react';
 
 export interface Field {

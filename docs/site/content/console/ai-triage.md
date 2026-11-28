@@ -24,7 +24,7 @@ case timeline.
 
 ## Setting it up (administrators)
 
-AI triage is off until an administrator configures it under **Admin >
+AI triage is off until an administrator configures it under **Server settings >
 Integrations > AI triage**:
 
 1. Create an **HTTP Secrets** [secret](/secrets/) for the provider's API:

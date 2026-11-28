@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server, Users, KeyRound,
-  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, Plug, HeartPulse, UsersRound, ShieldCheck, Code2, Network, CloudDownload, Rss, Building2,
+  LayoutDashboard, Crosshair, Monitor, BookOpen, Package, Radio, Server,
+  FolderTree, History, Activity, PanelLeftClose, PanelLeftOpen, ExternalLink, Laptop, X, Siren, Briefcase, ScanSearch, HeartPulse, Rss, Settings2,
 } from 'lucide-react';
 import { getItem, schema } from '../../components/core/storage.jsx';
 import { EncodePathInURL } from '../../components/utils/paths.jsx';
@@ -12,12 +12,13 @@ import { useTraits } from '../lib/queries';
 import { cn, StatusDot, Tooltip } from '../ui/primitives';
 import { useSelectedClient } from './client-context';
 import { clientStatus } from '../lib/format';
+import { isSettingsPath } from '../pages/settings/nav';
 
 interface Item {
   to: string;
   label: string;
   icon: React.ReactNode;
-  match?: RegExp;
+  match?: { test: (path: string) => boolean };
   exact?: boolean;
 }
 
@@ -77,15 +78,7 @@ export default function Sidebar({ collapsed, onToggle, className }: { collapsed:
     { to: remembered(schema.CurrentServerEventArtifactKey, '/events/server'), label: 'Server events', icon: <Radio />, match: /^\/events\/server/ },
   ];
   const admin: Item[] = isAdmin ? [
-    { to: '/users', label: 'Users', icon: <Users />, match: /^\/users/ },
-    { to: '/groups', label: 'Groups', icon: <UsersRound />, match: /^\/groups/ },
-    { to: '/orgs', label: 'Organizations', icon: <Building2 />, match: /^\/orgs/ },
-    { to: '/account/security', label: 'Security and 2FA', icon: <ShieldCheck />, match: /^\/account/ },
-    { to: '/secrets', label: 'Secrets', icon: <KeyRound />, match: /^\/secrets/ },
-    { to: '/integrations', label: 'Integrations', icon: <Plug />, match: /^\/integrations/ },
-    { to: '/apikeys', label: 'API keys', icon: <Code2 />, match: /^\/apikeys/ },
-    { to: '/network', label: 'Network access', icon: <Network />, match: /^\/network/ },
-    { to: '/updates', label: 'Server updates', icon: <CloudDownload />, match: /^\/updates/ },
+    { to: '/settings', label: 'Server settings', icon: <Settings2 />, match: { test: isSettingsPath } },
   ] : [];
 
   const clientItems: Item[] = clientId ? [

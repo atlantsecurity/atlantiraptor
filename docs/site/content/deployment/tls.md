@@ -25,7 +25,50 @@ at an impostor by someone with a valid public certificate.
 The only drawback is the browser warning on the console. Either accept it
 once per browser, or install the CA certificate (`Client.ca_certificate`
 in the configuration) in your browsers' trusted roots, or use a separate
-certificate for the console behind a [reverse proxy](#behind-a-reverse-proxy-or-load-balancer).
+certificate for the console: [from the console itself](#your-own-address-from-the-console), or behind a [reverse proxy](#behind-a-reverse-proxy-or-load-balancer).
+
+## Your own address, from the console
+
+The simplest way to give the console a trusted certificate and an address
+without a port, such as `https://console.example.com`. Nothing in the
+configuration file changes, agents are not affected, and the console's
+original address keeps working.
+
+1. Create a DNS record for the name, pointing to the server.
+2. Open **Server settings > Address and certificate**.
+3. Enter the host name. Keep port **443** so the address needs no port.
+4. Choose where the certificate comes from:
+   - **Let's Encrypt**: free and renewed automatically. Let's Encrypt must
+     reach the name from the internet on port 443 (or on port 80 with the
+     redirect turned on).
+   - **Upload my certificate**: a `.pfx`/`.p12` file with its password, or
+     the PEM certificate (with its intermediate certificates) and private
+     key. The page checks that the key matches, that the certificate covers
+     the name, that it has not expired and whether browsers will trust it.
+     The key is stored encrypted on the server.
+5. Optionally send `http://` visitors to `https://` (uses port 80).
+6. Choose **Turn on and test**. The server starts answering at the new
+   address at once, *on trial*, and the page checks from your browser that
+   the address opens without a warning.
+7. Choose **Keep these settings**. Settings you don't keep switch back by
+   themselves after 10 minutes, and a restart drops them too.
+
+If anything goes wrong, open the console at its original address (shown on
+the page) and undo or change the settings. Every change, confirmation and
+rollback is in the audit log as `console_https_*`.
+
+Notes:
+
+- On Linux, ports below 1024 need permission. Run
+  `setcap cap_net_bind_service=+ep` on the server binary, or add
+  `AmbientCapabilities=CAP_NET_BIND_SERVICE` to its systemd unit. The page
+  says so if this is what failed.
+- If sign-in uses an identity provider (OIDC, Entra ID, Google, GitHub),
+  it returns to `GUI.public_url` after sign-in. To sign in at the new
+  address, set `GUI.public_url` to it, add its callback URL in the identity
+  provider, and restart the server.
+- The setting is not available on a server that already uses Let's
+  Encrypt from its configuration file, or on minion nodes.
 
 ## Let's Encrypt
 

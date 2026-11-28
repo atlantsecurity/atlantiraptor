@@ -1,4 +1,4 @@
-// Organization management (Admin > Organizations). The server only
+// Organization management (Server settings > Organizations). The server only
 // answers org admins: administrators (or org admins) of the root org.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';

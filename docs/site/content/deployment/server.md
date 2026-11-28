@@ -71,7 +71,7 @@ Browse to `https://<server name>:8889/` and sign in as the administrator
 the wizard created. Then:
 
 - set up [two-factor sign in](/deployment/authentication/#two-factor-sign-in),
-- review **Admin > Server updates** (see [Updating](/deployment/updates/)),
+- review **Server settings > Server updates** (see [Updating](/deployment/updates/)),
 - [deploy agents](/deployment/clients/).
 
 ## Linux
