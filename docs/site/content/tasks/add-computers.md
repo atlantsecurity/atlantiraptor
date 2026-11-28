@@ -3,6 +3,11 @@ title: Add more computers
 description: Install the Atlantiraptor agent on more Windows, Linux and macOS computers, by hand or with Intune, Group Policy or another deployment tool.
 ---
 
+On Windows the agent always runs as a Windows service under the SYSTEM
+account, so it can read the raw disk (including the `$MFT`), locked files,
+every registry hive and other processes' memory. Every method on this page
+installs it that way.
+
 Each computer needs the agent and your server's **client configuration**,
 which tells the agent where the server is, which certificate to trust and
 the enrollment secret (the org's *nonce*). The console builds ready-to-run
@@ -10,8 +15,9 @@ install commands with the configuration already inside.
 
 ## The quick way: Deploy a client
 
-1. In the console, open **Clients** and expand **Deploy a client** at the
-   bottom of the page. (Only server administrators see it.)
+1. In the console, open **Server settings > Deploy a client**. (Only
+   server administrators see it; the same section is at the bottom of
+   **Clients**.)
 2. Pick the tab for the computer: **Windows**, **Linux**, **macOS** or
    **Microsoft Intune**.
 3. Copy the command, and paste it on the computer: on Windows into
@@ -23,7 +29,10 @@ install commands with the configuration already inside.
 On Windows the command downloads the signed `Atlantiraptor.exe` from
 GitHub, checks that Atlant Security signed it, and installs it as the
 **Atlantiraptor** service. The same installer is available as a script
-(`Install-Atlantiraptor.ps1`) for Group Policy, SCCM or an RMM tool. For
+(`Install-Atlantiraptor.ps1`) for Group Policy, SCCM or an RMM tool: run
+it as SYSTEM, which for Group Policy means a computer **startup** script,
+not a user logon script (see
+[Deploying agents](/deployment/clients/#without-the-msi)). For
 Intune, the console builds a ready-to-upload Win32 app package: see
 [Deploying with Intune](/deployment/intune/).
 

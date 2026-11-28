@@ -140,12 +140,13 @@ function WindowsTab({ info }: { info: DeployInfo }) {
       <p className="tw:text-muted">
         On the computer, open <b>PowerShell as administrator</b> and paste this command. It downloads the signed
         program{info.version ? ` (version ${info.version})` : ''} from GitHub, checks that it is signed by Atlant Security,
-        and installs it as the <Mono>Atlantiraptor</Mono> service with your configuration.
+        and installs it as the <Mono>Atlantiraptor</Mono> service, running as SYSTEM, with your configuration.
       </p>
       <CodeBox label="PowerShell (as administrator)" text={info.commands.windows} />
       <p className="tw:text-muted">
-        Or download the same installer as a script, for many computers, Group Policy, SCCM or an RMM tool. It works offline
-        too if you put <Mono>Atlantiraptor.exe</Mono> next to it.
+        Or download the same installer as a script, for many computers, Group Policy, SCCM or an RMM tool. Run it as
+        SYSTEM: with Group Policy as a computer startup script, not a user logon script. It works offline too if you
+        put <Mono>Atlantiraptor.exe</Mono> next to it.
       </p>
       <div className="tw:flex tw:flex-wrap tw:gap-2">
         <Button size="sm" variant="secondary" icon={<Download />} onClick={() => download(info.intune.setup_file)}>{info.intune.setup_file}</Button>
