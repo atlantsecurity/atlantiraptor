@@ -479,8 +479,8 @@ func (self *PackageSpec) OutputFilename() string {
 // systems that already have a package installed upgrade in place.
 const (
 	packageMaintainer      = "Atlant Security EOOD"
-	packageMaintainerEmail = "support@atlantsecurity.com"
-	packageHomepage        = "https://atlantsecurity.com"
+	packageMaintainerEmail = ""
+	packageHomepage        = "https://github.com/atlantsecurity/atlantiraptor"
 )
 
 func NewClientRPMSpec() *PackageSpec {
