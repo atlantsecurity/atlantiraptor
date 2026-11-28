@@ -47,50 +47,74 @@ administrator):
 .\Atlantiraptor.exe config generate -i
 ```
 
-It writes `server.config.yaml` and `client.config.yaml`. The server
-configuration contains private keys. See
+It writes `server.config.yaml`, which contains the server's private keys. See
 [Server configuration](/deployment/configuration/) for what the wizard
 creates and how to change it later.
 
-### 4. Name the service
+### 4. Check the service name
 
 The service's name and folder come from `Client.windows_installer` in the
-server configuration. A new configuration still has the inherited
-defaults, `Velociraptor` under `C:\Program Files\Velociraptor\`. Change
-them to the Atlantiraptor server's own name before you install:
-
-```powershell
-(Get-Content .\server.config.yaml) `
-  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
-  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe' `
-  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server' |
-  Set-Content .\server.config.yaml
-Select-String -Path .\server.config.yaml -Pattern 'service_name|install_path' | Select-Object -First 2
-```
-
-Or edit the `windows_installer` block under `Client:` by hand:
+server configuration. The wizard sets them to:
 
 ```yaml
   windows_installer:
     service_name: AtlantiraptorServer
-    install_path: C:\Program Files\Atlantiraptor Server\AtlantiraptorServer.exe
-    service_description: Atlantiraptor server
+    install_path: $ProgramFiles\Atlantiraptor Server\AtlantiraptorServer.exe
+    service_description: Atlantiraptor server by Atlant Security
 ```
+
+Agents installed from **Server settings > Deploy a client**, the MSI, or a
+client configuration made with `config client` always get their own
+service, `Atlantiraptor`.
+
+Configurations made by version 1.0.5 or earlier, and by the `gui` lab,
+still say `Velociraptor` under `C:\Program Files\Velociraptor\`. For a new
+server, change them before you install:
+
+```powershell
+(Get-Content .\server.config.yaml) `
+  -replace 'service_name: Velociraptor$', 'service_name: AtlantiraptorServer' `
+  -replace 'install_path: \$ProgramFiles\\Velociraptor\\Velociraptor\.exe$', 'install_path: $ProgramFiles\Atlantiraptor Server\AtlantiraptorServer.exe' `
+  -replace 'service_description: Velociraptor service$', 'service_description: Atlantiraptor server by Atlant Security' |
+  Set-Content .\server.config.yaml
+```
+
+A server that already runs as the `Velociraptor` service keeps that name;
+don't change it there, or the next install creates a second service.
 
 > **Warning:** Never use `Atlantiraptor` (the agent's service) or the name
 > of any other service on the machine. The install replaces a service
 > with the same name, and its program file, without asking.
 
-These names only affect the server. Agents installed from **Server
-settings > Deploy a client** or the MSI always use their own service,
-`Atlantiraptor`.
-
 ### 5. Install and start the service
+
+Before you install, check two things:
+
+- **Nothing else is running this server.** A test copy started with
+  `gui`, `frontend` or a scheduled task holds the same ports, and the
+  service then can't start. This must print nothing:
+
+  ```powershell
+  Get-NetTCPConnection -State Listen -LocalPort 8000,8889 -ErrorAction SilentlyContinue
+  ```
+
+- **The log has a folder.** A service has no console window, so the server
+  only writes log files when `Logging.output_directory` is set. The
+  wizard sets it. A configuration made another way, for example one
+  written by the `gui` lab into its data folder, may not have it. Then add
+  it under `Logging:` (for example `output_directory: D:\Atlantiraptor\logs`)
+  and create the folder.
 
 ```powershell
 .\Atlantiraptor.exe --config .\server.config.yaml server_service install
 Get-Service AtlantiraptorServer
+sc.exe qfailure AtlantiraptorServer
+Get-NetTCPConnection -State Listen -LocalPort 8889
 ```
+
+The install prints nothing when it works. Check the result with the
+commands after it: the service must be **Running**, the failure actions
+must show `RESTART`, and port 8889 must be listening.
 
 The install:
 
@@ -101,7 +125,7 @@ The install:
    minute if it stops, running the server (the `frontend` command),
 4. starts it.
 
-`Get-Service` should show **Running**. If it doesn't, look in the Windows
+If the service isn't running, look in the log folder, in the Windows
 **Application** event log and see [Server problems](/troubleshooting/server/).
 
 Then move `C:\AtlSetup\server.config.yaml` somewhere only administrators

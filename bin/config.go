@@ -214,6 +214,10 @@ func doGenerateConfigNonInteractive() error {
 	// Users have to update the following fields.
 	config_obj.Client.ServerUrls = []string{"https://localhost:8000/"}
 
+	// server_service install uses these; agents get their own
+	// service name (see config.StripClientConfig).
+	config_obj.Client.WindowsInstaller = config.ServerWindowsInstaller()
+
 	err = applyMergesAndPatches(config_obj,
 		*config_generate_command_merge_file,
 		*config_generate_command_merge,

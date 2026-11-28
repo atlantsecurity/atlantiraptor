@@ -54,6 +54,10 @@ func generateGUIConfig(datastore_directory, server_config_path, client_config_pa
 	config_obj.GUI.BindAddress = "127.0.0.1"
 	config_obj.GUI.BindPort = 8889
 
+	// If this lab is ever installed as a service, it gets the
+	// server's own service name, never the agent's.
+	config_obj.Client.WindowsInstaller = config.ServerWindowsInstaller()
+
 	// Frontend only suitable for local client
 	config_obj.Frontend.BindAddress = "127.0.0.1"
 	config_obj.Frontend.BindPort = 8000
