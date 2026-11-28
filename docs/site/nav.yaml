@@ -159,4 +159,5 @@ sections:
     pages:
       - path: whats-new
       - path: security
+      - path: security/advisories
       - path: support

@@ -3,8 +3,14 @@ description: |
   Polls RSS feeds at a configurable interval and alerts users about
   new items.
 
-  By default this artifact will monitor the Velociraptor RSS feeds to
-  inform users of critical CVEs or blog posts.
+  By default this artifact follows the Atlantiraptor security
+  advisories feed, so every console user is told once about each new
+  advisory.
+
+  The server runs its server monitoring artifacts in every org, but
+  console notices belong to the user, not the org. So only the root org
+  polls the feeds, and it notifies each matching user of every org
+  once. In other orgs this artifact does nothing.
 
 type: SERVER_EVENT
 parameters:
@@ -12,8 +18,7 @@ parameters:
   type: csv
   default: |
     URL
-    https://docs.velociraptor.app/blog/index.xml
-    https://docs.velociraptor.app/announcements/advisories/index.xml
+    https://atlantsecurity.github.io/atlantiraptor/security/advisories/index.xml
 - name: Period
   type: int
   default: "600"
@@ -27,10 +32,14 @@ parameters:
   default: 7
 
 export: |
+  // Each user once, even when they belong to several orgs.
+  LET _Users = SELECT name FROM gui_users(all_orgs=TRUE)
+    WHERE name =~ UserRegex
+    GROUP BY name
+
   LET _Send(Message) =
     SELECT user_message(user=name, message=Message) AS User
-    FROM gui_users()
-    WHERE name =~ UserRegex
+    FROM _Users
 
   LET Send(Message) =  _Send(Message=Message).User
 
@@ -59,16 +68,21 @@ export: |
 
 sources:
 - query: |
+    // Only the root org polls the feeds; see the description.
+    LET IsRootOrg <= org().id = "root"
+
     LET URLs <= FeedURLs.URL
 
     // Create the initial cache and watch for changes.
-    LET m <= to_dict(item={
-        SELECT guid AS _key,
-               dict(title=title, link=link, pubDate=pubDate) AS _value
-        FROM GetRSS(URLs=URLs)
-      })
+    LET m <= if(condition=IsRootOrg,
+        then=to_dict(item={
+          SELECT guid AS _key,
+                 dict(title=title, link=link, pubDate=pubDate) AS _value
+          FROM GetRSS(URLs=URLs)
+        }),
+        else=dict())
 
-    SELECT *
+    LET Watch = SELECT *
     FROM foreach(row={
         SELECT *
         FROM clock(period=Period)
@@ -83,6 +97,16 @@ sources:
                   value=dict(title=title, link=link, pubDate=pubDate))
           AND log(message="Sending message to %v", args=[Users,])
       })
+
+    SELECT *
+    FROM if(condition=IsRootOrg,
+            then=Watch,
+            else={
+      SELECT *
+      FROM scope()
+      WHERE log(message="RSS feeds are polled by the root org only")
+        AND FALSE
+    })
 
 column_types:
 - name: link
