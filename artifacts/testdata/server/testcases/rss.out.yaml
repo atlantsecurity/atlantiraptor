@@ -4,25 +4,42 @@ Query: LET _ <= SELECT mock(plugin='http_client', results=[
    (dict(Content= SecondRSS, Response=200),)]),
    mock(plugin='clock', results=[
    dict(Unix=1), dict(Unix=2)
- ]), user_create(user="Fred", roles="investigator")
+ ]), org_create(name="RSSOrg", org_id="RSSORG")
 FROM scope()
 
 Output: []
 
-# Check for RSS feeds - should emit the new item (2.txt)
-Query: SELECT *, Users =~ "Fred" AS Users FROM Artifact.Server.Monitoring.RSSFeeds(FeedURLs=FeedURLs, AgeDays=999999999)
+# Fred is in the root org and a child org, Barney only in the child org.
+Query: LET _ <= SELECT user_create(user="Fred", roles="investigator", orgs=["root", "RSSORG"]), user_create(user="Barney", roles="reader", orgs=["RSSORG"]) FROM scope()
+Output: []
+
+# In a child org the artifact does nothing: the root org notifies
+# everyone, so running in every org would send duplicate notices.
+Query: SELECT * FROM query(org_id="RSSORG", env=dict(FeedURLs=FeedURLs), query={ SELECT * FROM Artifact.Server.Monitoring.RSSFeeds( FeedURLs=FeedURLs, AgeDays=999999999) })
+Output: []
+
+Query: SELECT count() AS Skipped FROM test_read_logs() WHERE Log =~ "polled by the root org only" AND NOT Log =~ "SELECT" GROUP BY 1
+Output: [
+ {
+  "Skipped": 1
+ }
+]
+
+# Check for RSS feeds - should emit the new item (2.txt), sent once to
+# each user of every org.
+Query: SELECT guid, title, link, pubDate, Users =~ "Fred" AS FredNotified, Users =~ "Barney" AS BarneyNotified FROM Artifact.Server.Monitoring.RSSFeeds(FeedURLs=FeedURLs, AgeDays=999999999)
 Output: [
  {
   "guid": "https://www.example.com/blob/2.txt/",
   "title": "Second",
   "link": "https://www.example.com/blob/2.txt/",
   "pubDate": "2018-08-10T04:10:06Z",
-  "_Source": "Server.Monitoring.RSSFeeds",
-  "Users": true
+  "FredNotified": true,
+  "BarneyNotified": true
  }
 ]
 
-# Now check that the user message was sent
+# Now check that each user got the message exactly once
 Query: SELECT * FROM user_messages(clear=TRUE, user="Fred")
 Output: [
  {
@@ -36,11 +53,25 @@ Output: [
  }
 ]
 
-# Clean up
-Query: SELECT user_delete(user="Fred") FROM scope()
+Query: SELECT * FROM user_messages(clear=TRUE, user="Barney")
 Output: [
  {
-  "user_delete(user=\"Fred\")": "Fred"
+  "Timestamp": "2020-05-31T15:28:05Z",
+  "From": "VelociraptorServer",
+  "Message": {
+   "title": "Second",
+   "link": "https://www.example.com/blob/2.txt/",
+   "date": "2018-08-10T04:10:06Z"
+  }
+ }
+]
+
+# Clean up
+Query: SELECT user_delete(user="Fred"), user_delete(user="Barney") FROM scope()
+Output: [
+ {
+  "user_delete(user=\"Fred\")": "Fred",
+  "user_delete(user=\"Barney\")": "Barney"
  }
 ]
 
