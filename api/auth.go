@@ -20,6 +20,7 @@ package api
 import (
 	api_proto "www.velocidex.com/golang/velociraptor/api/proto"
 	config_proto "www.velocidex.com/golang/velociraptor/config/proto"
+	"www.velocidex.com/golang/velociraptor/services/users"
 )
 
 func NewDefaultUserObject(config_obj *config_proto.Config) *api_proto.ApiUser {
@@ -30,7 +31,7 @@ func NewDefaultUserObject(config_obj *config_proto.Config) *api_proto.ApiUser {
 
 	if config_obj.GUI != nil {
 		result.InterfaceTraits = &api_proto.ApiUserInterfaceTraits{
-			Links: config_obj.GUI.Links,
+			Links: users.RebrandLegacyLinks(config_obj.GUI.Links),
 		}
 	}
 

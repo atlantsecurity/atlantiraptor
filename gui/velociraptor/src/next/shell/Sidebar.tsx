@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { getItem, schema } from '../../components/core/storage.jsx';
 import { EncodePathInURL } from '../../components/utils/paths.jsx';
-import logo from '../../components/sidebar/velo.svg';
+import logo from '../../components/sidebar/atlantiraptor.svg';
 import { srcOf } from '../lib/api';
 import { useTraits } from '../lib/queries';
 import { cn, StatusDot, Tooltip } from '../ui/primitives';

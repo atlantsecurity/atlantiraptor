@@ -41,7 +41,8 @@ jobs:
 
       # Our documentation replaces docs.velociraptor.app. Upstream merges
       # bring such links back; point them at this site instead. The
-      # allowed files fetch artifacts and feeds from there, not docs.
+      # allowed files fetch artifacts and feeds from there, not docs, or
+      # (services/users/rebrand.go) recognise old links to replace them.
       - name: No links to the Velociraptor documentation
         run: |
           if git grep -nI -e 'docs\.velociraptor\.app' -e 'Velocidex/velociraptor-docs' -- . \
@@ -49,6 +50,7 @@ jobs:
               ':!artifacts/definitions/Server/Import/Extras.yaml' \
               ':!artifacts/definitions/Server/Import/PreviousReleases.yaml' \
               ':!artifacts/definitions/Server/Import/ArtifactBundle.yaml' \
+              ':!services/users/rebrand.go' ':!services/users/rebrand_test.go' \
               ':!.github/workflows/docs.yml'; then
             echo "::error::Replace the links above with links to https://atlantsecurity.github.io/atlantiraptor/"
             exit 1
