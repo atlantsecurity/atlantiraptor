@@ -2,7 +2,7 @@
 // collection with its results, files, logs and exports on the right.
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
-import { History, Monitor, Plus, Server, Search } from 'lucide-react';
+import { Briefcase, History, Monitor, Plus, Server, Search } from 'lucide-react';
 import { useClient, useClientFlowList } from '../../lib/queries';
 import type { ArtifactCollectorArgs, Flow } from '../../lib/types';
 import type { Row } from '../../lib/table';
@@ -13,6 +13,7 @@ import FlowDetail, { FlowStateBadge } from './FlowDetail';
 import { MobileBack } from '../../ui/MobileBack';
 
 const NewHuntDialog = lazy(() => import('../hunts/NewHuntDialog'));
+const OfflineCollectorDialog = lazy(() => import('./OfflineCollectorDialog').then(m => ({ default: m.OfflineCollectorDialog })));
 
 export default function CollectionsPage() {
   const { client_id: clientId = 'server', flow_id: flowId, tab } = useParams<{ client_id?: string; flow_id?: string; tab?: string }>();
@@ -25,6 +26,7 @@ export default function CollectionsPage() {
   const [filter, setFilter] = useState('');
   const [newOpen, setNewOpen] = useState(() => new URLSearchParams(location.search).get('new') === '1');
   const [baseRequest, setBaseRequest] = useState<ArtifactCollectorArgs | undefined>();
+  const [collectorOpen, setCollectorOpen] = useState(() => new URLSearchParams(location.search).get('collector') === '1');
 
   // Keep the sidebar's client in sync with the page.
   useEffect(() => {
@@ -78,6 +80,10 @@ export default function CollectionsPage() {
                 </>}
               </div>
             </div>
+            {isServer && (
+              <Button variant="secondary" size="sm" icon={<Briefcase className="tw:size-3.5" />} onClick={() => setCollectorOpen(true)}
+                title="Build a standalone collector for machines without an agent">Offline collector</Button>
+            )}
             <Button variant="primary" size="sm" icon={<Plus className="tw:size-3.5" />} onClick={() => openNew()}>Collect</Button>
           </div>
           <div className="tw:relative">
@@ -123,6 +129,11 @@ export default function CollectionsPage() {
               setNewOpen(false);
               if (id) history.push(`/collected/${clientId}/${id}`);
             }} />
+        </Suspense>
+      )}
+      {collectorOpen && (
+        <Suspense fallback={null}>
+          <OfflineCollectorDialog open={collectorOpen} onOpenChange={setCollectorOpen} />
         </Suspense>
       )}
     </div>
