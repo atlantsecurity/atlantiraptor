@@ -21,13 +21,13 @@ func row(ts, from, msg string) *Row {
 	}
 }
 
-const advisory = `{"title":"CVE-2026-132797 Velociraptor Child orgs can use server artifacts to escalate privilege","link":"https://docs.velociraptor.app/announcements/advisories/cve-2026-132797/","date":"2026-11-27T00:00:00Z"}`
+const advisory = `{"title":"CVE-2026-132797 Velociraptor Child orgs can use server artifacts to escalate privilege","link":"https://atlantsecurity.github.io/atlantiraptor/security/advisories/cve-2026-132797/","date":"2026-11-27T00:00:00Z"}`
 
 func TestParseAdvisory(t *testing.T) {
 	m := Parse(row("2026-11-28T03:27:14Z", "VelociraptorServer", advisory))
 	assert.Equal(t, "CVE-2026-132797 Velociraptor Child orgs can use server artifacts to escalate privilege", m.Title)
-	assert.Equal(t, "https://docs.velociraptor.app/announcements/advisories/cve-2026-132797/", m.Link)
-	assert.Equal(t, "docs.velociraptor.app", m.LinkHost)
+	assert.Equal(t, "https://atlantsecurity.github.io/atlantiraptor/security/advisories/cve-2026-132797/", m.Link)
+	assert.Equal(t, "atlantsecurity.github.io", m.LinkHost)
 	assert.Equal(t, []string{"CVE-2026-132797"}, m.CVEs)
 	assert.Equal(t, CategorySecurity, m.Category)
 	assert.Equal(t, SeverityCritical, m.Severity) // "privilege escalation" wording
@@ -68,7 +68,7 @@ func TestUserMessages(t *testing.T) {
 }
 
 func TestBuildGroupsAndMarks(t *testing.T) {
-	other := `{"title":"Velociraptor 0.76 released","link":"https://docs.velociraptor.app/blog/2026/v076/","date":"2026-11-20T00:00:00Z"}`
+	other := `{"title":"Velociraptor 0.76 released","link":"https://atlantsecurity.github.io/atlantiraptor/blog/2026/v076/","date":"2026-11-20T00:00:00Z"}`
 	rows := []*Row{
 		row("2026-11-28T03:27:14Z", "VelociraptorServer", advisory),
 		row("2026-11-28T03:27:14Z", "VelociraptorServer", advisory),
