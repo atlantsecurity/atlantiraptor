@@ -100,6 +100,8 @@ The page lists entries newest first. Filter by text anywhere in the entry,
 user, action, organization ID and time, and click an entry to see all its
 details and its hash. **Export** downloads the filtered entries:
 
+![The Audit log page](/images/audit-log.webp "Server settings > Audit log: the integrity check, the signed checkpoints and the newest entries, with filters.")
+
 - **JSON lines**: the lines exactly as stored. An unfiltered export of all
   days can be checked with `audit verify`.
 - **CSV**: for spreadsheets (cells that start with `=`, `+`, `-` or `@` are

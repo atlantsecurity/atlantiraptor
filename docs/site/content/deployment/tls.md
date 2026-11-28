@@ -34,6 +34,8 @@ without a port, such as `https://console.example.com`. Nothing in the
 configuration file changes, agents are not affected, and the console's
 original address keeps working.
 
+![Address and certificate page](/images/address-certificate.webp "Server settings > Address and certificate: the host name, the certificate source and the HTTP redirect.")
+
 1. Create a DNS record for the name, pointing to the server.
 2. Open **Server settings > Address and certificate**.
 3. Enter the host name. Keep port **443** so the address needs no port.

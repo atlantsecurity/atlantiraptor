@@ -12,6 +12,8 @@ Type in the top bar's search box, or on the Clients page. Plain text
 matches host names (wildcards allowed: `web*`, `*-dc-*`). Prefixes narrow
 the search:
 
+![The Clients page](/images/clients.webp "The Clients page: search results with each computer's OS, release, labels and when it was last seen.")
+
 | Search | Finds |
 |---|---|
 | `host:web01` | Host name |

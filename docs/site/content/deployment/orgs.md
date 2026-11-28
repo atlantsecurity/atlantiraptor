@@ -20,6 +20,8 @@ Open **Server settings > Organizations** (also reachable from the org switcher i
 top bar: **Manage organizations…**). It lists every org with its ID and
 number of users, and lets you:
 
+![The Organizations page](/images/organizations.webp "Server settings > Organizations: the root organization and a customer org, with their users.")
+
 - **Create** an org with **New organization**. It gets an ID such as
   `O1a2b3` and you become its administrator, so it appears in your org
   switcher straight away.

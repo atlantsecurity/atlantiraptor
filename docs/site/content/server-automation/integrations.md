@@ -15,6 +15,8 @@ shows whether it is **Configured**, its settings, and buttons to **Save**,
 **Test** it, or **Turn off**. **Send test alert** puts one harmless alert
 in the queue so you can check every forwarder end to end.
 
+![The Integrations page](/images/integrations.webp "Server settings > Integrations: AI triage, chat webhooks, email, Splunk or Elastic, and MISP.")
+
 Credentials are never entered on the card itself: each integration uses a
 [secret](/secrets/) you create first (the card links to **Secrets**).
 
