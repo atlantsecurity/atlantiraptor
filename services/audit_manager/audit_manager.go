@@ -9,6 +9,7 @@ import (
 	"www.velocidex.com/golang/velociraptor/logging"
 	"www.velocidex.com/golang/velociraptor/paths/artifacts"
 	"www.velocidex.com/golang/velociraptor/services"
+	"www.velocidex.com/golang/velociraptor/services/auditlog"
 	"www.velocidex.com/golang/velociraptor/utils"
 )
 
@@ -33,15 +34,26 @@ func (self *AuditManager) LogAudit(
 		return nil
 	}
 
+	// The tamper-evident copy on local disk (see services/auditlog).
+	// It must not be skipped because the journal fails, and vice versa.
+	file_err := auditlog.Record(config_obj.OrgId, principal, operation, details)
+
 	journal, err := services.GetJournal(config_obj)
 	if err != nil {
+		if file_err != nil {
+			return file_err
+		}
 		return err
 	}
 
 	// If an event is important enough to be audit logged we need to
 	// make sure to write it synchronously.
-	return journal.PushRowsToArtifact(
+	err = journal.PushRowsToArtifact(
 		ctx, config_obj, []*ordereddict.Dict{record},
 		artifacts.AUDIT_LOGS.
 			WithSuperUser().WithFrom(principal))
+	if err != nil {
+		return err
+	}
+	return file_err
 }

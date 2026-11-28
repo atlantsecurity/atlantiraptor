@@ -28,6 +28,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         description: 'Separate tenants on one server, and who can use each.' },
       { id: 'security', to: '/account/security', label: 'Security and 2FA', match: /^\/account(\/|$)/, keys: 'mfa totp password policy two-factor',
         description: 'Two-factor sign-in and the password policy.' },
+      { id: 'audit', to: '/settings/audit', label: 'Audit log', match: /^\/settings\/audit(\/|$)/, keys: 'audit trail log tamper immutable compliance syslog siem who did what',
+        description: 'Who did what, in a tamper-evident log kept outside the datastore.' },
     ],
   },
   {

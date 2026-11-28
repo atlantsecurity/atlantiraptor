@@ -57,11 +57,20 @@ WHERE operation =~ "hunt"
 **Response > Audit** shows the response actions of the last 30 days in a
 friendlier form.
 
+### The tamper-evident copy
+
+The server also keeps every audit event in signed, hash-chained files on its
+own disk, outside the datastore, where a changed or removed entry is
+detected. See [Tamper-evident audit log](/deployment/audit-log/).
+
 ### Forwarding the audit log
 
 To keep the audit log outside the server, where an administrator cannot
 change it:
 
+- **Syslog from the console**: **Server settings > Audit log** forwards
+  each entry of the tamper-evident log, see
+  [Tamper-evident audit log](/deployment/audit-log/#forwarding-to-syslog-or-a-siem).
 - **Syslog**: set `Logging.remote_syslog_server` (for example
   `siem.example.com:514`), `remote_syslog_protocol` (`udp` or `tcp`) and,
   optionally, `remote_syslog_components`. By default only audit events are

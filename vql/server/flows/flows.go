@@ -195,6 +195,12 @@ func (self *CancelFlowFunction) Call(ctx context.Context,
 		return vfilter.Null{}
 	}
 
+	_ = services.LogAudit(ctx, config_obj, vql_subsystem.GetPrincipal(scope),
+		"CancelFlow", ordereddict.NewDict().
+			Set("client_id", arg.ClientId).
+			Set("flow_id", arg.FlowId).
+			Set("via", "VQL"))
+
 	return json.ConvertProtoToOrderedDict(res)
 }
 

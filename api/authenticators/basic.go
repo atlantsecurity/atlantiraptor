@@ -148,6 +148,8 @@ func (self *BasicAuthenticator) AuthenticateUserHandler(
 				return
 			}
 
+			noteLogin(self.config_obj, r, user_record.Name, "password")
+
 			// Must use quote encoding because grpc can not handle
 			// binary data in metadata.
 			ctx := context.WithValue(

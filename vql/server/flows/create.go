@@ -201,6 +201,16 @@ func (self *ScheduleCollectionFunction) Call(ctx context.Context,
 	}
 
 	result.FlowId = flow_id
+
+	err = services.LogAudit(ctx, config_obj, vql_subsystem.GetPrincipal(scope),
+		"collect_client", ordereddict.NewDict().
+			Set("client_id", arg.ClientId).
+			Set("flow_id", flow_id).
+			Set("artifacts", request.Artifacts).
+			Set("urgent", arg.Urgent))
+	if err != nil {
+		scope.Log("collect_client: audit log: %v", err)
+	}
 	return json.ConvertProtoToOrderedDict(result)
 }
 

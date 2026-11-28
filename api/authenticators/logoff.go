@@ -21,13 +21,15 @@ func installLogoff(config_obj *config_proto.Config, mux *api_utils.ServeMux) {
 					username := ""
 					if ok && len(old_username) == 1 {
 						err := services.LogAudit(r.Context(),
-							config_obj, old_username[0], "LogOff", ordereddict.NewDict())
+							config_obj, old_username[0], "LogOff", ordereddict.NewDict().
+								Set("remote", r.RemoteAddr))
 						if err != nil {
 							logger := logging.GetLogger(
 								config_obj, &logging.FrontendComponent)
 							logger.Error("LogAudit: LogOff %v", old_username[0])
 						}
 						username = old_username[0]
+						forgetLogins(username)
 					}
 
 					// Clear the cookie

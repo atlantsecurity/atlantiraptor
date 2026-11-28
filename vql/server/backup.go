@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/Velocidex/ordereddict"
@@ -155,6 +156,10 @@ func (self RestoreBackupPlugin) Call(
 		}
 
 		stats, err := backups.RestoreBackup(path_spec, opts)
+		_ = services.LogAudit(ctx, config_obj, vql_subsystem.GetPrincipal(scope),
+			"backup_restore", ordereddict.NewDict().
+				Set("name", arg.Name).
+				Set("error", fmt.Sprintf("%v", err)))
 		if err != nil {
 			scope.Log("backup_restore: %v", err)
 			return

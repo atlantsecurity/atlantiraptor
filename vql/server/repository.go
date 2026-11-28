@@ -153,6 +153,12 @@ func (self *ArtifactSetFunction) Call(ctx context.Context,
 		return vfilter.Null{}
 	}
 
+	_ = services.LogAudit(ctx, config_obj, principal, "SetArtifactFile",
+		ordereddict.NewDict().
+			Set("artifact", definition.Name).
+			Set("details", arg.Definition).
+			Set("via", "VQL"))
+
 	if len(arg.Tags) > 0 {
 		metadata := definition.Metadata
 		if metadata == nil {
@@ -254,6 +260,9 @@ func (self *ArtifactDeleteFunction) Call(ctx context.Context,
 		scope.Log("artifact_delete: %s", err)
 		return vfilter.Null{}
 	}
+
+	_ = services.LogAudit(ctx, config_obj, principal, "DeleteArtifactFile",
+		ordereddict.NewDict().Set("artifact", arg.Name))
 
 	return arg.Name
 }
