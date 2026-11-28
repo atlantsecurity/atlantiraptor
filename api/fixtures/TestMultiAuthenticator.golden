@@ -49,6 +49,13 @@
    " authenticators.authenticateUserHandle",
    " api.toolUploadHandler"
   ],
+  "/velociraptor/api/v1/atl/agent-update": [
+   "authenticators.IpFilter",
+   " api.csrfProtect",
+   " GetLoggingHandler",
+   " authenticators.authenticateUserHandle",
+   " http.HandlerFunc"
+  ],
   "/velociraptor/api/v1/atl/apikeys": [
    "authenticators.IpFilter",
    " api.csrfProtect",

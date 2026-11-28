@@ -1,0 +1,101 @@
+name: Admin.Client.Upgrade.Atlantiraptor
+description: |
+  Upgrades the Atlantiraptor agent on a Windows computer to the release
+  the server hosts as the AtlantiraptorAgentWindows tool.
+
+  The server schedules this automatically after it updates itself
+  (Admin > Server updates > Agent updates): a canary group first, then
+  every other Windows agent. You can also collect it by hand.
+
+  On the computer it:
+  1. does nothing if the agent already runs TargetVersion;
+  2. downloads the binary from the server, checked against the tool's
+     SHA-256 hash;
+  3. requires a valid Authenticode signature from Atlant Security EOOD
+     that Windows trusts;
+  4. copies it into the agent's folder (only SYSTEM and Administrators
+     can write there) and runs its "selfupdate agent-upgrade" step,
+     which checks the signature and version again, then, detached from
+     the agent, stops the service, swaps the binary and starts it
+     again. If the new agent does not stay running, the previous binary
+     is put back. The log is agent-upgrade.log in the agent's folder.
+
+  The computer keeps its client ID, configuration and writeback.
+
+tools:
+  - name: AtlantiraptorAgentWindows
+
+parameters:
+  - name: TargetVersion
+    description: The Atlantiraptor release the tool contains, for example 1.0.4.
+  - name: ServiceName
+    default: Atlantiraptor
+    description: The agent's Windows service.
+  - name: SleepDuration
+    type: int
+    default: "300"
+    description: |
+      Wait up to this many seconds (at random) before downloading, so a
+      large fleet does not download the binary all at once.
+
+implied_permissions:
+  - EXECVE
+  - FILESYSTEM_WRITE
+
+sources:
+  - precondition:
+      SELECT OS From info() where OS = 'windows'
+
+    query: |
+      LET Me <= info()
+      LET Signer = "Atlant Security EOOD"
+      LET Staged <= path_join(components=[dirname(path=Me.Exe),
+                                          "Atlantiraptor-upgrade.exe"])
+
+      LET Fetch = SELECT OSPath
+        FROM Artifact.Generic.Utils.FetchBinary(
+           ToolName="AtlantiraptorAgentWindows", IsExecutable=TRUE,
+           SleepDuration=SleepDuration)
+
+      LET Run(Path) = SELECT "Upgrade started" AS Result,
+               TargetVersion, Stdout, Stderr, ReturnCode
+        FROM execve(argv=[Path, "selfupdate", "agent-upgrade",
+                          "--version", TargetVersion,
+                          "--service", ServiceName])
+        WHERE ReturnCode = 0 OR
+              log(level="ERROR", message="agent-upgrade failed (%v): %v %v",
+                  args=[ReturnCode, Stdout, Stderr])
+
+      LET Install = SELECT * FROM foreach(row=Fetch, query={
+          SELECT * FROM foreach(
+            row={ SELECT authenticode(filename=OSPath) AS Sig FROM scope() },
+            query={
+              SELECT * FROM if(
+                condition=Sig.Trusted = "trusted" AND
+                          Sig.SubjectName =~ ("(^|, )O=" + Signer + "(,|$)"),
+                then={
+                  SELECT * FROM foreach(
+                    row={ SELECT copy(filename=OSPath, dest=Staged) AS Dest
+                          FROM scope() WHERE Dest },
+                    query={ SELECT * FROM Run(Path=Dest) })
+                },
+                else={
+                  SELECT "Refused" AS Result, TargetVersion,
+                         Sig.Trusted AS Stdout, Sig.SubjectName AS Stderr,
+                         -1 AS ReturnCode
+                  FROM scope()
+                  WHERE log(level="ERROR",
+                            message="Refusing %v: signature %v, signer %v",
+                            args=[OSPath, Sig.Trusted, Sig.SubjectName])
+                })
+            })
+        })
+
+      SELECT * FROM if(
+        condition=Me.AtlantiraptorVersion = TargetVersion,
+        then={
+          SELECT "Already running " + TargetVersion AS Result, TargetVersion,
+                 "" AS Stdout, "" AS Stderr, 0 AS ReturnCode
+          FROM scope()
+        },
+        else=Install)

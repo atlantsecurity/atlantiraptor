@@ -91,3 +91,21 @@ func VerifyBinary(path string) (string, error) {
 	}
 	return subject, nil
 }
+
+// TrustSupported reports whether this platform can check that Windows
+// trusts a signature (VerifyBinary). Elsewhere only the signer's names
+// can be read (VerifySignerNames).
+const TrustSupported = installSupported
+
+// VerifySignerNames checks that a Windows executable carries an
+// Authenticode signature naming Atlant Security as the signer and
+// Microsoft's code signing CA as the issuer. It does not check the
+// signature itself; servers that cannot (non-Windows) use it as an
+// early check, and agents run the full VerifyBinary before installing.
+func VerifySignerNames(path string) (string, error) {
+	subject, issuer, err := readSigner(path)
+	if err != nil {
+		return "", err
+	}
+	return subject, checkSignerNames(subject, issuer)
+}

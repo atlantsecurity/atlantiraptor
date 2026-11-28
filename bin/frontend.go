@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	"www.velocidex.com/golang/velociraptor/services/huntfeeds"
+	"www.velocidex.com/golang/velociraptor/services/agentupdate"
 	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"github.com/sirupsen/logrus"
@@ -111,6 +112,7 @@ func doFrontend() error {
 
 	// Keep the server on the latest signed GitHub release.
 	selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)
+	agentupdate.Start(sm.Ctx, sm.Wg, config_obj)
 
 	// Atlant Security premium hunt feeds (licensed).
 	huntfeeds.Start(sm.Ctx, sm.Wg, config_obj)

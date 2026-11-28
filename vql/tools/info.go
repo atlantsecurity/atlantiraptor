@@ -27,6 +27,7 @@ import (
 	"github.com/Velocidex/ordereddict"
 
 	"www.velocidex.com/golang/velociraptor/acls"
+	"www.velocidex.com/golang/velociraptor/config"
 	"www.velocidex.com/golang/velociraptor/utils"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
 	"www.velocidex.com/golang/velociraptor/vql/psutils"
@@ -91,9 +92,16 @@ func info(
 		vql_subsystem.CacheSet(scope, "__info", info)
 	}
 
-	return GetInfo(info).
+	result := GetInfo(info).
 		Set("Fqdn", fqdn.Get()).
 		Set("Architecture", utils.GetArch())
+
+	// The Atlantiraptor release of this binary (absent on development
+	// builds). Generic.Client.Info reports it as the agent version.
+	if v := config.ReleaseVersion(); v != "" {
+		result.Set("AtlantiraptorVersion", v)
+	}
+	return result
 }
 
 type InfoFunction struct{}

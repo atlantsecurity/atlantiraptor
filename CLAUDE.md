@@ -64,6 +64,13 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   credentials are configured; until then run `pwsh -File scripts/publish-release.ps1` on the
   developer PC (build -> sign -> verify -> `gh release create`). Servers refuse any binary
   that isn't Authenticode-signed by Atlant Security EOOD and trusted by Windows.
+- Agent upgrades (`services/agentupdate`, console Admin > Server updates > Agent updates, docs in
+  `docs/site/content/deployment/updates.md`): after a server update the server hosts the same
+  release's signed Windows binary as tool `AtlantiraptorAgentWindows` and schedules
+  `Admin.Client.Upgrade.Atlantiraptor` (canary first, then everyone). The swap itself is
+  `Atlantiraptor.exe selfupdate agent-upgrade` in the new binary (`services/selfupdate/agent_windows.go`),
+  so keep that subcommand working in every release. Release agents report `Atlantiraptor x.y.z`
+  as their name and version.
 - MSI: `scripts/build-msi.ps1 -Binary dist/release/Atlantiraptor.exe -ClientConfig <client.config.yaml> -Version x.y.z`
   (WiX v5, source `docs/wix/atlantiraptor_amd64.wxs`). Order: build exe -> sign exe ->
   build MSI -> sign MSI -> verify. Keep the UpgradeCode unchanged so new versions upgrade in place.

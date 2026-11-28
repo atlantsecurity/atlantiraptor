@@ -261,3 +261,112 @@ func downloadVerified(ctx context.Context, address, path, want string) (err erro
 	}
 	return fd.Sync()
 }
+
+// releaseByTagURL is the GitHub API address of one release by its tag.
+var releaseByTagURL = "https://api.github.com/repos/" + Repository + "/releases/tags/"
+
+func fetchReleaseByTag(ctx context.Context, tag string) (*release, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		releaseByTagURL+url.PathEscape(tag), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("User-Agent", userAgent())
+
+	resp, err := httpClient(30 * time.Second).Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("release %v is not published on GitHub", tag)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub answered %v", resp.Status)
+	}
+	result := &release{}
+	err = json.NewDecoder(io.LimitReader(resp.Body, maxAPISize)).Decode(result)
+	if err != nil {
+		return nil, fmt.Errorf("reading release %v from GitHub: %w", tag, err)
+	}
+	if result.Draft || result.Prerelease {
+		return nil, fmt.Errorf("release %v is a draft or pre-release", tag)
+	}
+	return result, nil
+}
+
+// DownloadReleaseAsset downloads one asset of release vVERSION of this
+// repository to path, checked against the release's SHA256SUMS. It
+// returns the SHA-256 of the file. The file is removed on failure.
+// The caller still has to check the signature (VerifyBinary).
+func DownloadReleaseAsset(ctx context.Context, version, asset_name, path string) (string, error) {
+	v, ok := parseVersion(version)
+	if !ok {
+		return "", fmt.Errorf("%q is not a release version", version)
+	}
+	tag := "v" + v.String()
+	rel, err := fetchReleaseByTag(ctx, tag)
+	if err != nil {
+		return "", err
+	}
+	bin_asset := rel.find(asset_name)
+	sums_asset := rel.find(SumsAssetName)
+	if bin_asset == nil || sums_asset == nil {
+		return "", fmt.Errorf("release %v has no %v with %v", tag, asset_name, SumsAssetName)
+	}
+	bin_url, err := assetURL(rel.TagName, bin_asset)
+	if err != nil {
+		return "", err
+	}
+	sums_url, err := assetURL(rel.TagName, sums_asset)
+	if err != nil {
+		return "", err
+	}
+
+	var sums_buf strings.Builder
+	if _, err := download(ctx, sums_url, &sums_buf, maxSumsSize); err != nil {
+		return "", fmt.Errorf("downloading %v: %w", SumsAssetName, err)
+	}
+	sums, err := parseSums(strings.NewReader(sums_buf.String()))
+	if err != nil {
+		return "", err
+	}
+	want, ok := sums[bin_asset.Name]
+	if !ok {
+		return "", fmt.Errorf("%v does not list %v", SumsAssetName, bin_asset.Name)
+	}
+	if err := downloadVerified(ctx, bin_url, path, want); err != nil {
+		return "", fmt.Errorf("downloading %v: %w", bin_asset.Name, err)
+	}
+	return want, nil
+}
+
+// ParseVersion reports whether s is a plain MAJOR.MINOR.PATCH release
+// number and returns it normalized (without a "v").
+func ParseVersion(s string) (string, bool) {
+	v, ok := parseVersion(s)
+	if !ok {
+		return "", false
+	}
+	return v.String(), true
+}
+
+// CompareVersions compares two release numbers: -1, 0 or 1. ok is
+// false if either is not a release number.
+func CompareVersions(a, b string) (result int, ok bool) {
+	va, ok_a := parseVersion(a)
+	vb, ok_b := parseVersion(b)
+	if !ok_a || !ok_b {
+		return 0, false
+	}
+	switch {
+	case va.Less(vb):
+		return -1, true
+	case vb.Less(va):
+		return 1, true
+	}
+	return 0, true
+}
