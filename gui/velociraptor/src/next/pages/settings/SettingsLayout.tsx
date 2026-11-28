@@ -3,7 +3,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  Building2, CloudDownload, Code2, KeyRound, LayoutGrid, Lock, Network, Plug, Rocket, Settings2, ShieldCheck, Users, UsersRound,
+  Building2, CloudDownload, Code2, KeyRound, LayoutGrid, Lock, Network, Plug, Rocket, ScrollText, Settings2, ShieldCheck, Users, UsersRound,
 } from 'lucide-react';
 import { cn } from '../../ui/primitives';
 import { usePhone } from '../../ui/MobileBack';
@@ -14,6 +14,7 @@ export const SETTINGS_ICONS: Record<string, React.ReactNode> = {
   groups: <UsersRound />,
   orgs: <Building2 />,
   security: <ShieldCheck />,
+  audit: <ScrollText />,
   https: <Lock />,
   network: <Network />,
   updates: <CloudDownload />,

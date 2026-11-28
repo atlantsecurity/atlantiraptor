@@ -84,3 +84,10 @@ scripts/sign-agents.sh -n "Atlant SIEM Agent" -r build/Release/siem-agent
   code so a query can't send a tenant's token elsewhere (Okta, whose address differs per customer, is limited to the Okta
   domains; AWS requests are signed only for `amazonaws.com` hosts built from a validated region); tests point them at fixture servers.
   Every hunt returns `Time, Severity, Detection, User, IPAddress, Location, Device, Details`.
+- Tamper-evident audit log (`services/auditlog`, console Server settings > Audit log, API
+  `/api/v1/atl/audit`, CLI `audit verify`, docs `docs/site/content/deployment/audit-log.md`): every
+  `services.LogAudit` event is also appended to hash-chained daily JSONL files outside the datastore
+  (default `%ProgramData%\Atlantiraptor\AuditLog`, or `ATLANTIRAPTOR_AUDIT_DIR`), with Ed25519-signed
+  checkpoints (key derived from the secrets key) and the head recorded in the datastore. Never rewrite
+  or delete those files from code, and do not reorder `auditlog.Entry` fields (they are hashed). New
+  admin or response features must call `services.LogAudit`.

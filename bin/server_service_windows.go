@@ -29,6 +29,7 @@ import (
 	"time"
 	"www.velocidex.com/golang/velociraptor/services/huntfeeds"
 	"www.velocidex.com/golang/velociraptor/services/agentupdate"
+	"www.velocidex.com/golang/velociraptor/services/auditlog"
 	"www.velocidex.com/golang/velociraptor/services/selfupdate"
 
 	"context"
@@ -479,6 +480,9 @@ func NewVelociraptorServerService(name string) (
 				return
 			}
 			defer sm.Close()
+
+			// Tamper-evident audit log on local disk (services/auditlog).
+			auditlog.Start(sm.Ctx, sm.Wg, config_obj)
 
 			// Keep the server on the latest signed GitHub release.
 			selfupdate.Start(sm.Ctx, sm.Wg, config_obj, cancel)

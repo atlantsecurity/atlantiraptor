@@ -482,6 +482,12 @@ func (self *AddToHuntFunction) Call(ctx context.Context,
 		return vfilter.Null{}
 	}
 
+	_ = services.LogAudit(ctx, config_obj, principal, "hunt_add",
+		ordereddict.NewDict().
+			Set("hunt_id", arg.HuntId).
+			Set("client_id", arg.ClientId).
+			Set("flow_id", arg.FlowId))
+
 	return arg.ClientId
 }
 

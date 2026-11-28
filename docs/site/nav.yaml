@@ -82,6 +82,7 @@ sections:
       - path: deployment/storage
       - path: deployment/backups
       - path: deployment/logging
+      - path: deployment/audit-log
       - path: deployment/performance
 
   - title: Users and access

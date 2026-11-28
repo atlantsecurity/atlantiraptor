@@ -39,6 +39,7 @@ const NotebooksPage = lazy(() => import('../pages/notebooks/NotebooksPage'));
 const SettingsHome = lazy(() => import('../pages/settings/SettingsHome'));
 const DeployPage = lazy(() => import('../pages/settings/DeployPage'));
 const HttpsPage = lazy(() => import('../pages/settings/HttpsPage'));
+const AuditPage = lazy(() => import('../pages/settings/AuditPage'));
 const LegacyRoutes = lazy(() => import('./LegacyRoutes.jsx'));
 
 // The settings pages share the Server settings frame. They keep their
@@ -110,6 +111,7 @@ export default function AppShell() {
                       <Switch>
                         <Route path="/settings" exact><SettingsHome /></Route>
                         <Route path="/settings/https"><HttpsPage /></Route>
+                        <Route path="/settings/audit"><AuditPage /></Route>
                         <Route path="/users/:user?"><UsersPage /></Route>
                         <Route path="/groups"><GroupsPage /></Route>
                         <Route path="/orgs"><OrgsPage /></Route>

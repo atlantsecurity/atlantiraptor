@@ -232,6 +232,8 @@ func (self *CertAuthenticator) AuthenticateUserHandler(
 				return
 			}
 
+			noteLogin(self.config_obj, r, user_record.Name, "client certificate")
+
 			ctx := context.WithValue(
 				r.Context(),
 				constants.GRPC_USER_CONTEXT,

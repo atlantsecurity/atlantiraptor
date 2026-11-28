@@ -191,6 +191,10 @@ func PrepareGUIMux(
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/agent-update"),
 		ipFilter(config_obj, csrfProtect(config_obj,
 			auther.AuthenticateUserHandler(agentUpdateHandler(config_obj), acls.READ_RESULTS))))
+	// The tamper-evident audit log. Server admin check is in the handler.
+	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/audit"),
+		ipFilter(config_obj, csrfProtect(config_obj,
+			auther.AuthenticateUserHandler(auditHandler(), acls.READ_RESULTS))))
 	// Client configuration and install commands (Clients > Deploy a
 	// client). Server admin check is in the handler.
 	mux.Handle(api_utils.GetBasePath(config_obj, "/api/v1/atl/deploy"),

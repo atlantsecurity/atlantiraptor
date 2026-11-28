@@ -61,6 +61,30 @@ func (self *UpdateHuntFunction) Call(ctx context.Context,
 		return vfilter.Null{}
 	}
 
+	audit := ordereddict.NewDict().Set("hunt_id", arg.HuntId)
+	if arg.Start {
+		audit.Set("start", true)
+	}
+	if arg.Stop {
+		audit.Set("stop", true)
+	}
+	if arg.Description != "" {
+		audit.Set("description", arg.Description)
+	}
+	if !arg.Expires.IsZero() {
+		audit.Set("expires", arg.Expires)
+	}
+	if len(arg.AddLabel) > 0 {
+		audit.Set("add_labels", arg.AddLabel)
+	}
+	if len(arg.DelLabel) > 0 {
+		audit.Set("del_labels", arg.DelLabel)
+	}
+	if err := services.LogAudit(ctx, config_obj, vql_subsystem.GetPrincipal(scope),
+		"ModifyHunt", audit); err != nil {
+		scope.Log("hunt_update: audit log: %v", err)
+	}
+
 	if arg.Start || arg.Stop {
 		state := api_proto.Hunt_STOPPED
 		if arg.Start {
